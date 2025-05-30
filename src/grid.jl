@@ -470,10 +470,8 @@ function flag_regridding_regions_richardson!(parent::AMRLevel, child::AMRLevel)
         child_data = child.grid_functions_storage[storage_idx]
 
         # Initialize to indicate no points flagged yet.
-        # lower_flagged_child_coord will store the min child index flagged.
-        # upper_flagged_child_coord will store the max child index flagged.
-        lower_flagged_child_coord = child.num_grid_points + 1 # sentinel: larger than any valid index
-        upper_flagged_child_coord = 0                         # sentinel: smaller than any valid index
+        lower_flagged_child_coord = child.num_grid_points + 1
+        upper_flagged_child_coord = 0
 
         # These are the indices on the parent grid that the child grid `grid` covers.
         parent_idx_start_of_child = child.parent_indices[1]
@@ -524,8 +522,8 @@ function flag_regridding_regions_richardson!(parent::AMRLevel, child::AMRLevel)
 
             trunc_err = abs(parent_val - child_val)
 
-            if trunc_err > grid.ctx.trunc_err_tolerance
-                if lower_flagged_child_coord > grid.num_grid_points # First time flagging
+            if trunc_err > child.ctx.trunc_err_tolerance
+                if lower_flagged_child_coord > child.num_grid_points # First time flagging
                     lower_flagged_child_coord = child_coord
                     upper_flagged_child_coord = child_coord
                 else
