@@ -544,13 +544,13 @@ function flag_regridding_regions_richardson!(parent::AMRLevel, child::AMRLevel)
 end
 
 """
-STUB: determine_overall_regrid_coords!(fields::Vector{AMRField}, grid::AMRLevel)
+STUB: determine_overall_regrid_coords!(grid::AMRLevel)
 Determine the overall coordinates for creating a new finer grid based on flagged regions
 from all fields. Updates `grid.regrid_indices`.
 """
-function determine_overall_regrid_coords!(fields::Vector{AMRField}, grid::AMRLevel)
+function determine_overall_regrid_coords!(grid::AMRLevel)
     (; ctx, num_grid_points, is_physical_boundary) = grid
-    (; buffer_coord) = ctx
+    (; fields, buffer_coord) = ctx
 
     # Initialize with values that will be overridden by any valid flagged region
     # These are 1-based indices for the current `grid`
@@ -649,15 +649,15 @@ function regrid_level!(current_L_grid::AMRLevel)
     # If current_L_grid has a parent, we can use Richardson error with parent and current_L_grid.
     # The flags produced will be on current_L_grid.
     if current_L_grid.parent !== nothing
-        flag_regridding_regions_richardson!(fields, current_L_grid.parent, current_L_grid)
+        flag_regridding_regions_richardson!(current_L_grid.parent, current_L_grid)
     else
         # Base grid or no parent available, use difference on current_L_grid itself.
-        flag_regridding_regions_difference!(fields, current_L_grid)
+        flag_regridding_regions_difference!(current_L_grid)
     end
 
     # 2. Determine overall regrid coordinates on current_L_grid based on all field flags.
     # Result is stored in current_L_grid.regrid_indices.
-    determine_overall_regrid_coords!(fields, current_L_grid)
+    determine_overall_regrid_coords!(current_L_grid)
 
     # These are the proposed start/end indices on current_L_grid (as parent) for the new child.
     new_child_lower_on_parent, new_child_upper_on_parent = current_L_grid.regrid_indices
