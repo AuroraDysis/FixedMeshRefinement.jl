@@ -288,3 +288,158 @@ function amr_prolong_to_child!(parent::AMRLevel)
 
     return nothing
 end
+
+"""
+    get_base_level(level::AMRLevel)
+Navigate to the base (coarsest) level from the given `level`.
+"""
+function get_base_level(level::AMRLevel)
+    current = level
+    while !isnothing(current.parent)
+        current = current.parent
+    end
+    return current
+end
+
+"""
+    get_finest_level(level::AMRLevel)
+Navigate to the finest level from the given `level`.
+"""
+function get_finest_level(level::AMRLevel)
+    current = level
+    while !isnothing(current.child)
+        current = current.child
+    end
+    return current
+end
+
+"""
+    find_level(start_level::AMRLevel, target_level_num::Int)
+Find and return the level at `target_level_num`, starting the search from `start_level`.
+Returns `nothing` if the level is not found.
+"""
+function find_level(start_level::AMRLevel, target_level_num::Int)
+    @argcheck target_level_num >= 1 "Target level must be positive."
+
+    # Navigate to base grid to ensure consistent starting point if needed,
+    # or decide search direction based on current vs target.
+    current = get_base_level(start_level)
+
+    while !isnothing(current) && current.level != target_level_num
+        if current.level < target_level_num
+            current = current.child
+        else # current.level > target_level_num, should not happen if starting from base
+            return nothing # Or error, depending on desired behavior
+        end
+    end
+
+    return current
+end
+
+"""
+    amr_remove_level!(grid_to_remove::AMRLevel)
+Remove `grid_to_remove` from the AMR hierarchy, updating links.
+The children of the removed grid are not automatically handled (i.e., they are orphaned).
+Consider explicit handling of children if necessary before calling this.
+"""
+function amr_remove_level!(grid_to_remove::AMRLevel)
+    parent_grid = grid_to_remove.parent
+    child_grid = grid_to_remove.child
+
+    if !isnothing(parent_grid)
+        parent_grid.child = child_grid # Link parent to grandchild
+    end
+
+    if !isnothing(child_grid)
+        child_grid.parent = parent_grid # Link grandchild to grandparent
+        # Update levels of subsequent child grids
+        current_child = child_grid
+        while !isnothing(current_child)
+            if !isnothing(current_child.parent)
+                current_child.level = current_child.parent.level + 1
+            else
+                # This case implies child_grid became the new base grid
+                # This logic might need refinement if removing the base grid (level 1)
+                # or if a more complex re-leveling strategy is needed.
+                # For now, assume base grid is not removed or handled separately.
+                current_child.level = 1 # Or adjust based on new parent.
+            end
+            current_child = current_child.child
+        end
+    end
+
+    # Clear links from the removed grid
+    grid_to_remove.parent = nothing
+    grid_to_remove.child = nothing
+
+    # The grid_to_remove is now unlinked and will be garbage collected by Julia.
+    return nothing
+end
+
+# Stubs for more complex functions from amr_grid_hierarchy.c
+
+"""
+STUB: smooth_all_grid_funcs!(fields::Vector{AMRField}, grid::AMRLevel)
+Apply a Kreiss-Oliger filter to the grid functions.
+"""
+function smooth_all_grid_funcs!(fields::Vector{AMRField}, grid::AMRLevel)
+    # Placeholder for Kreiss-Oliger smoothing logic
+    @warn "smooth_all_grid_funcs! is a stub and not implemented."
+    return nothing
+end
+
+"""
+STUB: flag_regridding_regions_richardson!(fields::Vector{AMRField}, parent_grid::AMRLevel, grid::AMRLevel)
+Flag regions for regridding based on Richardson extrapolation error.
+Updates `regrid_indices` in `fields`.
+"""
+function flag_regridding_regions_richardson!(
+    fields::Vector{AMRField}, parent_grid::AMRLevel, grid::AMRLevel
+)
+    # Placeholder for Richardson-based flagging
+    @warn "flag_regridding_regions_richardson! is a stub and not implemented."
+    for field in fields
+        field.regrid_indices = (0, 0) # Default no flagging
+    end
+    return nothing
+end
+
+"""
+STUB: flag_regridding_regions_difference!(fields::Vector{AMRField}, grid::AMRLevel)
+Flag regions for regridding based on finite differences of grid functions.
+Updates `regrid_indices` in `fields`.
+"""
+function flag_regridding_regions_difference!(fields::Vector{AMRField}, grid::AMRLevel)
+    # Placeholder for difference-based flagging
+    @warn "flag_regridding_regions_difference! is a stub and not implemented."
+    for field in fields
+        field.regrid_indices = (0, 0) # Default no flagging
+    end
+    return nothing
+end
+
+"""
+STUB: determine_overall_regrid_coords!(fields::Vector{AMRField}, grid::AMRLevel)
+Determine the overall coordinates for creating a new finer grid based on flagged regions
+from all fields. Updates `grid.regrid_indices`.
+"""
+function determine_overall_regrid_coords!(fields::Vector{AMRField}, grid::AMRLevel)
+    # Placeholder for logic to combine flagged regions
+    @warn "determine_overall_regrid_coords! is a stub and not implemented."
+    grid.regrid_indices = (0, 0) # Default no regridding
+    return nothing
+end
+
+"""
+STUB: regrid_level!(grid::AMRLevel)
+Orchestrates the regridding process for the level above `grid`.
+This involves flagging, determining new grid coordinates, creating the new grid,
+interpolating, and injecting old data if applicable.
+"""
+function regrid_level!(grid::AMRLevel)
+    # Placeholder for the main regridding orchestration logic
+    @warn "regrid_level! is a stub and not implemented."
+    # This would call flagging functions, determine_overall_regrid_coords!,
+    # then potentially amr_refine_level! or amr_insert_level! with new logic.
+    return nothing
+end
