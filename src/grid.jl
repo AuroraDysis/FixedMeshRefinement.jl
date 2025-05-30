@@ -187,7 +187,7 @@ function AMRLevel(
     )
 end
 
-function amr_make_finer_level!(parent::AMRLevel, start_idx::Int, end_idx::Int)
+function amr_refine_level!(parent::AMRLevel, start_idx::Int, end_idx::Int)
     parent.child = AMRLevel(parent, start_idx, end_idx)
     parent.child.parent = parent
     return nothing
