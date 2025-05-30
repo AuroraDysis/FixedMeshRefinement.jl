@@ -188,6 +188,12 @@ function AMRLevel(
     )
 end
 
+function amr_make_finer_level!(parent::AMRLevel, child_start_idx::Int, child_end_idx::Int)
+    parent.child = AMRLevel(parent, child_start_idx, child_end_idx)
+    parent.child.parent = parent
+    return nothing
+end
+
 """
 amr_insert_grid!(parent, new_child_grid)
 Insert `new_child_grid` directly beneath `parent`, updating the linked structure.
