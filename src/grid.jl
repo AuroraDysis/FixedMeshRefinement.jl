@@ -204,6 +204,14 @@ function amr_insert_grid!(parent::AMRLevel, new_child_grid::AMRLevel)
         parent.child.parent = new_child_grid
     end
     parent.child = new_child_grid
+
+    # increase the level of the new child grid
+    child_of_parent = new_child_grid
+    while !isnothing(child_of_parent.child)
+        child_of_parent.child.level = child_of_parent.level + 1
+        child_of_parent = child_of_parent.child
+    end
+
     return nothing
 end
 
