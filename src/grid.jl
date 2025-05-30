@@ -51,7 +51,7 @@ mutable struct AMRField
     const num_time_levels::Int                 # hyperbolic time levels stored on each grid
     const num_extrapolation_levels::Int        # extra history for ODE extrapolation
     const pde_type::PDEType                    # PDE type (hyperbolic, elliptic, ODE, diagnostic)
-    regrid_bounds::NTuple{2,Int}         # (lower, upper) flagged coordinates for regridding
+    regrid_indices::NTuple{2,Int}         # (lower, upper) flagged coordinates for regridding
 
     function AMRField(
         name::String, pde_type::PDEType, num_time_levels::Int, num_extrapolation_levels::Int
@@ -68,8 +68,8 @@ mutable struct AMRLevel{TF<:AbstractFloat}
     bounding_box::NTuple{2,TF}                                         # physical domain covered by this grid
     num_grid_points::Int                                               # number of spatial grid points
     is_physical_boundary::NTuple{2,Bool}                               # whether the grid touches a physical boundary
-    parent_grid_bounds::NTuple{2,Int}                                  # coordinates inside parent grid (inclusive)
-    regrid_bounds::NTuple{2,Int}                                       # flagged coordinates for regridding
+    parent_indices::NTuple{2,Int}                                      # coordinates inside parent grid (inclusive)
+    regrid_indices::NTuple{2,Int}                                      # tagged regions for regridding
     excision_index::Int                                                # excision coordinate (0 => none)
     grid_functions_storage::Vector{Vector{TF}}                         # storage: each entry is a 1-D array over space
     time::TF                                                           # current simulation time
@@ -88,8 +88,8 @@ function AMRLevel(
     parent = nothing
     child = nothing
     is_physical_boundary = (true, true)
-    parent_grid_bounds = (0, 0)
-    regrid_bounds = (0, 0)
+    parent_indices = (0, 0)
+    regrid_indices = (0, 0)
     excision_index = 0
     grid_functions_storage = [
         Vector{TF}(NaN, num_grid_points) for _ in 1:(ctx.num_grid_functions)
@@ -105,8 +105,8 @@ function AMRLevel(
         bounding_box,
         num_grid_points,
         is_physical_boundary,
-        parent_grid_bounds,
-        regrid_bounds,
+        parent_indices,
+        regrid_indices,
         excision_index,
         grid_functions_storage,
         time,
@@ -149,7 +149,7 @@ function AMRLevel(
     bounding_box_val = (child_bbox_start, child_bbox_end)
 
     # Parent grid bounds (inclusive indices on parent grid that this child covers)
-    parent_grid_bounds_val = (start_idx, end_idx)
+    parent_indices_val = (start_idx, end_idx)
 
     # Determine if boundaries of the new grid are physical boundaries
     is_left_physical = parent.is_physical_boundary[1] && (start_idx == 1)
@@ -177,8 +177,8 @@ function AMRLevel(
         bounding_box_val,                   # bounding_box
         num_grid_points,                    # num_grid_points
         is_physical_boundary_val,           # is_physical_boundary
-        parent_grid_bounds_val,             # parent_grid_bounds
-        (0, 0),                             # regrid_bounds (default placeholder)
+        parent_indices_val,                 # parent_indices
+        (0, 0),                             # regrid_indices
         excision_index_val,                 # excision_index
         grid_functions_storage,             # grid_functions_storage
         time_val,                           # time
@@ -216,12 +216,12 @@ function amr_insert_level!(parent::AMRLevel, new_child_grid::AMRLevel)
 end
 
 """
-amr_restrict_to_parent!(ctx::AMRContext, current_grid::AMRLevel)
-Restrict overlapping grid-functions from `current_grid` into its `parent`.
+amr_restrict_level!(ctx::AMRContext, grid::AMRLevel)
+Restrict overlapping grid-functions from `grid` into its `parent`.
 This version assumes the 'index' corresponded to the first data slot of each field.
 """
-function amr_restrict_to_parent!(ctx::AMRContext, current_grid::AMRLevel)
-    parent = current_grid.parent
+function amr_restrict_level!(ctx::AMRContext, grid::AMRLevel)
+    parent = grid.parent
 
     calculated_field_data_slot_index = 0 # 0-based index for the start of current field's data block in grid_functions
     for field_obj in ctx.fields
@@ -231,8 +231,8 @@ function amr_restrict_to_parent!(ctx::AMRContext, current_grid::AMRLevel)
 
         copy_to_parent_grid!(
             parent.grid_functions[actual_julia_index_in_grid_funcs],
-            current_grid.grid_functions[actual_julia_index_in_grid_funcs],
-            current_grid.parent_grid_bounds[1],
+            grid.grid_functions[actual_julia_index_in_grid_funcs],
+            grid.parent_indices[1],
             ctx,
         )
 
@@ -242,3 +242,5 @@ function amr_restrict_to_parent!(ctx::AMRContext, current_grid::AMRLevel)
     end
     return nothing
 end
+
+function amr_prolong_level!(ctx::AMRContext, grid::AMRLevel) end
