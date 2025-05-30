@@ -544,6 +544,84 @@ function flag_regridding_regions_richardson!(parent::AMRLevel, child::AMRLevel)
 end
 
 """
+STUB: flag_regridding_regions_difference!(fields::Vector{AMRField}, grid::AMRLevel)
+Flag regions for regridding based on finite differences of grid functions.
+Updates `regrid_indices` in `fields`.
+"""
+function flag_regridding_regions_difference!(grid::AMRLevel)
+    (; ctx, num_grid_points, is_physical_boundary) = grid
+    (; fields, buffer_coord, grid_functions_storage_indices) = ctx
+
+    for (field_idx, field) in enumerate(fields)
+        if field.pde_type != HYPERBOLIC
+            field.regrid_indices = (1, 0) # No flagging
+            continue
+        end
+
+        storage_idx = grid_functions_storage_indices[field_idx]
+        gf = grid.grid_functions_storage[storage_idx]
+
+        lower_flagged_coord = num_grid_points + 1
+        upper_flagged_coord = 0
+
+        # Determine effective iteration range on the current `grid`
+        iter_start = 1
+        # If left boundary is not physical (i.e., interior), apply buffer
+        if !is_physical_boundary[1]
+            iter_start += buffer_coord
+        end
+
+        iter_end = num_grid_points
+        # If right boundary is not physical (i.e., interior), apply buffer
+        if !is_physical_boundary[2]
+            iter_end -= buffer_coord
+        end
+
+        # Loop from iter_start to iter_end-1 to compare gf[j] and gf[j+1]
+        # So, j can go up to iter_end-1, ensuring j+1 (which is iter_end) is valid.
+        # The C loop `for (int jC=start_jC; jC<end_jC-1; jC++)` means jC stops at end_jC-2.
+        # If end_jC is the C equivalent of num_grid_points (0-indexed N-1), then end_jC-1 is N-2.
+        # Then jC < N-2 means jC goes up to N-3. Accesses gf[N-3] and gf[N-2].
+        # Let's adjust Julia: loop j from iter_start to (iter_end - 1)
+        if iter_start >= iter_end # Not enough points after applying buffer
+            field.regrid_indices = (1, 0)
+            continue
+        end
+
+        for j_child in iter_start:(iter_end - 1)
+            # Ensure j_child and j_child+1 are valid indices for gf
+            if j_child < 1 || (j_child + 1) > num_grid_points
+                # This check should ideally not be needed if iter_start/iter_end are correct
+                continue
+            end
+
+            trunc_err = abs(gf[j_child + 1] - gf[j_child])
+
+            if trunc_err > grid.ctx.trunc_err_tolerance
+                if lower_flagged_coord > num_grid_points # First time flagging
+                    lower_flagged_coord = j_child
+                    upper_flagged_coord = j_child
+                else
+                    lower_flagged_coord = min(lower_flagged_coord, j_child)
+                    upper_flagged_coord = max(upper_flagged_coord, j_child)
+                end
+            end
+        end
+
+        if lower_flagged_coord > upper_flagged_coord
+            field.regrid_indices = (1, 0)
+        else
+            # The flagged region is inclusive of [lower_flagged_coord, upper_flagged_coord]
+            # If we flag based on cell j (diff between j and j+1), the region needing refinement
+            # might include both j and j+1. The C code flags jC.
+            # Let's stick to flagging j_child as the start of the difference.
+            field.regrid_indices = (lower_flagged_coord, upper_flagged_coord)
+        end
+    end
+    return nothing
+end
+
+"""
 STUB: determine_overall_regrid_coords!(grid::AMRLevel)
 Determine the overall coordinates for creating a new finer grid based on flagged regions
 from all fields. Updates `grid.regrid_indices`.
