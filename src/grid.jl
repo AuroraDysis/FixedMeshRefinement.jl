@@ -10,7 +10,6 @@ struct AMRContext{TF<:AbstractFloat}
 
     # Simulation parameters
     fields::Vector{AMRField}
-    base_grid::AMRLevel
 
     cfl::TF # CFL number
 
@@ -22,9 +21,9 @@ struct AMRContext{TF<:AbstractFloat}
     min_shift_distance::Int
 
     function AMRContext(
-        fields::Vector{AMRField},
-        base_grid::AMRLevel,
-        use_excision::Bool;
+        fields::Vector{AMRField};
+        cfl::TF=0.25,
+        use_excision::Bool=false,
         max_levels::Int=8,
         refinement_ratio::Int=2,
         regrid_cadence::Int=80,
@@ -49,8 +48,7 @@ struct AMRContext{TF<:AbstractFloat}
             buffer_coord,
             min_grid_size,
             fields,
-            base_grid,
-            use_excision,
+            cfl,
             num_grid_functions,
             grid_functions_storage_indices,
             trunc_err_tolerance,
