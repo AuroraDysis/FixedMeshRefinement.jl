@@ -27,7 +27,9 @@ struct AMRContext{TF<:AbstractFloat}
         buffer_coord::Int=40,
         min_grid_size::Int=40,
     )
-        num_grid_functions = [field.num_time_levels + field.num_extrapolation_levels for field in fields]
+        num_grid_functions = [
+            field.num_time_levels + field.num_extrapolation_levels for field in fields
+        ]
         grid_functions_storage_indices = Vector{Int}(undef, num_grid_functions)
         current_index = 1
         for (i, field) in enumerate(fields)
@@ -268,10 +270,20 @@ function amr_prolong_to_child!(parent::AMRLevel)
     # prolong all grid functions from parent to child
     start_idx = parent_indices[1]
     end_idx = parent_indices[2]
+    num_points = end_idx - start_idx + 1
     for i in 1:num_grid_functions
         parent_data = parent.grid_functions_storage[i]
         child_data = child.grid_functions_storage[i]
-        # TODO: Implement the prolongation logic here
+        for j in 1:num_points-1
+            p0 = parent_data[start_idx + j - 1]
+            p1 =
+                (parent_data[start_idx + j] - parent_data[start_idx + j - 1]) /
+                refinement_ratio
+            for k in 1:refinement_ratio
+                child_data[refinement_ratio * (j - 1) + k] = p0 + (k - 1) * p1
+            end
+        end
+        child_data[refinement_ratio * (num_points - 1) + 1] = parent_data[end_idx]
     end
 
     return nothing
