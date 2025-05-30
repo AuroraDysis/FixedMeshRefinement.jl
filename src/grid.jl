@@ -15,6 +15,7 @@ struct AMRContext{TF<:AbstractFloat}
     cfl::TF # CFL number
 
     num_grid_functions::Int
+    grid_functions_storage_indices::Vector{Int}
 
     function AMRContext(
         fields::Vector{AMRField},
@@ -26,6 +27,13 @@ struct AMRContext{TF<:AbstractFloat}
         buffer_coord::Int=40,
         min_grid_size::Int=40,
     )
+        num_grid_functions = length(fields)
+        grid_functions_storage_indices = Vector{Int}(undef, num_grid_functions)
+        current_index = 1
+        for (i, field) in enumerate(fields)
+            grid_functions_storage_indices[i] = current_index
+            current_index += field.num_time_levels + field.num_extrapolation_levels
+        end
         return new(
             max_levels,
             refinement_ratio,
@@ -35,6 +43,8 @@ struct AMRContext{TF<:AbstractFloat}
             fields,
             base_grid,
             use_excision,
+            num_grid_functions,
+            grid_functions_storage_indices,
         )
     end
 end
@@ -227,7 +237,16 @@ function amr_restrict_to_parent!(grid::AMRLevel)
         return nothing
     end
 
-    # TODO: Implement the restriction logic here
+    (; ctx, parent_indices) = parent
+    (; refinement_ratio, fields, grid_functions_storage_indices) = ctx
+
+    # restrict the data from the child grid into the parent grid along shared grid points
+    for i in 1:length(fields)
+        storage_index = grid_functions_storage_indices[i]
+        parent_data = parent.grid_functions_storage[storage_index]
+        child_data = grid.grid_functions_storage[storage_index]
+        parent_data .= @view child_data[parent_indices[1]:refinement_ratio:parent_indices[2]]
+    end
 
     return nothing
 end
