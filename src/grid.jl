@@ -194,10 +194,10 @@ function amr_make_finer_level!(parent::AMRLevel, start_idx::Int, end_idx::Int)
 end
 
 """
-amr_insert_grid!(parent, new_child_grid)
+amr_insert_level!(parent, new_child_grid)
 Insert `new_child_grid` directly beneath `parent`, updating the linked structure.
 """
-function amr_insert_grid!(parent::AMRLevel, new_child_grid::AMRLevel)
+function amr_insert_level!(parent::AMRLevel, new_child_grid::AMRLevel)
     new_child_grid.child = parent.child
     new_child_grid.parent = parent
     if !isnothing(parent.child)
