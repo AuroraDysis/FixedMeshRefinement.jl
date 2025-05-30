@@ -27,7 +27,7 @@ struct AMRContext{TF<:AbstractFloat}
         buffer_coord::Int=40,
         min_grid_size::Int=40,
     )
-        num_grid_functions = length(fields)
+        num_grid_functions = [field.num_time_levels + field.num_extrapolation_levels for field in fields]
         grid_functions_storage_indices = Vector{Int}(undef, num_grid_functions)
         current_index = 1
         for (i, field) in enumerate(fields)
@@ -230,8 +230,8 @@ amr_restrict_level!(grid::AMRLevel)
 Restrict overlapping grid-functions from `grid` into its `parent`.
 This version assumes the 'index' corresponded to the first data slot of each field.
 """
-function amr_restrict_to_parent!(grid::AMRLevel)
-    parent = grid.parent
+function amr_restrict_to_parent!(child::AMRLevel)
+    parent = child.parent
 
     if isnothing(parent)
         return nothing
@@ -244,7 +244,7 @@ function amr_restrict_to_parent!(grid::AMRLevel)
     for i in 1:length(fields)
         storage_index = grid_functions_storage_indices[i]
         parent_data = parent.grid_functions_storage[storage_index]
-        child_data = grid.grid_functions_storage[storage_index]
+        child_data = child.grid_functions_storage[storage_index]
         parent_data .= @view child_data[parent_indices[1]:refinement_ratio:parent_indices[2]]
     end
 
@@ -255,14 +255,24 @@ end
 amr_prolong_level!(grid::AMRLevel)
 Prolong the grid-functions from `grid` into its `child`.
 """
-function amr_prolong_to_child!(grid::AMRLevel)
-    child = grid.child
+function amr_prolong_to_child!(parent::AMRLevel)
+    child = parent.child
 
     if isnothing(child)
         return nothing
     end
 
-    # TODO: Implement the prolongation logic here
+    (; ctx, parent_indices) = child
+    (; refinement_ratio, num_grid_functions) = ctx
+
+    # prolong all grid functions from parent to child
+    start_idx = parent_indices[1]
+    end_idx = parent_indices[2]
+    for i in 1:num_grid_functions
+        parent_data = parent.grid_functions_storage[i]
+        child_data = child.grid_functions_storage[i]
+        # TODO: Implement the prolongation logic here
+    end
 
     return nothing
 end
