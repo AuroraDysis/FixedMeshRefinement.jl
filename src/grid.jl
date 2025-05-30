@@ -17,6 +17,10 @@ struct AMRContext{TF<:AbstractFloat}
     num_grid_functions::Int
     grid_functions_storage_indices::Vector{Int}
 
+    # Error tolerance parameters
+    trunc_err_tolerance::TF
+    min_shift_distance::Int
+
     function AMRContext(
         fields::Vector{AMRField},
         base_grid::AMRLevel,
@@ -26,7 +30,9 @@ struct AMRContext{TF<:AbstractFloat}
         regrid_cadence::Int=80,
         buffer_coord::Int=40,
         min_grid_size::Int=40,
-    )
+        trunc_err_tolerance::TF=1e-6,
+        min_shift_distance::Int=8,
+    ) where {TF<:AbstractFloat}
         num_grid_functions = [
             field.num_time_levels + field.num_extrapolation_levels for field in fields
         ]
@@ -36,7 +42,7 @@ struct AMRContext{TF<:AbstractFloat}
             grid_functions_storage_indices[i] = current_index
             current_index += field.num_time_levels + field.num_extrapolation_levels
         end
-        return new(
+        return new{TF}(
             max_levels,
             refinement_ratio,
             regrid_cadence,
@@ -47,6 +53,8 @@ struct AMRContext{TF<:AbstractFloat}
             use_excision,
             num_grid_functions,
             grid_functions_storage_indices,
+            trunc_err_tolerance,
+            min_shift_distance,
         )
     end
 end
@@ -190,7 +198,7 @@ function AMRLevel(
         num_grid_points,                    # num_grid_points
         is_physical_boundary_val,           # is_physical_boundary
         parent_indices_val,                 # parent_indices
-        (0, 0),                             # regrid_indices
+        (1, 0),                             # regrid_indices
         excision_index_val,                 # excision_index
         grid_functions_storage,             # grid_functions_storage
         time_val,                           # time
@@ -383,8 +391,59 @@ STUB: smooth_all_grid_funcs!(fields::Vector{AMRField}, grid::AMRLevel)
 Apply a Kreiss-Oliger filter to the grid functions.
 """
 function smooth_all_grid_funcs!(fields::Vector{AMRField}, grid::AMRLevel)
-    # Placeholder for Kreiss-Oliger smoothing logic
-    @warn "smooth_all_grid_funcs! is a stub and not implemented."
+    epsilon_ko = 1.0
+    Nx = grid.num_grid_points
+    
+    # Determine the actual start index of valid data (1-based)
+    # If grid.excision_index is 0, it means no excision, so data starts at 1.
+    # Otherwise, data starts at grid.excision_index.
+    first_valid_idx = grid.excision_index == 0 ? 1 : grid.excision_index
+
+    # Iterate over each field provided
+    for (field_enum_idx, _field_obj) in enumerate(fields)
+        # Get the index for the grid_functions_storage array for this field's primary data
+        storage_idx = grid.ctx.grid_functions_storage_indices[field_enum_idx]
+        vals = grid.grid_functions_storage[storage_idx]
+
+        # KO filter requires at least 5 points for full stencil application.
+        # The C code does not explicitly check this, implying Nx is assumed large enough.
+        # We'll add checks for stencil validity.
+
+        # Main loop for interior points
+        # Loop runs if first_valid_idx + 2 <= Nx - 2  => Nx >= first_valid_idx + 4
+        loop_start_interior = first_valid_idx + 2
+        loop_end_interior = Nx - 2
+        if loop_start_interior <= loop_end_interior
+            for j in loop_start_interior:loop_end_interior
+                # Ensure stencil points are within bounds [first_valid_idx, Nx]
+                # For this loop, j-2 >= first_valid_idx and j+2 <= Nx is guaranteed by loop bounds
+                if (j - 2 >= first_valid_idx && j + 2 <= Nx) # Redundant given loop_start/end but safe
+                    stencil_val = vals[j+2] - 4*vals[j+1] + 6*vals[j] - 4*vals[j-1] + vals[j-2]
+                    vals[j] -= (epsilon_ko / 16.0) * stencil_val
+                end
+            end
+        end
+
+        # Boundary condition at Nx-1 (C index Nx-2)
+        # Stencil: vals[Nx-4] to vals[Nx]. Target: vals[Nx-1].
+        # Requires: Nx >= 5 (for 5 points).
+        # And all stencil points vals[Nx-4]...vals[Nx] must be valid.
+        # Smallest index used is Nx-4. Target index is Nx-1.
+        if Nx >= 5 && (Nx - 1 >= first_valid_idx) && (Nx - 4 >= first_valid_idx)
+            stencil_val_hi = vals[Nx] - 4*vals[Nx-1] + 6*vals[Nx-2] - 4*vals[Nx-3] + vals[Nx-4]
+            vals[Nx-1] += (epsilon_ko / 16.0) * stencil_val_hi
+        end
+
+        # Boundary condition at 2 (C index 1)
+        # Stencil: vals[1] to vals[5]. Target: vals[2].
+        # Requires: Nx >= 5.
+        # All stencil points vals[1]...vals[5] must be valid.
+        # Smallest index used is 1. Target index is 2.
+        if Nx >= 5 && (2 >= first_valid_idx) && (1 >= first_valid_idx) # (1 >= first_valid_idx implies first_valid_idx is 1)
+            stencil_val_lo = vals[1] - 4*vals[2] + 6*vals[3] - 4*vals[4] + vals[5]
+            vals[2] += (epsilon_ko / 16.0) * stencil_val_lo
+        end
+    end
     return nothing
 end
 
@@ -396,10 +455,93 @@ Updates `regrid_indices` in `fields`.
 function flag_regridding_regions_richardson!(
     fields::Vector{AMRField}, parent_grid::AMRLevel, grid::AMRLevel
 )
-    # Placeholder for Richardson-based flagging
-    @warn "flag_regridding_regions_richardson! is a stub and not implemented."
-    for field in fields
-        field.regrid_indices = (0, 0) # Default no flagging
+    (; ctx) = grid
+    (; refinement_ratio, buffer_coord, grid_functions_storage_indices) = ctx
+
+    for (field_idx, field) in enumerate(fields)
+        if field.pde_type != HYPERBOLIC
+            # For non-hyperbolic, C sets flagged_coords to (Nx-1, 0) on child.
+            # This indicates an empty or invalid range.
+            # We'll use (1, 0) to indicate no flagging, assuming indices are 1-based and start <= end.
+            field.regrid_indices = (1, 0)
+            continue
+        end
+
+        storage_idx = grid_functions_storage_indices[field_idx]
+        parent_data = parent_grid.grid_functions_storage[storage_idx]
+        child_data = grid.grid_functions_storage[storage_idx]
+
+        # Initialize to indicate no points flagged yet.
+        # lower_flagged_child_coord will store the min child index flagged.
+        # upper_flagged_child_coord will store the max child index flagged.
+        lower_flagged_child_coord = grid.num_grid_points + 1 # sentinel: larger than any valid index
+        upper_flagged_child_coord = 0                         # sentinel: smaller than any valid index
+
+        # These are the indices on the parent grid that the child grid `grid` covers.
+        parent_idx_start_of_child = grid.parent_indices[1]
+        parent_idx_end_of_child = grid.parent_indices[2]
+
+        # Determine the iteration range on the parent grid, applying buffers.
+        # The C code's `grid->perim_interior` refers to the child grid's boundary type.
+        # `grid.is_physical_boundary[1]` is true if child's left is physical.
+        # If false, it's an interior boundary, so buffer is applied.
+        
+        iter_parent_start = parent_idx_start_of_child
+        if !grid.is_physical_boundary[1] # if child's left boundary is not physical (i.e., interior)
+            iter_parent_start += buffer_coord
+        end
+
+        iter_parent_end = parent_idx_end_of_child
+        if !grid.is_physical_boundary[2] # if child's right boundary is not physical (i.e., interior)
+            iter_parent_end -= buffer_coord
+        end
+        
+        # C loop is `for (jC=start_jC; jC<end_jC; jC++)`, so end_jC is exclusive.
+        # We iterate j_parent from iter_parent_start up to iter_parent_end - 1.
+        # However, the Richardson error compares parent[j_p] with child[corresponding to j_p].
+        # The loop in C is `for (int jC=start_jC; jC<end_jC; jC++)`.
+        # It seems indices should cover the comparable region.
+        # If iter_parent_end becomes less than iter_parent_start, loop won't run.
+
+        for j_parent in iter_parent_start:(iter_parent_end-1) # Adjusted for C's exclusive end
+            if j_parent < 1 || j_parent > parent_grid.num_grid_points
+                # Should not happen if parent_indices are valid for parent_grid
+                continue 
+            end
+
+            parent_val = parent_data[j_parent]
+
+            # Convert parent index j_parent to child index
+            # C: grid_index = refinement*(jC-lower_jC)
+            # lower_jC is parent_idx_start_of_child (0-based in C, 1-based in Julia)
+            # So, child_coord = refinement_ratio * (j_parent - parent_idx_start_of_child) + 1 (for 1-based child array)
+            child_coord = refinement_ratio * (j_parent - parent_idx_start_of_child) + 1
+            
+            if child_coord < 1 || child_coord > grid.num_grid_points
+                # This indicates an issue with index mapping or loop bounds.
+                # Given the C logic, this comparison point should be valid.
+                continue
+            end
+            child_val = child_data[child_coord]
+
+            trunc_err = abs(parent_val - child_val)
+
+            if trunc_err > grid.ctx.trunc_err_tolerance
+                if lower_flagged_child_coord > grid.num_grid_points # First time flagging
+                    lower_flagged_child_coord = child_coord
+                    upper_flagged_child_coord = child_coord
+                else
+                    lower_flagged_child_coord = min(lower_flagged_child_coord, child_coord)
+                    upper_flagged_child_coord = max(upper_flagged_child_coord, child_coord)
+                end
+            end
+        end
+
+        if lower_flagged_child_coord > upper_flagged_child_coord # No points flagged or invalid range
+            field.regrid_indices = (1, 0) # Or some other conventional "no flagging"
+        else
+            field.regrid_indices = (lower_flagged_child_coord, upper_flagged_child_coord)
+        end
     end
     return nothing
 end
@@ -410,10 +552,74 @@ Flag regions for regridding based on finite differences of grid functions.
 Updates `regrid_indices` in `fields`.
 """
 function flag_regridding_regions_difference!(fields::Vector{AMRField}, grid::AMRLevel)
-    # Placeholder for difference-based flagging
-    @warn "flag_regridding_regions_difference! is a stub and not implemented."
-    for field in fields
-        field.regrid_indices = (0, 0) # Default no flagging
+    (; ctx, num_grid_points, is_physical_boundary) = grid
+    (; buffer_coord, grid_functions_storage_indices) = ctx
+
+    for (field_idx, field) in enumerate(fields)
+        if field.pde_type != HYPERBOLIC
+            field.regrid_indices = (1, 0) # No flagging
+            continue
+        end
+
+        storage_idx = grid_functions_storage_indices[field_idx]
+        gf = grid.grid_functions_storage[storage_idx]
+
+        lower_flagged_coord = num_grid_points + 1
+        upper_flagged_coord = 0
+
+        # Determine effective iteration range on the current `grid`
+        iter_start = 1
+        # If left boundary is not physical (i.e., interior), apply buffer
+        if !is_physical_boundary[1]
+            iter_start += buffer_coord
+        end
+
+        iter_end = num_grid_points
+        # If right boundary is not physical (i.e., interior), apply buffer
+        if !is_physical_boundary[2]
+            iter_end -= buffer_coord
+        end
+
+        # Loop from iter_start to iter_end-1 to compare gf[j] and gf[j+1]
+        # So, j can go up to iter_end-1, ensuring j+1 (which is iter_end) is valid.
+        # The C loop `for (int jC=start_jC; jC<end_jC-1; jC++)` means jC stops at end_jC-2.
+        # If end_jC is the C equivalent of num_grid_points (0-indexed N-1), then end_jC-1 is N-2.
+        # Then jC < N-2 means jC goes up to N-3. Accesses gf[N-3] and gf[N-2].
+        # Let's adjust Julia: loop j from iter_start to (iter_end - 1)
+        if iter_start >= iter_end # Not enough points after applying buffer
+            field.regrid_indices = (1,0)
+            continue
+        end 
+
+        for j_child in iter_start:(iter_end - 1)
+            # Ensure j_child and j_child+1 are valid indices for gf
+            if j_child < 1 || (j_child + 1) > num_grid_points
+                # This check should ideally not be needed if iter_start/iter_end are correct
+                continue
+            end
+
+            trunc_err = abs(gf[j_child+1] - gf[j_child])
+
+            if trunc_err > grid.ctx.trunc_err_tolerance
+                if lower_flagged_coord > num_grid_points # First time flagging
+                    lower_flagged_coord = j_child
+                    upper_flagged_coord = j_child
+                else
+                    lower_flagged_coord = min(lower_flagged_coord, j_child)
+                    upper_flagged_coord = max(upper_flagged_coord, j_child)
+                end
+            end
+        end
+
+        if lower_flagged_coord > upper_flagged_coord
+            field.regrid_indices = (1, 0)
+        else
+            # The flagged region is inclusive of [lower_flagged_coord, upper_flagged_coord]
+            # If we flag based on cell j (diff between j and j+1), the region needing refinement
+            # might include both j and j+1. The C code flags jC.
+            # Let's stick to flagging j_child as the start of the difference.
+            field.regrid_indices = (lower_flagged_coord, upper_flagged_coord)
+        end
     end
     return nothing
 end
@@ -424,9 +630,87 @@ Determine the overall coordinates for creating a new finer grid based on flagged
 from all fields. Updates `grid.regrid_indices`.
 """
 function determine_overall_regrid_coords!(fields::Vector{AMRField}, grid::AMRLevel)
-    # Placeholder for logic to combine flagged regions
-    @warn "determine_overall_regrid_coords! is a stub and not implemented."
-    grid.regrid_indices = (0, 0) # Default no regridding
+    (; ctx, num_grid_points, is_physical_boundary) = grid
+    (; buffer_coord) = ctx
+
+    # Initialize with values that will be overridden by any valid flagged region
+    # These are 1-based indices for the current `grid`
+    overall_lower_coord_jl = num_grid_points + 1 
+    overall_upper_coord_jl = 0
+
+    # Find min and max coords from all hyperbolic fields
+    for field in fields
+        if field.pde_type == HYPERBOLIC
+            field_lower, field_upper = field.regrid_indices
+            # Check if the field has a valid flagged region (lower <= upper and lower >= 1)
+            if field_lower >= 1 && field_lower <= field_upper && field_upper <= num_grid_points
+                overall_lower_coord_jl = min(overall_lower_coord_jl, field_lower)
+                overall_upper_coord_jl = max(overall_upper_coord_jl, field_upper)
+            end
+        end
+    end
+
+    # If no valid region was flagged by any hyperbolic field
+    if overall_lower_coord_jl > overall_upper_coord_jl
+        grid.regrid_indices = (1, 0) # Indicate no regridding needed
+        return nothing
+    end
+
+    # Convert to 0-indexed for easier comparison with C logic, then convert back
+    lower_c = overall_lower_coord_jl - 1
+    upper_c = overall_upper_coord_jl - 1
+    nx_c = num_grid_points # C's Nx is number of points, so Nx-1 is max index
+
+    # Apply buffer logic from C code (determine_grid_coords)
+    # Note: C variables: lower_child_grid_coord, upper_child_grid_coord, Nx, grid->perim_interior
+
+    # Condition 1: Physical left boundary
+    if is_physical_boundary[1] # C: grid->perim_interior[0] == false
+        if lower_c < buffer_coord
+            lower_c = 0
+        end
+    end
+
+    # Condition 2: Physical right boundary
+    if is_physical_boundary[2] # C: grid->perim_interior[1] == false
+        if upper_c > (nx_c - 1 - buffer_coord)
+            upper_c = nx_c - 1
+        end
+    end
+
+    # Condition 3: Interior left boundary
+    # C: if ((grid->perim_interior[0]==true) && (lower_child_grid_coord - buffer_coord > 0))
+    if !is_physical_boundary[1] # C: grid->perim_interior[0] == true
+        if (lower_c - buffer_coord) > 0
+            lower_c -= buffer_coord
+        # else: C code does not change lower_c if (lower_c - buffer_coord) <= 0
+        end
+    end
+
+    # Condition 4: Interior right boundary
+    # C: if ((grid->perim_interior[1]==true) && (upper_child_grid_coord + buffer_coord < Nx-1))
+    # Assuming typo in C code fixed from lower_child_grid_coord to upper_child_grid_coord for this condition.
+    if !is_physical_boundary[2] # C: grid->perim_interior[1] == true
+        if (upper_c + buffer_coord) < (nx_c - 1)
+            upper_c += buffer_coord
+        # else: C code does not change upper_c if (upper_c + buffer_coord) >= Nx-1
+        end
+    end
+
+    # Convert back to 1-based Julia indices and store
+    final_lower_jl = lower_c + 1
+    final_upper_jl = upper_c + 1
+    
+    # Ensure final coordinates are valid and within grid bounds, though C logic should ensure this.
+    final_lower_jl = max(1, min(final_lower_jl, num_grid_points))
+    final_upper_jl = max(1, min(final_upper_jl, num_grid_points))
+
+    if final_lower_jl > final_upper_jl
+        grid.regrid_indices = (1,0) # Should not happen if initial overall_lower <= overall_upper
+    else
+        grid.regrid_indices = (final_lower_jl, final_upper_jl)
+    end
+    
     return nothing
 end
 
@@ -436,10 +720,108 @@ Orchestrates the regridding process for the level above `grid`.
 This involves flagging, determining new grid coordinates, creating the new grid,
 interpolating, and injecting old data if applicable.
 """
-function regrid_level!(grid::AMRLevel)
-    # Placeholder for the main regridding orchestration logic
-    @warn "regrid_level! is a stub and not implemented."
-    # This would call flagging functions, determine_overall_regrid_coords!,
-    # then potentially amr_refine_level! or amr_insert_level! with new logic.
+function regrid_level!(current_L_grid::AMRLevel)
+    fields = current_L_grid.ctx.fields
+    min_grid_size = current_L_grid.ctx.min_grid_size
+
+    # 1. Flagging based on chosen method
+    # If current_L_grid has a parent, we can use Richardson error with parent and current_L_grid.
+    # The flags produced will be on current_L_grid.
+    if current_L_grid.parent !== nothing
+        flag_regridding_regions_richardson!(fields, current_L_grid.parent, current_L_grid)
+    else
+        # Base grid or no parent available, use difference on current_L_grid itself.
+        flag_regridding_regions_difference!(fields, current_L_grid)
+    end
+
+    # 2. Determine overall regrid coordinates on current_L_grid based on all field flags.
+    # Result is stored in current_L_grid.regrid_indices.
+    determine_overall_regrid_coords!(fields, current_L_grid)
+
+    # These are the proposed start/end indices on current_L_grid (as parent) for the new child.
+    new_child_lower_on_parent, new_child_upper_on_parent = current_L_grid.regrid_indices
+
+    # 3. Validation of new child coordinates & Early Exit if not viable
+    if new_child_lower_on_parent > new_child_upper_on_parent || 
+       (new_child_upper_on_parent - new_child_lower_on_parent + 1) < min_grid_size
+        
+        # If proposed region is invalid/too small, remove existing child if it has no children.
+        if current_L_grid.child !== nothing && current_L_grid.child.child === nothing
+            amr_remove_level!(current_L_grid.child)
+            current_L_grid.child = nothing # Ensure parent's child link is cleared
+        end
+        # @warn "Regridding aborted: Proposed child grid region is invalid or too small."
+        return nothing
+    end
+
+    # 4. Handle existing child (old_child)
+    old_child = current_L_grid.child
+
+    # 5. Compare with old_child's coordinates to avoid minimal changes
+    if old_child !== nothing
+        old_child_lower_on_parent = old_child.parent_indices[1]
+        old_child_upper_on_parent = old_child.parent_indices[2]
+        if abs(old_child_lower_on_parent - new_child_lower_on_parent) < current_L_grid.ctx.min_shift_distance &&
+           abs(old_child_upper_on_parent - new_child_upper_on_parent) < current_L_grid.ctx.min_shift_distance
+            # @warn "Regridding aborted: New child grid is too similar to the existing child grid."
+            return nothing # New grid is too similar to the old one
+        end
+    end
+
+    # 6. TODO: Implement C's `make_coords_fit_into_parent_and_fit_grandchild`.
+    # This function in C adjusts `new_child_lower_on_parent`, `new_child_upper_on_parent`.
+    # For now, we proceed with the coordinates from `determine_overall_regrid_coords!`.
+    # After this (if implemented), a re-check of min_grid_size might be needed.
+    # if (new_child_upper_on_parent - new_child_lower_on_parent + 1) < min_grid_size:
+    #    ... (handle removal of child if it exists and has no children) ...
+    #    return nothing
+
+    # 7. Create the new child AMRLevel
+    # current_L_grid acts as the parent for this new level.
+    new_child = AMRLevel(current_L_grid, new_child_lower_on_parent, new_child_upper_on_parent)
+
+    # 8. Prolong data from parent (current_L_grid) to new_child
+    # Temporarily link new_child to parent for amr_prolong_to_child! to work
+    original_actual_child_link = current_L_grid.child # Save current link (could be old_child)
+    current_L_grid.child = new_child 
+    # new_child.parent is already set by its constructor to current_L_grid
+    amr_prolong_to_child!(current_L_grid) # Prolongs data into new_child.grid_functions_storage
+    current_L_grid.child = original_actual_child_link # Restore parent's original child link for now
+
+    # 9. Handle hierarchy update (replace old_child with new_child)
+    grand_child = nothing
+    if old_child !== nothing
+        @warn "TODO: Implement inject_old_data!(old_child, new_child) to copy overlapping data from old_child to new_child."
+        grand_child = old_child.child # Get children of old_child
+        
+        # Detach old_child from its parent (current_L_grid) and its child (grand_child)
+        # to prepare for its effective removal from this specific parent-child chain.
+        old_child.parent = nothing
+        old_child.child = nothing 
+        # old_child itself is not destroyed from memory here, GC will handle if unreferenced.
+    end
+
+    # Link new_child into the hierarchy
+    new_child.child = grand_child # new_child adopts old_child's children
+    if grand_child !== nothing
+        grand_child.parent = new_child
+        # Update levels of grand_child and its descendants
+        current = grand_child
+        while current !== nothing
+            if current.parent === nothing # Should not happen if logic is correct
+                 @error "Error in level update: grand_child's parent is nothing."
+                 break
+            end
+            current.level = current.parent.level + 1
+            current = current.child
+        end
+    end
+    
+    current_L_grid.child = new_child # Parent (current_L_grid) now points to new_child
+    # new_child.parent was already set to current_L_grid by AMRLevel constructor.
+
+    # 10. Smooth the parent grid (current_L_grid)
+    smooth_all_grid_funcs!(fields, current_L_grid)
+    
     return nothing
 end

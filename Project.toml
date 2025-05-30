@@ -3,5 +3,9 @@ uuid = "ffe09bc1-ac12-45d3-a3dd-425211443744"
 authors = ["Zhen Zhong <auroradysis@gmail.com> and contributors"]
 version = "1.0.0-DEV"
 
+[deps]
+ArgCheck = "dce04be8-c92d-5529-be00-80e4d2c0e197"
+
 [compat]
+ArgCheck = "2.5.0"
 julia = "1.10"
