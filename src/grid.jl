@@ -216,31 +216,34 @@ function amr_insert_level!(parent::AMRLevel, new_child_grid::AMRLevel)
 end
 
 """
-amr_restrict_level!(ctx::AMRContext, grid::AMRLevel)
+amr_restrict_level!(grid::AMRLevel)
 Restrict overlapping grid-functions from `grid` into its `parent`.
 This version assumes the 'index' corresponded to the first data slot of each field.
 """
-function amr_restrict_level!(ctx::AMRContext, grid::AMRLevel)
+function amr_restrict_to_parent!(grid::AMRLevel)
     parent = grid.parent
 
-    calculated_field_data_slot_index = 0 # 0-based index for the start of current field's data block in grid_functions
-    for field_obj in ctx.fields
-        # The Julia index (1-based) for the specific Vector{Float64} in grid_functions
-        # This assumes the original fld.index pointed to the first time_level (n=0) data for that field.
-        actual_julia_index_in_grid_funcs = calculated_field_data_slot_index + 1
-
-        copy_to_parent_grid!(
-            parent.grid_functions[actual_julia_index_in_grid_funcs],
-            grid.grid_functions[actual_julia_index_in_grid_funcs],
-            grid.parent_indices[1],
-            ctx,
-        )
-
-        # Advance the base slot index to the start of the next field's data block
-        calculated_field_data_slot_index +=
-            field_obj.num_time_levels + field_obj.num_extrapolation_levels
+    if isnothing(parent)
+        return nothing
     end
+
+    # TODO: Implement the restriction logic here
+
     return nothing
 end
 
-function amr_prolong_level!(ctx::AMRContext, grid::AMRLevel) end
+"""
+amr_prolong_level!(grid::AMRLevel)
+Prolong the grid-functions from `grid` into its `child`.
+"""
+function amr_prolong_to_child!(grid::AMRLevel)
+    child = grid.child
+
+    if isnothing(child)
+        return nothing
+    end
+
+    # TODO: Implement the prolongation logic here
+
+    return nothing
+end
