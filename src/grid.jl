@@ -116,25 +116,25 @@ function AMRLevel(
 end
 
 """
-    AMRLevel(parent, parent_start_idx, parent_end_idx) -> AMRLevel
+    AMRLevel(parent, start_idx, end_idx) -> AMRLevel
 Construct a new AMRLevel refined with respect to `parent`.
-The new grid covers the interval [`parent_start_idx`, `parent_end_idx`] in parent coordinates.
+The new grid covers the interval [`start_idx`, `end_idx`] in parent coordinates.
 """
 function AMRLevel(
-    parent::AMRLevel{TF}, parent_start_idx::Int, parent_end_idx::Int
+    parent::AMRLevel{TF}, start_idx::Int, end_idx::Int
 ) where {TF<:AbstractFloat}
     ctx = parent.ctx
 
     @argcheck parent.level + 1 <= ctx.max_levels "Cannot create level $(parent.level + 1), maximum AMR levels is $(ctx.max_levels)"
-    @argcheck parent_start_idx >= 1 && parent_start_idx <= parent.num_grid_points "parent_start_idx ($parent_start_idx) is out of bounds [1, $(parent.num_grid_points)] for parent grid."
-    @argcheck parent_end_idx >= 1 && parent_end_idx <= parent.num_grid_points "parent_end_idx ($parent_end_idx) is out of bounds [1, $(parent.num_grid_points)] for parent grid."
-    @argcheck parent_start_idx <= parent_end_idx "parent_start_idx ($parent_start_idx) cannot be greater than parent_end_idx ($parent_end_idx)"
+    @argcheck start_idx >= 1 && start_idx <= parent.num_grid_points "start_idx ($start_idx) is out of bounds [1, $(parent.num_grid_points)] for parent grid."
+    @argcheck end_idx >= 1 && end_idx <= parent.num_grid_points "end_idx ($end_idx) is out of bounds [1, $(parent.num_grid_points)] for parent grid."
+    @argcheck start_idx <= end_idx "start_idx ($start_idx) cannot be greater than end_idx ($end_idx)"
 
     # Level of the new (child) grid
     child_level_val = parent.level + 1
 
     # Number of spatial points in the new grid
-    num_grid_points = ctx.refinement_ratio * (parent_end_idx - parent_start_idx) + 1
+    num_grid_points = ctx.refinement_ratio * (end_idx - start_idx) + 1
 
     # Spatial and temporal resolution for the new grid
     dx_val = parent.dx / ctx.refinement_ratio
@@ -144,23 +144,22 @@ function AMRLevel(
     time_val = parent.time
 
     # Physical bounding box of the new grid
-    child_bbox_start = parent.bounding_box[1] + (parent_start_idx - 1) * parent.dx
-    child_bbox_end = parent.bounding_box[1] + (parent_end_idx - 1) * parent.dx
+    child_bbox_start = parent.bounding_box[1] + (start_idx - 1) * parent.dx
+    child_bbox_end = parent.bounding_box[1] + (end_idx - 1) * parent.dx
     bounding_box_val = (child_bbox_start, child_bbox_end)
 
     # Parent grid bounds (inclusive indices on parent grid that this child covers)
-    parent_grid_bounds_val = (parent_start_idx, parent_end_idx)
+    parent_grid_bounds_val = (start_idx, end_idx)
 
     # Determine if boundaries of the new grid are physical boundaries
-    is_left_physical = parent.is_physical_boundary[1] && (parent_start_idx == 1)
+    is_left_physical = parent.is_physical_boundary[1] && (start_idx == 1)
     is_right_physical =
-        parent.is_physical_boundary[2] && (parent_end_idx == parent.num_grid_points)
+        parent.is_physical_boundary[2] && (end_idx == parent.num_grid_points)
     is_physical_boundary_val = (is_left_physical, is_right_physical)
 
     # Excision index mapping
-    if parent.excision_index >= parent_start_idx && parent.excision_index <= parent_end_idx
-        excision_index_val =
-            ctx.refinement_ratio * (parent.excision_index - parent_start_idx) + 1
+    if parent.excision_index >= start_idx && parent.excision_index <= end_idx
+        excision_index_val = ctx.refinement_ratio * (parent.excision_index - start_idx) + 1
     else
         excision_index_val = 0
     end
