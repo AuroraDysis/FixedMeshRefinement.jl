@@ -552,7 +552,7 @@ Flag regions for regridding based on finite differences of grid functions.
 Updates `regrid_indices` in `fields`.
 """
 function flag_regrid_regions_by_gradient!(grid::AMRLevel)
-    (; ctx, num_grid_points, is_physical_boundary) = grid
+    (; ctx, num_grid_points, is_physical_boundary, grid_functions_storage) = grid
     (; fields, buffer_coord, grid_functions_storage_indices) = ctx
 
     for (field_idx, field) in enumerate(fields)
@@ -562,7 +562,7 @@ function flag_regrid_regions_by_gradient!(grid::AMRLevel)
         end
 
         storage_idx = grid_functions_storage_indices[field_idx]
-        gf = grid.grid_functions_storage[storage_idx]
+        gf = grid_functions_storage[storage_idx]
 
         lower_flagged_coord = num_grid_points + 1
         upper_flagged_coord = 0
