@@ -944,7 +944,7 @@ function regrid_level!(current_L_grid::AMRLevel)
     # new_child.parent was already set to current_L_grid by AMRLevel constructor.
 
     # 11. Smooth the parent grid (current_L_grid)
-    smooth_all_grid_funcs!(fields, current_L_grid)
+    smooth_all_grid_funcs!(current_L_grid)
 
     return nothing
 end
