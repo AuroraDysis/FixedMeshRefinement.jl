@@ -622,11 +622,11 @@ function flag_regrid_regions_by_gradient!(grid::AMRLevel)
 end
 
 """
-determine_overall_regrid_coords!(grid::AMRLevel)
+compute_regrid_region!(grid::AMRLevel)
 Determine the overall coordinates for creating a new finer grid based on flagged regions
 from all fields. Updates `grid.regrid_indices`.
 """
-function determine_overall_regrid_coords!(grid::AMRLevel)
+function compute_regrid_region!(grid::AMRLevel)
     (; ctx, num_grid_points, is_physical_boundary) = grid
     (; fields, buffer_coord) = ctx
 
@@ -735,7 +735,7 @@ function regrid_level!(current_L_grid::AMRLevel)
 
     # 2. Determine overall regrid coordinates on current_L_grid based on all field flags.
     # Result is stored in current_L_grid.regrid_indices.
-    determine_overall_regrid_coords!(current_L_grid)
+    compute_regrid_region!(current_L_grid)
 
     # These are the proposed start/end indices on current_L_grid (as parent) for the new child.
     new_child_lower_on_parent, new_child_upper_on_parent = current_L_grid.regrid_indices
@@ -771,7 +771,7 @@ function regrid_level!(current_L_grid::AMRLevel)
 
     # 6. TODO: Implement C's `make_coords_fit_into_parent_and_fit_grandchild`.
     # This function in C adjusts `new_child_lower_on_parent`, `new_child_upper_on_parent`.
-    # For now, we proceed with the coordinates from `determine_overall_regrid_coords!`.
+    # For now, we proceed with the coordinates from `compute_regrid_region!`.
     # After this (if implemented), a re-check of min_grid_size might be needed.
     # if (new_child_upper_on_parent - new_child_lower_on_parent + 1) < min_grid_size:
     #    ... (handle removal of child if it exists and has no children) ...
