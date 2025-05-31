@@ -450,11 +450,11 @@ function smooth_all_grid_funcs!(fields::Vector{AMRField}, grid::AMRLevel)
 end
 
 """
-STUB: tag_regridding_regions_by_richardson!(parent::AMRLevel, child::AMRLevel)
-Tag regions for regridding based on Richardson extrapolation error.
+flag_regridding_regions_by_richardson!(parent::AMRLevel, child::AMRLevel)
+Flag regions for regridding based on Richardson extrapolation error.
 Updates `regrid_indices` in `fields`.
 """
-function tag_regridding_regions_by_richardson!(parent::AMRLevel, child::AMRLevel)
+function flag_regridding_regions_by_richardson!(parent::AMRLevel, child::AMRLevel)
     (; ctx) = child
     (; fields, refinement_ratio, buffer_coord, grid_functions_storage_indices) = ctx
 
@@ -544,11 +544,11 @@ function tag_regridding_regions_by_richardson!(parent::AMRLevel, child::AMRLevel
 end
 
 """
-STUB: tag_regrid_regions_by_gradient!(fields::Vector{AMRField}, grid::AMRLevel)
+flag_regrid_regions_by_gradient!(fields::Vector{AMRField}, grid::AMRLevel)
 Flag regions for regridding based on finite differences of grid functions.
 Updates `regrid_indices` in `fields`.
 """
-function tag_regrid_regions_by_gradient!(grid::AMRLevel)
+function flag_regrid_regions_by_gradient!(grid::AMRLevel)
     (; ctx, num_grid_points, is_physical_boundary) = grid
     (; fields, buffer_coord, grid_functions_storage_indices) = ctx
 
@@ -727,10 +727,10 @@ function regrid_level!(current_L_grid::AMRLevel)
     # If current_L_grid has a parent, we can use Richardson error with parent and current_L_grid.
     # The flags produced will be on current_L_grid.
     if current_L_grid.parent !== nothing
-        tag_regridding_regions_by_richardson!(current_L_grid.parent, current_L_grid)
+        flag_regridding_regions_by_richardson!(current_L_grid.parent, current_L_grid)
     else
         # Base grid or no parent available, use difference on current_L_grid itself.
-        tag_regrid_regions_by_gradient!(current_L_grid)
+        flag_regrid_regions_by_gradient!(current_L_grid)
     end
 
     # 2. Determine overall regrid coordinates on current_L_grid based on all field flags.
