@@ -714,6 +714,105 @@ function compute_regrid_region!(grid::AMRLevel)
 end
 
 """
+_adjust_child_coords_for_hierarchy(parent_grid::AMRLevel, proposed_lower_on_pg_jl::Int, proposed_upper_on_pg_jl::Int)
+
+Adjusts the proposed coordinates for a new child grid to ensure it:
+1. Fits within the parent_grid's boundaries, considering buffers.
+2. Encompasses any existing grandchild (parent_grid.child.child), including the grandchild's buffered region,
+   projected onto the parent_grid.
+
+Returns a Tuple{Int, Int} of adjusted (lower, upper) 1-based coordinates on parent_grid,
+or nothing if a valid placement is impossible.
+"""
+function _adjust_child_coords_for_hierarchy(
+    parent_grid::AMRLevel, proposed_lower_on_pg_jl::Int, proposed_upper_on_pg_jl::Int
+)::Union{Tuple{Int,Int},Nothing}
+    ctx_pg = parent_grid.ctx
+    buffer_coord_pg = ctx_pg.buffer_coord
+
+    # 1. Determine Parent Constraints (0-indexed calculations, then convert to 1-based)
+    parent_allowed_min_start_0idx = 0
+    if !parent_grid.is_physical_boundary[1] # Left is interior
+        parent_allowed_min_start_0idx += buffer_coord_pg
+    end
+
+    parent_allowed_max_end_0idx = parent_grid.num_grid_points - 1
+    if !parent_grid.is_physical_boundary[2] # Right is interior
+        parent_allowed_max_end_0idx -= buffer_coord_pg
+    end
+
+    parent_allowed_min_start_jl = parent_allowed_min_start_0idx + 1
+    parent_allowed_max_end_jl = parent_allowed_max_end_0idx + 1
+
+    if parent_allowed_min_start_jl > parent_allowed_max_end_jl
+        return nothing # Parent cannot support a buffered region
+    end
+
+    # 2. Initialize Adjusted Coordinates
+    adj_L_jl = proposed_lower_on_pg_jl
+    adj_U_jl = proposed_upper_on_pg_jl
+
+    # 3. Apply Parent Constraints to Adjusted Coordinates
+    adj_L_jl = max(adj_L_jl, parent_allowed_min_start_jl)
+    adj_U_jl = min(adj_U_jl, parent_allowed_max_end_jl)
+
+    # 4. Handle Grandchild Constraints
+    old_child = parent_grid.child
+    if old_child !== nothing && old_child.child !== nothing
+        grandchild = old_child.child
+        refinement_ratio_pg_to_oc = ctx_pg.refinement_ratio # Ratio from parent_grid to old_child
+
+        # Buffer for grandchild, scaled to old_child's grid resolution
+        buffer_for_gc_on_oc_scale =
+            ceil(Int, buffer_coord_pg / refinement_ratio_pg_to_oc)
+
+        # Required extent of grandchild on old_child (1-based)
+        gc_req_start_on_oc_jl = grandchild.parent_indices[1]
+        gc_req_end_on_oc_jl = grandchild.parent_indices[2]
+
+        if !grandchild.is_physical_boundary[1] # Grandchild's left is interior
+            gc_req_start_on_oc_jl -= buffer_for_gc_on_oc_scale
+        end
+        if !grandchild.is_physical_boundary[2] # Grandchild's right is interior
+            gc_req_end_on_oc_jl += buffer_for_gc_on_oc_scale
+        end
+
+        # Project this required old_child interval to parent_grid coordinates
+        oc_start_on_pg_jl = old_child.parent_indices[1]
+
+        s_pg =
+            oc_start_on_pg_jl +
+            floor(Int, (gc_req_start_on_oc_jl - 1) / refinement_ratio_pg_to_oc)
+        len_oc = gc_req_end_on_oc_jl - gc_req_start_on_oc_jl + 1
+        if len_oc < 0; len_oc = 0; end # handle case where buffer makes start > end
+        len_pg = ceil(Int, len_oc / refinement_ratio_pg_to_oc)
+        e_pg = s_pg + len_pg - 1
+        
+        grandchild_req_start_on_pg_jl = s_pg
+        grandchild_req_end_on_pg_jl = e_pg
+
+        # Check compatibility: Grandchild's needs vs. parent's allowance
+        if grandchild_req_start_on_pg_jl < parent_allowed_min_start_jl ||
+            grandchild_req_end_on_pg_jl > parent_allowed_max_end_jl
+            return nothing # Grandchild's needs are outside parent's buffered area
+        end
+
+        # Apply Grandchild Constraints to Adjusted Coordinates
+        # New child must start early enough to cover grandchild's required start
+        adj_L_jl = min(adj_L_jl, grandchild_req_start_on_pg_jl)
+        # New child must end late enough to cover grandchild's required end
+        adj_U_jl = max(adj_U_jl, grandchild_req_end_on_pg_jl)
+    end
+
+    # 5. Final Validation for adjusted coordinates
+    if adj_L_jl > adj_U_jl
+        return nothing
+    end
+
+    return (adj_L_jl, adj_U_jl)
+end
+
+"""
 regrid_level!(grid::AMRLevel)
 Orchestrates the regridding process for the level above `grid`.
 This involves flagging, determining new grid coordinates, creating the new grid,
@@ -741,22 +840,44 @@ function regrid_level!(current_L_grid::AMRLevel)
     new_child_lower_on_parent, new_child_upper_on_parent = current_L_grid.regrid_indices
 
     # 3. Validation of new child coordinates & Early Exit if not viable
-    if new_child_lower_on_parent > new_child_upper_on_parent ||
-        (new_child_upper_on_parent - new_child_lower_on_parent + 1) < min_grid_size
-
-        # If proposed region is invalid/too small, remove existing child if it has no children.
+    if new_child_lower_on_parent > new_child_upper_on_parent # Initial check from compute_regrid_region!
         if current_L_grid.child !== nothing && current_L_grid.child.child === nothing
             amr_remove_level!(current_L_grid.child)
-            current_L_grid.child = nothing # Ensure parent's child link is cleared
+            current_L_grid.child = nothing
         end
-        # @warn "Regridding aborted: Proposed child grid region is invalid or too small."
         return nothing
     end
 
     # 4. Handle existing child (old_child)
     old_child = current_L_grid.child
 
-    # 5. Compare with old_child's coordinates to avoid minimal changes
+    # 5. Adjust new child coordinates to fit parent and grandchild constraints
+    adjusted_coords = _adjust_child_coords_for_hierarchy(
+        current_L_grid, new_child_lower_on_parent, new_child_upper_on_parent
+    )
+
+    if adjusted_coords === nothing
+        # @warn "Regridding aborted: Coords could not be adjusted for parent/grandchild."
+        if current_L_grid.child !== nothing && current_L_grid.child.child === nothing
+            amr_remove_level!(current_L_grid.child)
+            current_L_grid.child = nothing
+        end
+        return nothing
+    end
+    
+    new_child_lower_on_parent, new_child_upper_on_parent = adjusted_coords
+
+    # Re-check size after adjustment
+    if (new_child_upper_on_parent - new_child_lower_on_parent + 1) < min_grid_size
+        # @warn "Regridding aborted: Adjusted child grid region is too small."
+        if current_L_grid.child !== nothing && current_L_grid.child.child === nothing
+            amr_remove_level!(current_L_grid.child)
+            current_L_grid.child = nothing
+        end
+        return nothing
+    end
+
+    # 6. Compare with old_child's coordinates to avoid minimal changes
     if old_child !== nothing
         old_child_lower_on_parent = old_child.parent_indices[1]
         old_child_upper_on_parent = old_child.parent_indices[2]
@@ -769,21 +890,16 @@ function regrid_level!(current_L_grid::AMRLevel)
         end
     end
 
-    # 6. TODO: Implement C's `make_coords_fit_into_parent_and_fit_grandchild`.
-    # This function in C adjusts `new_child_lower_on_parent`, `new_child_upper_on_parent`.
-    # For now, we proceed with the coordinates from `compute_regrid_region!`.
-    # After this (if implemented), a re-check of min_grid_size might be needed.
-    # if (new_child_upper_on_parent - new_child_lower_on_parent + 1) < min_grid_size:
-    #    ... (handle removal of child if it exists and has no children) ...
-    #    return nothing
+    # 7. TODO: (This was step 6 in old comments) - The C's `make_coords_fit_into_parent_and_fit_grandchild` is now handled by _adjust_child_coords_for_hierarchy above.
+    # The re-check of min_grid_size is also done above after adjustment.
 
-    # 7. Create the new child AMRLevel
+    # 8. Create the new child AMRLevel
     # current_L_grid acts as the parent for this new level.
     new_child = AMRLevel(
         current_L_grid, new_child_lower_on_parent, new_child_upper_on_parent
     )
 
-    # 8. Prolong data from parent (current_L_grid) to new_child
+    # 9. Prolong data from parent (current_L_grid) to new_child
     # Temporarily link new_child to parent for amr_prolong_to_child! to work
     original_actual_child_link = current_L_grid.child # Save current link (could be old_child)
     current_L_grid.child = new_child
@@ -791,7 +907,7 @@ function regrid_level!(current_L_grid::AMRLevel)
     amr_prolong_to_child!(current_L_grid) # Prolongs data into new_child.grid_functions_storage
     current_L_grid.child = original_actual_child_link # Restore parent's original child link for now
 
-    # 9. Handle hierarchy update (replace old_child with new_child)
+    # 10. Handle hierarchy update (replace old_child with new_child)
     grand_child = nothing
     if old_child !== nothing
         @warn "TODO: Implement inject_old_data!(old_child, new_child) to copy overlapping data from old_child to new_child."
@@ -823,7 +939,7 @@ function regrid_level!(current_L_grid::AMRLevel)
     current_L_grid.child = new_child # Parent (current_L_grid) now points to new_child
     # new_child.parent was already set to current_L_grid by AMRLevel constructor.
 
-    # 10. Smooth the parent grid (current_L_grid)
+    # 11. Smooth the parent grid (current_L_grid)
     smooth_all_grid_funcs!(fields, current_L_grid)
 
     return nothing
