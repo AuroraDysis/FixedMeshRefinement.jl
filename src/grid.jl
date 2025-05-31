@@ -640,15 +640,15 @@ function compute_regrid_region!(grid::AMRLevel)
 
     # Find min and max coords from all hyperbolic fields
     for field in fields
-        if field.pde_type == HYPERBOLIC
-            field_lower, field_upper = field.regrid_indices
-            # Check if the field has a valid flagged region (lower <= upper and lower >= 1)
-            if field_lower >= 1 &&
-                field_lower <= field_upper &&
-                field_upper <= num_grid_points
-                overall_lower_coord_jl = min(overall_lower_coord_jl, field_lower)
-                overall_upper_coord_jl = max(overall_upper_coord_jl, field_upper)
-            end
+        if field.pde_type != HYPERBOLIC
+            continue
+        end
+
+        field_lower, field_upper = field.regrid_indices
+        # Check if the field has a valid flagged region (lower <= upper and lower >= 1)
+        if field_lower >= 1 && field_lower <= field_upper && field_upper <= num_grid_points
+            overall_lower_coord_jl = min(overall_lower_coord_jl, field_lower)
+            overall_upper_coord_jl = max(overall_upper_coord_jl, field_upper)
         end
     end
 
