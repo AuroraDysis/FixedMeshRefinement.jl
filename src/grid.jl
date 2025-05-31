@@ -385,7 +385,7 @@ end
 # Stubs for more complex functions from amr_grid_hierarchy.c
 
 """
-STUB: smooth_all_grid_funcs!(fields::Vector{AMRField}, grid::AMRLevel)
+smooth_all_grid_funcs!(fields::Vector{AMRField}, grid::AMRLevel)
 Apply a Kreiss-Oliger filter to the grid functions.
 """
 function smooth_all_grid_funcs!(fields::Vector{AMRField}, grid::AMRLevel)
@@ -622,7 +622,7 @@ function flag_regrid_regions_by_gradient!(grid::AMRLevel)
 end
 
 """
-STUB: determine_overall_regrid_coords!(grid::AMRLevel)
+determine_overall_regrid_coords!(grid::AMRLevel)
 Determine the overall coordinates for creating a new finer grid based on flagged regions
 from all fields. Updates `grid.regrid_indices`.
 """
@@ -714,7 +714,7 @@ function determine_overall_regrid_coords!(grid::AMRLevel)
 end
 
 """
-STUB: regrid_level!(grid::AMRLevel)
+regrid_level!(grid::AMRLevel)
 Orchestrates the regridding process for the level above `grid`.
 This involves flagging, determining new grid coordinates, creating the new grid,
 interpolating, and injecting old data if applicable.
