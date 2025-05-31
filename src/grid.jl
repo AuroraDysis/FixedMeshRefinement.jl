@@ -385,23 +385,26 @@ end
 # Stubs for more complex functions from amr_grid_hierarchy.c
 
 """
-smooth_all_grid_funcs!(fields::Vector{AMRField}, grid::AMRLevel)
+smooth_all_grid_funcs!(grid::AMRLevel)
 Apply a Kreiss-Oliger filter to the grid functions.
 """
-function smooth_all_grid_funcs!(fields::Vector{AMRField}, grid::AMRLevel)
+function smooth_all_grid_funcs!(grid::AMRLevel)
+    (; ctx, grid_functions_storage) = grid
+    (; fields, num_grid_points, excision_index, grid_functions_storage_indices) = ctx
+
     epsilon_ko = 1.0
-    Nx = grid.num_grid_points
+    Nx = num_grid_points
 
     # Determine the actual start index of valid data (1-based)
     # If grid.excision_index is 0, it means no excision, so data starts at 1.
     # Otherwise, data starts at grid.excision_index.
-    first_valid_idx = grid.excision_index == 0 ? 1 : grid.excision_index
+    first_valid_idx = excision_index == 0 ? 1 : excision_index
 
     # Iterate over each field provided
     for (field_enum_idx, _field_obj) in enumerate(fields)
         # Get the index for the grid_functions_storage array for this field's primary data
-        storage_idx = grid.ctx.grid_functions_storage_indices[field_enum_idx]
-        vals = grid.grid_functions_storage[storage_idx]
+        storage_idx = grid_functions_storage_indices[field_enum_idx]
+        vals = grid_functions_storage[storage_idx]
 
         # KO filter requires at least 5 points for full stencil application.
         # The C code does not explicitly check this, implying Nx is assumed large enough.
@@ -763,8 +766,7 @@ function _adjust_child_coords_for_hierarchy(
         refinement_ratio_pg_to_oc = ctx_pg.refinement_ratio # Ratio from parent_grid to old_child
 
         # Buffer for grandchild, scaled to old_child's grid resolution
-        buffer_for_gc_on_oc_scale =
-            ceil(Int, buffer_coord_pg / refinement_ratio_pg_to_oc)
+        buffer_for_gc_on_oc_scale = ceil(Int, buffer_coord_pg / refinement_ratio_pg_to_oc)
 
         # Required extent of grandchild on old_child (1-based)
         gc_req_start_on_oc_jl = grandchild.parent_indices[1]
@@ -784,10 +786,12 @@ function _adjust_child_coords_for_hierarchy(
             oc_start_on_pg_jl +
             floor(Int, (gc_req_start_on_oc_jl - 1) / refinement_ratio_pg_to_oc)
         len_oc = gc_req_end_on_oc_jl - gc_req_start_on_oc_jl + 1
-        if len_oc < 0; len_oc = 0; end # handle case where buffer makes start > end
+        if len_oc < 0
+            len_oc = 0
+        end # handle case where buffer makes start > end
         len_pg = ceil(Int, len_oc / refinement_ratio_pg_to_oc)
         e_pg = s_pg + len_pg - 1
-        
+
         grandchild_req_start_on_pg_jl = s_pg
         grandchild_req_end_on_pg_jl = e_pg
 
@@ -864,7 +868,7 @@ function regrid_level!(current_L_grid::AMRLevel)
         end
         return nothing
     end
-    
+
     new_child_lower_on_parent, new_child_upper_on_parent = adjusted_coords
 
     # Re-check size after adjustment
