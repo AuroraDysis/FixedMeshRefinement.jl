@@ -66,3 +66,85 @@ function step!(
 
     return nothing
 end
+
+function rk4!(f::Function, levf)
+    u = levf.u
+    u_p = levf.u_p
+    u_pp = levf.u_pp
+    r = levf.rhs
+    w = levf.w
+    lev = levf.lev
+    t = lev.time
+    dt = lev.dt
+
+    @. u_pp = u_p * 1.0
+    @. u_p = u * 1.0
+    lev.time = t
+    f(lev, r, u)
+    @. u += r * (dt / 6)
+
+    @. w = u_p + r * (dt / 2)
+    lev.time = t + 0.5 * dt
+    f(lev, r, w)
+    @. u += r * (dt / 3)
+
+    @. w = u_p + r * (dt / 2)
+    lev.time = t + 0.5 * dt
+    f(lev, r, w)
+    @. u += r * (dt / 3)
+
+    @. w = u_p + r * dt
+    lev.time = t + dt
+    f(lev, r, w)
+    @. u += r * (dt / 6)
+    lev.time = t + dt
+end
+
+function rk4_mongwane!(f::Function, levf)
+    u = levf.u
+    u_p = levf.u_p
+    r = levf.rhs
+    w = levf.w
+    k1 = levf.k[1]
+    k2 = levf.k[2]
+    k3 = levf.k[3]
+    k4 = levf.k[4]
+    lev = levf.lev
+    t = lev.time
+    dt = lev.dt
+    isrt = lev.is_lev1 ? 1 : 1 + lev.nbuf
+    iend = lev.is_lev1 ? lev.nxa : lev.nxa - lev.nbuf
+
+    @. u_p = u * 1.0
+    lev.time = t
+    f(lev, r, u)
+    for v = 1:levf.nd
+        k1[v][isrt:iend] = r[v][isrt:iend] * dt
+    end
+    @. u += k1 * (1 / 6)
+
+    @. w = u_p + k1 * (1 / 2)
+    lev.time = t + 0.5 * dt
+    f(lev, r, w)
+    for v = 1:levf.nd
+        k2[v][isrt:iend] = r[v][isrt:iend] * dt
+    end
+    @. u += k2 * (1 / 3)
+
+    @. w = u_p + k2 * (1 / 2)
+    lev.time = t + 0.5 * dt
+    f(lev, r, w)
+    for v = 1:levf.nd
+        k3[v][isrt:iend] = r[v][isrt:iend] * dt
+    end
+    @. u += k3 * (1 / 3)
+
+    @. w = u_p + k3
+    lev.time = t + dt
+    f(lev, r, w)
+    for v = 1:levf.nd
+        k4[v][isrt:iend] = r[v][isrt:iend] * dt
+    end
+    @. u += k4 * (1 / 6)
+    lev.time = t + dt
+end
