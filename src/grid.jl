@@ -35,7 +35,7 @@ mutable struct Level{NumState,NumDiagnostic}
     state_prev::Vector{Vector{Float64}}  # previous state vectors
     state_prev_prev::Vector{Vector{Float64}}  # previous previous state vectors
     rhs::Vector{Vector{Float64}}  # rhs of state vectors
-    workspace::Vector{Vector{Float64}}  # intermediate state vectors
+    tmp::Vector{Vector{Float64}}  # intermediate state vectors
     # intermediate state vectors for new subcycling
     runge_kutta_stages::Vector{Vector{Vector{Float64}}}
 
@@ -68,7 +68,7 @@ mutable struct Level{NumState,NumDiagnostic}
         state_prev = Vector{Vector{Float64}}(undef, NumState)
         state_prev_prev = Vector{Vector{Float64}}(undef, NumState)
         rhs = Vector{Vector{Float64}}(undef, NumState)
-        workspace = Vector{Vector{Float64}}(undef, NumState)
+        tmp = Vector{Vector{Float64}}(undef, NumState)
         runge_kutta_stages = Vector{Vector{Vector{Float64}}}(undef, 4)
         diag_state = Vector{Vector{Float64}}(undef, NumDiagnostic)
         for j in 1:4
@@ -80,7 +80,7 @@ mutable struct Level{NumState,NumDiagnostic}
             state_prev[i] = fill(NaN, num_total_points)
             state_prev_prev[i] = fill(NaN, num_total_points)
             rhs[i] = fill(NaN, num_total_points)
-            workspace[i] = fill(NaN, num_total_points)
+            tmp[i] = fill(NaN, num_total_points)
             for j in 1:4
                 runge_kutta_stages[j][i] = fill(NaN, num_total_points)
             end
@@ -112,7 +112,7 @@ mutable struct Level{NumState,NumDiagnostic}
             state_prev,
             state_prev_prev,
             rhs,
-            workspace,
+            tmp,
             runge_kutta_stages,
             diag_state,
         )
