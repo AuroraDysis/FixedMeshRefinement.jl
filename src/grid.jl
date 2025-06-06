@@ -111,7 +111,7 @@ mutable struct Grid{NumState,NumDiagnostic}
     levels::Vector{Level{NumState,NumDiagnostic}}
     base_dt::Float64
     time::Float64
-    use_subcycling::Bool  # turn on subcycling or not
+    subcycling::Bool  # turn on subcycling or not
 
     function Grid{NumState,NumDiagnostic}(
         base_level_num_points,  # num of interior grid points at base level
@@ -124,12 +124,12 @@ mutable struct Grid{NumState,NumDiagnostic}
         cfl_number=0.25,
         initial_time=0.0,
         dissipation=0.0,
-        use_subcycling=true,
+        subcycling=true,
     )
         # build the first level (base level)
         base_level_spatial_step =
             (domain_boxes[1][2] - domain_boxes[1][1]) / (base_level_num_points - 1)
-        base_dt = if use_subcycling
+        base_dt = if subcycling
             cfl_number * base_level_spatial_step
         else
             cfl_number * base_level_spatial_step / 2^(length(domain_boxes) - 1)
@@ -153,7 +153,7 @@ mutable struct Grid{NumState,NumDiagnostic}
         # build the rest levels
         for i in 2:length(domain_boxes)
             level_spatial_step = base_level_spatial_step / 2^(i - 1)
-            level_time_step = (use_subcycling ? cfl_number * level_spatial_step : base_dt)
+            level_time_step = (subcycling ? cfl_number * level_spatial_step : base_dt)
             parent_level = levels[i - 1]  # level lower than the current level (parent level)
             # if we refine parent level everywhere
             parent_level_grid_points = LinRange(
@@ -209,7 +209,7 @@ mutable struct Grid{NumState,NumDiagnostic}
         end
 
         # construct
-        return new{NumState,NumDiagnostic}(levels, base_dt, initial_time, use_subcycling)
+        return new{NumState,NumDiagnostic}(levels, base_dt, initial_time, subcycling)
     end
 end
 
@@ -217,7 +217,7 @@ function Base.show(
     io::IO, grid::Grid{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
     println(io, "Grid Structure:")
-    println(io, "  use_subcycling = ", grid.use_subcycling)
+    println(io, "  subcycling = ", grid.subcycling)
     for i in 1:length(grid.levels)
         println(io, "level[", i, "],")
         println(io, "  num_interior_points       = ", grid.levels[i].num_interior_points)

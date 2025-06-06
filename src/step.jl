@@ -23,7 +23,7 @@ function step!(
     #-------------------------------------------------#
     # march the other substeps to the same time slice #
     #-------------------------------------------------#
-    if grid.use_subcycling
+    if grid.subcycling
         levels = grid.levels
         dt_min = levels[max_level].dt
         substeps = ones(Int, max_level)
