@@ -122,7 +122,7 @@ mutable struct Grid{NumState,NumDiagnostic}
         num_transition_points=3,
         finite_difference_order=4,
         spatial_interpolation_order=5,
-        cfl_number=0.25,
+        cfl=0.25,
         initial_time=0.0,
         dissipation=0.0,
         subcycling=true,
@@ -133,9 +133,9 @@ mutable struct Grid{NumState,NumDiagnostic}
         base_dx =
             (domain_boxes[1][2] - domain_boxes[1][1]) / (base_level_num_points - 1)
         base_dt = if subcycling
-            cfl_number * base_dx
+            cfl * base_dx
         else
-            cfl_number * base_dx / 2^(num_levels - 1)
+            cfl * base_dx / 2^(num_levels - 1)
         end
         base_level = Level{NumState,NumDiagnostic}(
             base_level_num_points,
@@ -156,7 +156,7 @@ mutable struct Grid{NumState,NumDiagnostic}
         # build the rest levels
         for i in 2:num_levels
             level_dx = base_dx / 2^(i - 1)
-            level_dt = (subcycling ? cfl_number * level_dx : base_dt)
+            level_dt = (subcycling ? cfl * level_dx : base_dt)
             parent_level = levels[i - 1]  # level lower than the current level (parent level)
             # if we refine parent level everywhere
             parent_level_grid_points = LinRange(
