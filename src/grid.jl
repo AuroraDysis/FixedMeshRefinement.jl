@@ -129,7 +129,7 @@ mutable struct Grid{NumState,NumDiagnostic}
     )
         num_levels = length(domain_boxes)
 
-        # build the first level (base level)
+        # build the coarsest level (base level)
         base_dx =
             (domain_boxes[1][2] - domain_boxes[1][1]) / (base_level_num_points - 1)
         base_dt = if subcycling
@@ -153,7 +153,8 @@ mutable struct Grid{NumState,NumDiagnostic}
             [],
         )
         levels = [base_level]
-        # build the rest levels
+
+        # build the finer levels
         for i in 2:num_levels
             level_dx = base_dx / 2^(i - 1)
             level_dt = (subcycling ? cfl * level_dx : base_dt)
@@ -164,9 +165,10 @@ mutable struct Grid{NumState,NumDiagnostic}
                 parent_level.domain_box[2],
                 (parent_level.num_interior_points - 1) * 2 + 1,
             )
+            level_domain_box = domain_boxes[i]
             # find those two which are closest to current level boundaries
-            min_index = argmin(abs.(parent_level_grid_points .- domain_boxes[i][1]))
-            max_index = argmin(abs.(parent_level_grid_points .- domain_boxes[i][2]))
+            min_index = argmin(abs.(parent_level_grid_points .- level_domain_box[1]))
+            max_index = argmin(abs.(parent_level_grid_points .- level_domain_box[2]))
             #imin = findall(x->abs(x - domain_boxes[i][1]) <= level_dx + 1e-12, parent_level_grid_points)[1]
             #imax = findall(x->abs(x - domain_boxes[i][2]) <= level_dx + 1e-12, parent_level_grid_points)[end]
             level_domain = [
