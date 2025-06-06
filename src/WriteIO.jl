@@ -6,14 +6,14 @@ function dump(dir_path, gfs, it)
         open(fname, "w") do file
             println(file, "# 1:iteation 2:time 3:level 4:i 5:x 6:psi 7:Pi")
             for l = 1:length(gfs.levs)
-                lev = gfs.grid.levs[l]
+                level = gfs.grid.levs[l]
                 levfs = gfs.levs[l]
                 for i = 1:length(levfs.x)
                     println(
                         file,
                         it,
                         " ",
-                        lev.time,
+                        level.time,
                         " ",
                         l,
                         " ",

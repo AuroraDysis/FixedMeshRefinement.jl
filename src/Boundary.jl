@@ -2,29 +2,29 @@ module Boundary
 
 function ApplyPeriodicBoundaryCondition!(gfs)
     lev1fs = gfs.levs[1]
-    nxa = gfs.grid.levs[1].nxa
-    nbuf = gfs.grid.levs[1].nbuf
-    for v = 1:gfs.nd
+    num_total_points = gfs.grid.levs[1].num_total_points
+    num_buffer_points = gfs.grid.levs[1].num_buffer_points
+    for v = 1:gfs.NumState
         u = lev1fs.u[v]
-        for i = 1:nbuf
-            u[i] = u[nxa-2*nbuf+i]
+        for i = 1:num_buffer_points
+            u[i] = u[num_total_points-2*num_buffer_points+i]
         end
-        for i = nxa:-1:nxa-nbuf+1
-            u[i] = u[2*nbuf-nxa+i]
+        for i = num_total_points:-1:num_total_points-num_buffer_points+1
+            u[i] = u[2*num_buffer_points-num_total_points+i]
         end
     end
 end
 
-function ApplyPeriodicBoundaryConditionRHS!(lev, r)
-    nxa = lev.nxa
-    nbuf = lev.nbuf
+function ApplyPeriodicBoundaryConditionRHS!(level, r)
+    num_total_points = level.num_total_points
+    num_buffer_points = level.num_buffer_points
     for v = 1:length(r)
         rhs = r[v]
-        for i = 1:nbuf
-            rhs[i] = rhs[nxa-2*nbuf+i]
+        for i = 1:num_buffer_points
+            rhs[i] = rhs[num_total_points-2*num_buffer_points+i]
         end
-        for i = nxa:-1:nxa-nbuf+1
-            rhs[i] = rhs[2*nbuf-nxa+i]
+        for i = num_total_points:-1:num_total_points-num_buffer_points+1
+            rhs[i] = rhs[2*num_buffer_points-num_total_points+i]
         end
     end
 end

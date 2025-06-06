@@ -35,31 +35,31 @@ end
 apply_transition_zone: apply transition zone
 ===============================================================================#
 function apply_transition_zone(grid, l, interp_in_time::Bool)
-    nxa = grid.levs[l].nxa
-    nbuf = grid.levs[l].nbuf
-    ntrans = grid.levs[l].ntrans
+    num_total_points = grid.levs[l].num_total_points
+    num_buffer_points = grid.levs[l].num_buffer_points
+    num_transition_points = grid.levs[l].num_transition_points
     ord_s = grid.levs[l].ord_s
-    if2c = grid.levs[l].if2c
-    aligned = grid.levs[l].aligned
+    parent_map = grid.levs[l].parent_map
+    is_aligned = grid.levs[l].is_aligned
     levf = grid.levs[l]
     levc = grid.levs[l-1]
     # for transition zone
-    xbox = grid.levs[l].xbox
+    domain_box = grid.levs[l].domain_box
     dxf = grid.levs[l].dx
-    @assert(isapprox(xbox[1], grid.levs[l].x[1+nbuf]; rtol = 1e-12))
-    @assert(isapprox(xbox[2], grid.levs[l].x[nxa-nbuf]; rtol = 1e-12))
+    @assert(isapprox(domain_box[1], grid.levs[l].x[1+num_buffer_points]; rtol = 1e-12))
+    @assert(isapprox(domain_box[2], grid.levs[l].x[num_total_points-num_buffer_points]; rtol = 1e-12))
 
     for j = 1:2  # left or right
-        a = (j == 1) ? xbox[1] : xbox[2]
-        b = (j == 1) ? xbox[1] + (ntrans - 1) * dxf : xbox[2] - (ntrans - 1) * dxf
-        for v = 1:grid.nd
+        a = (j == 1) ? domain_box[1] : domain_box[2]
+        b = (j == 1) ? domain_box[1] + (num_transition_points - 1) * dxf : domain_box[2] - (num_transition_points - 1) * dxf
+        for v = 1:grid.NumState
             uf = levf.u[v]
             uc_p = levc.u_p[v]
-            for i = 1:ntrans
-                f = (j == 1) ? i + nbuf : nxa - i + 1 - nbuf
-                c = if2c[f]
+            for i = 1:num_transition_points
+                f = (j == 1) ? i + num_buffer_points : num_total_points - i + 1 - num_buffer_points
+                c = parent_map[f]
                 w = transition_profile(a, b, grid.levs[l].x[f])
-                if aligned[f]
+                if is_aligned[f]
                     kcs = [levc.k[m][v][c] for m = 1:4]
                     ys = interp_in_time ? DenseOutput.y(0.5, uc_p[c], kcs) : uc_p[c]
                     uf[f] = (1 - w) * ys + w * uf[f]
@@ -87,23 +87,23 @@ prolongation_mongwane: use Mongwane's method
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
 function prolongation_mongwane(grid, l, interp_in_time::Bool)
-    nxa = grid.levs[l].nxa
-    nbuf = grid.levs[l].nbuf
+    num_total_points = grid.levs[l].num_total_points
+    num_buffer_points = grid.levs[l].num_buffer_points
     ord_s = grid.levs[l].ord_s
-    if2c = grid.levs[l].if2c
-    aligned = grid.levs[l].aligned
+    parent_map = grid.levs[l].parent_map
+    is_aligned = grid.levs[l].is_aligned
     dtc = grid.levs[l-1].dt
     levf = grid.levs[l]
     levc = grid.levs[l-1]
 
     for j = 1:2  # left or right
-        for v = 1:grid.nd
+        for v = 1:grid.NumState
             uf = levf.u[v]
             uc_p = levc.u_p[v]
-            for i = 1:nbuf
-                f = (j == 1) ? i : nxa - i + 1
-                c = if2c[f]
-                if aligned[f]
+            for i = 1:num_buffer_points
+                f = (j == 1) ? i : num_total_points - i + 1
+                c = parent_map[f]
+                if is_aligned[f]
                     kcs = [levc.k[m][v][c] for m = 1:4]
                     kfs = calc_kfs_from_kcs(kcs, dtc, interp_in_time)
                     # setting k
@@ -143,25 +143,25 @@ prolongation:
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
 function prolongation(grid, l, interp_in_time::Bool; ord_t = 2)
-    nxa = grid.levs[l].nxa
-    nbuf = grid.levs[l].nbuf
+    num_total_points = grid.levs[l].num_total_points
+    num_buffer_points = grid.levs[l].num_buffer_points
     ord_s = grid.levs[l].ord_s
-    if2c = grid.levs[l].if2c
-    aligned = grid.levs[l].aligned
+    parent_map = grid.levs[l].parent_map
+    is_aligned = grid.levs[l].is_aligned
     levf = grid.levs[l]
     levc = grid.levs[l-1]
 
     for j = 1:2  # left or right
-        for v = 1:grid.nd
+        for v = 1:grid.NumState
             uf = levf.u[v]
             uc_p = levc.u_p[v]
             if interp_in_time
                 uc = levc.u[v]
                 uc_pp = levc.u_pp[v]
-                for i = 1:nbuf
-                    f = (j == 1) ? i : nxa - i + 1
-                    c = if2c[f]
-                    if aligned[f]
+                for i = 1:num_buffer_points
+                    f = (j == 1) ? i : num_total_points - i + 1
+                    c = parent_map[f]
+                    if is_aligned[f]
                         uf[f] = Algo.Interpolation([uc_pp[c], uc_p[c], uc[c]], 2, ord_t)
                     else
                         nucss = ord_s + 1
@@ -179,10 +179,10 @@ function prolongation(grid, l, interp_in_time::Bool; ord_t = 2)
                     end
                 end
             else
-                for i = 1:nbuf
-                    f = (j == 1) ? i : nxa - i + 1
-                    c = if2c[f]
-                    uf[f] = ((aligned[f]) ? uc_p[c] : Algo.Interpolation(uc_p, c, ord_s))
+                for i = 1:num_buffer_points
+                    f = (j == 1) ? i : num_total_points - i + 1
+                    c = parent_map[f]
+                    uf[f] = ((is_aligned[f]) ? uc_p[c] : Algo.Interpolation(uc_p, c, ord_s))
                 end
             end
         end
@@ -196,19 +196,19 @@ restriction:
     * we assume all the levels are at the same time slice
 ===============================================================================#
 function restriction(grid, l; apply_trans_zone = false)
-    nxa = grid.levs[l+1].nxa
-    nbuf = grid.levs[l+1].nbuf
-    ntrans = grid.levs[l+1].ntrans
-    if2c = grid.levs[l+1].if2c
-    aligned = grid.levs[l+1].aligned
-    isrt = apply_trans_zone ? 1 + nbuf + ntrans : 1 + nbuf
-    iend = apply_trans_zone ? nxa - nbuf - ntrans : nxa - nbuf
-    for v = 1:grid.nd
+    num_total_points = grid.levs[l+1].num_total_points
+    num_buffer_points = grid.levs[l+1].num_buffer_points
+    num_transition_points = grid.levs[l+1].num_transition_points
+    parent_map = grid.levs[l+1].parent_map
+    is_aligned = grid.levs[l+1].is_aligned
+    isrt = apply_trans_zone ? 1 + num_buffer_points + num_transition_points : 1 + num_buffer_points
+    iend = apply_trans_zone ? num_total_points - num_buffer_points - num_transition_points : num_total_points - num_buffer_points
+    for v = 1:grid.NumState
         uf = grid.levs[l+1].u[v]
         uc = grid.levs[l].u[v]
         for f = isrt:iend  # only interior
-            if aligned[f]
-                uc[if2c[f]] = uf[f]
+            if is_aligned[f]
+                uc[parent_map[f]] = uf[f]
             end
         end
     end

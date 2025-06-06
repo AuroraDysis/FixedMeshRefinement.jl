@@ -34,7 +34,7 @@ function deriv_diss(u, i, dx, diss_ord)
             (u[i+3] + u[i-3]) - 6 * (u[i+2] + u[i-2]) + 15 * (u[i+1] + u[i-1]) - 20 * u[i]
         ) / dx
     else
-        println("KO diss order not supported yet: ord = ", ord)
+        println("KO dissipation order not supported yet: ord = ", ord)
         exit()
     end
 end
@@ -59,13 +59,13 @@ function derivs_2nd!(ddu, u, dx, ord)
     end
 end
 
-function derivs_diss!(diss, u, dx, ord)
+function derivs_diss!(dissipation, u, dx, ord)
     diss_ord = ord + 2
     sign = (mod(diss_ord, 4) == 0 ? -1 : +1)
     istart = 1 + div(diss_ord, 2)
     iend = length(u) - div(diss_ord, 2)
     for i = istart:iend
-        diss[i] = deriv_diss(u, i, dx, diss_ord) * (sign / 2^(diss_ord))
+        dissipation[i] = deriv_diss(u, i, dx, diss_ord) * (sign / 2^(diss_ord))
     end
 end
 

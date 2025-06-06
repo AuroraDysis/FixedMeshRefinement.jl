@@ -43,8 +43,8 @@ end
 Spectial Treatment for prolongation
     * evolve backwards to file u_p
 ===============================================================================#
-function NegativeWaveRHS!(lev, r, u)
-    Physical.WaveRHS!(lev, r, u)
+function NegativeWaveRHS!(level, r, u)
+    Physical.WaveRHS!(level, r, u)
     @. r = -r
 end
 
@@ -61,7 +61,7 @@ function MarchBackwards!(gfs)
         @. u_pp = u_p
         @. u_p = u
         @. u = u_pp
-        gfs.levs[l].lev.time = 0.0
+        gfs.levs[l].level.time = 0.0
     end
     gfs.grid.time = 0.0
 end

@@ -9,24 +9,24 @@ WaveRHS!:
         dot(psi) = Pi
         dot(Pi)  = ddpsi
 ===============================================================================#
-function WaveRHS!(lev, r, u)
+function WaveRHS!(level, r, u)
     psi = u[1]
     Pi = u[2]
     psi_rhs = r[1]
     Pi_rhs = r[2]
 
-    ddpsi = zeros(Float64, lev.nxa)
-    psi_diss = zeros(Float64, lev.nxa)
-    Pi_diss = zeros(Float64, lev.nxa)
-    Derivs.derivs_2nd!(ddpsi, psi, lev.dx, lev.fdord)
-    Derivs.derivs_diss!(psi_diss, psi, lev.dx, lev.fdord)
-    Derivs.derivs_diss!(Pi_diss, Pi, lev.dx, lev.fdord)
+    ddpsi = zeros(Float64, level.num_total_points)
+    psi_diss = zeros(Float64, level.num_total_points)
+    Pi_diss = zeros(Float64, level.num_total_points)
+    Derivs.derivs_2nd!(ddpsi, psi, level.dx, level.finite_difference_order)
+    Derivs.derivs_diss!(psi_diss, psi, level.dx, level.finite_difference_order)
+    Derivs.derivs_diss!(Pi_diss, Pi, level.dx, level.finite_difference_order)
 
-    @. psi_rhs = Pi + lev.diss * psi_diss
-    @. Pi_rhs = ddpsi + lev.diss * Pi_diss
+    @. psi_rhs = Pi + level.dissipation * psi_diss
+    @. Pi_rhs = ddpsi + level.dissipation * Pi_diss
 
-    if lev.is_lev1
-        Boundary.ApplyPeriodicBoundaryConditionRHS!(lev, r)
+    if level.is_base_level
+        Boundary.ApplyPeriodicBoundaryConditionRHS!(level, r)
     end
 end
 
@@ -36,17 +36,17 @@ Energy:
     * calculate on base level (interior) only
 ===============================================================================#
 function Energy(gfs)
-    nxa = gfs.grid.levs[1].nxa
-    nbuf = gfs.grid.levs[1].nbuf
+    num_total_points = gfs.grid.levs[1].num_total_points
+    num_buffer_points = gfs.grid.levs[1].num_buffer_points
     dx = gfs.grid.levs[1].dx
     psi = gfs.levs[1].u[1]
     Pi = gfs.levs[1].u[2]
 
-    dpsi = zeros(Float64, nxa)
-    Derivs.derivs_1st!(dpsi, psi, dx, gfs.grid.levs[1].fdord)
+    dpsi = zeros(Float64, num_total_points)
+    Derivs.derivs_1st!(dpsi, psi, dx, gfs.grid.levs[1].finite_difference_order)
 
     E::Float64 = 0.0
-    for i = 1+nbuf:nxa-nbuf
+    for i = 1+num_buffer_points:num_total_points-num_buffer_points
         E += (0.5 * Pi[i] * Pi[i] + 0.5 * dpsi[i] * dpsi[i])
     end
     return E * dx
