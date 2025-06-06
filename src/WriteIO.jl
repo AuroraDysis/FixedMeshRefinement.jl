@@ -1,6 +1,6 @@
 module WriteIO
 
-function dump(dir_path, gfs, it)
+function dump(dir_path, grid, it)
     if isdir(dir_path)
         fname = dir_path * "/u.it" * lpad(string(it), 6, '0') * ".tsv"
         open(fname, "w") do file

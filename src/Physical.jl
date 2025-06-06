@@ -35,7 +35,7 @@ Energy:
     * int_xmin^xmax (Pi^2/2 + dpsi^2/2)
     * calculate on base level (interior) only
 ===============================================================================#
-function Energy(gfs)
+function Energy(grid)
     num_total_points = grid.levels[1].num_total_points
     num_buffer_points = grid.levels[1].num_buffer_points
     dx = grid.levels[1].dx

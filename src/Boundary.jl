@@ -1,6 +1,6 @@
 module Boundary
 
-function ApplyPeriodicBoundaryCondition!(gfs)
+function ApplyPeriodicBoundaryCondition!(grid)
     lev1fs = grid.levels[1]
     num_total_points = grid.levels[1].num_total_points
     num_buffer_points = grid.levels[1].num_buffer_points

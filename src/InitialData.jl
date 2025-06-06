@@ -9,7 +9,7 @@ include("Physical.jl")
 Initial Data Types:
     * Gaussian
 ===============================================================================#
-function Gaussian!(gfs; amp = 1.0, sig = 0.25, x0 = 0.0)
+function Gaussian!(grid; amp = 1.0, sig = 0.25, x0 = 0.0)
     lmax = length(grid.levels)
     for l = 1:lmax
         psi = grid.levels[l].u[1]
@@ -20,11 +20,11 @@ function Gaussian!(gfs; amp = 1.0, sig = 0.25, x0 = 0.0)
     end
     # restriction for consistence
     for l = lmax-1:-1:1
-        Sync.restriction(gfs, l)
+        Sync.restriction(grid, l)
     end
 end
 
-function sinusoidal!(gfs)
+function sinusoidal!(grid)
     lmax = length(grid.levels)
     for l = 1:lmax
         psi = grid.levels[l].u[1]
@@ -35,7 +35,7 @@ function sinusoidal!(gfs)
     end
     # restriction for consistence
     for l = lmax-1:-1:1
-        Sync.restriction(gfs, l)
+        Sync.restriction(grid, l)
     end
 end
 
@@ -48,10 +48,10 @@ function NegativeWaveRHS!(level, r, u)
     @. r = -r
 end
 
-function MarchBackwards!(gfs)
+function MarchBackwards!(grid)
     for l = 1:length(grid.levels)
         if l > 1
-            Sync.prolongation(gfs, l, false)
+            Sync.prolongation(grid, l, false)
         end
         ODESolver.rk4!(NegativeWaveRHS!, grid.levels[l])
         # save new u(-dt) -> u_p, u(0) -> u
