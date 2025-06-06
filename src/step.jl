@@ -1,5 +1,5 @@
 function step!(
-    grid::Grid{NumState,NumDiagnostic}; Mongwane=false, apply_trans_zone=false
+    grid::Grid{NumState,NumDiagnostic}; mongwane=false, apply_trans_zone=false
 ) where {NumState,NumDiagnostic}
     max_level = length(grid.levels)
 
@@ -8,7 +8,7 @@ function step!(
     #-------------------------------------------------#
     for l in 1:max_level  # notice that we march coarse level first
         if l > 1
-            if Mongwane
+            if mongwane
                 Sync.prolongation_mongwane(grid, l, false)
             else
                 Sync.prolongation(grid, l, false)
@@ -17,7 +17,7 @@ function step!(
                 Sync.apply_transition_zone(grid, l, false)
             end
         end
-        Mongwane ? rk4_Mongwane!(f, grid.levels[l]) : rk4!(f, grid.levels[l])
+        mongwane ? rk4_Mongwane!(f, grid.levels[l]) : rk4!(f, grid.levels[l])
     end
 
     #-------------------------------------------------#
@@ -38,7 +38,7 @@ function step!(
                         Sync.restriction(grid, l; apply_trans_zone=apply_trans_zone)  # from l+1 to l
                     end
                     # from l-1 to l
-                    if Mongwane
+                    if mongwane
                         Sync.prolongation_mongwane(grid, l, mod(substeps[l], 2) == 0)
                     else
                         Sync.prolongation(grid, l, mod(substeps[l], 2) == 0)
@@ -46,7 +46,7 @@ function step!(
                     if apply_trans_zone
                         Sync.apply_transition_zone(grid, l, mod(substeps[l], 2) == 0)
                     end
-                    Mongwane ? rk4_Mongwane!(f, grid.levels[l]) : rk4!(f, grid.levels[l])
+                    mongwane ? rk4_Mongwane!(f, grid.levels[l]) : rk4!(f, grid.levels[l])
                 end
             end
         end
