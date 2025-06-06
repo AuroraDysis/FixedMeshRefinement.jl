@@ -1,24 +1,24 @@
 export Level, Grid
 
 mutable struct Level{NumState,NumDiagnostic}
-    num_interior_points::Int64  # num of interior grid points
-    num_ghost_points::Int64  # num of ghost points
-    num_buffer_points::Int64  # num of buffer points
-    num_transition_points::Int64  # num of transition zone points
-    num_total_points::Int64  # num of all grid points
-    finite_difference_order::Int64  # finite difference order
-    spatial_interpolation_order::Int64  # interpolation order in space
+    num_interior_points::Int  # num of interior grid points
+    num_ghost_points::Int  # num of ghost points
+    num_buffer_points::Int  # num of buffer points
+    num_transition_points::Int  # num of transition zone points
+    num_total_points::Int  # num of all grid points
+    finite_difference_order::Int  # finite difference order
+    spatial_interpolation_order::Int  # interpolation order in space
     domain_box::Vector{Float64}  # size computational domain (interior)
     spatial_step::Float64
     time_step::Float64
     time::Float64
     dissipation::Float64
     is_base_level::Bool
-    parent_map::Vector{Int64}  # map between indexes of current and its parent level
+    parent_map::Vector{Int}  # map between indexes of current and its parent level
     is_aligned::Vector{Bool}  # if grid aligned with coarse grid
 
     # data
-    coordinates::Vector{Float64}  # coordinates
+    coordinates::LinRange{Float64,Int}  # coordinates
     state::Vector{Vector{Float64}}  # state vectors
     state_prev::Vector{Vector{Float64}}  # previous state vectors
     state_prev_prev::Vector{Vector{Float64}}  # previous previous state vectors
@@ -51,7 +51,7 @@ mutable struct Level{NumState,NumDiagnostic}
         noffset = (num_total_points - num_interior_points) / 2  # take account of buffer zone
         xmin = domain_box[1] - noffset * spatial_step
         xmax = domain_box[2] + noffset * spatial_step
-        coordinates = collect(LinRange(xmin, xmax, num_total_points))
+        coordinates = LinRange(xmin, xmax, num_total_points)
         state = Vector{Vector{Float64}}(undef, NumState)
         state_prev = Vector{Vector{Float64}}(undef, NumState)
         state_prev_prev = Vector{Vector{Float64}}(undef, NumState)
