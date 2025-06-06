@@ -2,7 +2,7 @@ module WriteIO
 
 function dump(dir_path, grid, it)
     if isdir(dir_path)
-        fname = dir_path * "/u.it" * lpad(string(it), 6, '0') * ".tsv"
+        fname = dir_path * "/state.it" * lpad(string(it), 6, '0') * ".tsv"
         open(fname, "w") do file
             println(file, "# 1:iteation 2:time 3:level 4:i 5:x 6:psi 7:Pi")
             for l = 1:length(grid.levels)
@@ -21,9 +21,9 @@ function dump(dir_path, grid, it)
                         " ",
                         levfs.x[i],
                         " ",
-                        levfs.u[1][i],
+                        levfs.state[1][i],
                         " ",
-                        levfs.u[2][i],
+                        levfs.state[2][i],
                     )
                 end
             end

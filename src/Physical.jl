@@ -9,9 +9,9 @@ WaveRHS!:
         dot(psi) = Pi
         dot(Pi)  = ddpsi
 ===============================================================================#
-function WaveRHS!(level, r, u)
-    psi = u[1]
-    Pi = u[2]
+function WaveRHS!(level, r, state)
+    psi = state[1]
+    Pi = state[2]
     psi_rhs = r[1]
     Pi_rhs = r[2]
 
@@ -39,8 +39,8 @@ function Energy(grid)
     num_total_points = grid.levels[1].num_total_points
     num_buffer_points = grid.levels[1].num_buffer_points
     dx = grid.levels[1].dx
-    psi = grid.levels[1].u[1]
-    Pi = grid.levels[1].u[2]
+    psi = grid.levels[1].state[1]
+    Pi = grid.levels[1].state[2]
 
     dpsi = zeros(Float64, num_total_points)
     Derivs.derivs_1st!(dpsi, psi, dx, grid.levels[1].finite_difference_order)
