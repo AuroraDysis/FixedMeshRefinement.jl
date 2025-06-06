@@ -1,15 +1,15 @@
 module Algo
 
-function Interpolation(state, i, ord)
+function Interpolation(u, i, ord)
     if ord == 1
-        return (state[i] + state[i+1]) * 0.5
+        return (u[i] + u[i+1]) * 0.5
     elseif ord == 2
-        return (-state[i-1] + 6 * state[i] + 3 * state[i+1]) * 0.125
+        return (-u[i-1] + 6 * u[i] + 3 * u[i+1]) * 0.125
     elseif ord == 3
-        return (-state[i-1] + 9 * state[i] + 9 * state[i+1] - state[i+2]) * 0.0625
+        return (-u[i-1] + 9 * u[i] + 9 * u[i+1] - u[i+2]) * 0.0625
     elseif ord == 5
         return (
-            3 * state[i-2] - 25 * state[i-1] + 150 * state[i] + 150 * state[i+1] - 25 * state[i+2] + 3 * state[i+3]
+            3 * u[i-2] - 25 * u[i-1] + 150 * u[i] + 150 * u[i+1] - 25 * u[i+2] + 3 * u[i+3]
         ) / 256
     else
         println("Interpolation order not supported yet: ord = ", ord)

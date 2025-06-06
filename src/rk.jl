@@ -1,9 +1,9 @@
 function rk4!(f::Function, level)
     cycle_state!(level)
 
-    u = level.state
-    u_p = level.state_prev
-    u_pp = level.state_prev_prev
+    u = level.u
+    u_p = level.u_p
+    u_pp = level.u_pp
 
     du = level.rhs
     tmp = level.tmp
@@ -36,8 +36,8 @@ end
 function rk4_mongwane!(
     f::Function, level::Level{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
-    u = level.state
-    u_p = level.state_prev
+    u = level.u
+    u_p = level.u_p
     du = level.rhs
     tmp = level.tmp
     k1 = level.k[1]

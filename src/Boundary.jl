@@ -7,12 +7,12 @@ function ApplyPeriodicBoundaryCondition!(
     num_total_points = base_level.num_total_points
     num_buffer_points = base_level.num_buffer_points
     for v in 1:NumState
-        state = base_level.state[v]
+        u = base_level.u[v]
         for i in 1:num_buffer_points
-            state[i] = state[num_total_points - 2 * num_buffer_points + i]
+            u[i] = u[num_total_points - 2 * num_buffer_points + i]
         end
         for i in num_total_points:-1:(num_total_points - num_buffer_points + 1)
-            state[i] = state[2 * num_buffer_points - num_total_points + i]
+            u[i] = u[2 * num_buffer_points - num_total_points + i]
         end
     end
 end

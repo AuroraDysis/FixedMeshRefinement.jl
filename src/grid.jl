@@ -31,16 +31,16 @@ mutable struct Level{NumState,NumDiagnostic}
 
     # data
     coordinates::LinRange{Float64,Int}  # coordinates
-    state::Vector{Vector{Float64}}  # state vectors
-    state_prev::Vector{Vector{Float64}}  # previous state vectors
-    state_prev_prev::Vector{Vector{Float64}}  # previous previous state vectors
-    rhs::Vector{Vector{Float64}}  # rhs of state vectors
-    tmp::Vector{Vector{Float64}}  # intermediate state vectors
-    # intermediate state vectors for new subcycling
+    u::Vector{Vector{Float64}}  # u vectors
+    u_p::Vector{Vector{Float64}}  # previous u vectors
+    u_pp::Vector{Vector{Float64}}  # previous previous u vectors
+    rhs::Vector{Vector{Float64}}  # rhs of u vectors
+    tmp::Vector{Vector{Float64}}  # intermediate u vectors
+    # intermediate u vectors for new subcycling
     runge_kutta_stages::Vector{Vector{Vector{Float64}}}
 
     # diagnostic variables
-    diag_state::Vector{Vector{Float64}}  # state vectors for diagnostic variables
+    diag_state::Vector{Vector{Float64}}  # u vectors for diagnostic variables
 
     function Level{NumState,NumDiagnostic}(
         num_interior_points,
@@ -64,9 +64,9 @@ mutable struct Level{NumState,NumDiagnostic}
         xmin = domain_box[1] - noffset * dx
         xmax = domain_box[2] + noffset * dx
         coordinates = LinRange(xmin, xmax, num_total_points)
-        state = Vector{Vector{Float64}}(undef, NumState)
-        state_prev = Vector{Vector{Float64}}(undef, NumState)
-        state_prev_prev = Vector{Vector{Float64}}(undef, NumState)
+        u = Vector{Vector{Float64}}(undef, NumState)
+        u_p = Vector{Vector{Float64}}(undef, NumState)
+        u_pp = Vector{Vector{Float64}}(undef, NumState)
         rhs = Vector{Vector{Float64}}(undef, NumState)
         tmp = Vector{Vector{Float64}}(undef, NumState)
         runge_kutta_stages = Vector{Vector{Vector{Float64}}}(undef, 4)
@@ -76,9 +76,9 @@ mutable struct Level{NumState,NumDiagnostic}
         end
 
         for i in 1:NumState
-            state[i] = fill(NaN, num_total_points)
-            state_prev[i] = fill(NaN, num_total_points)
-            state_prev_prev[i] = fill(NaN, num_total_points)
+            u[i] = fill(NaN, num_total_points)
+            u_p[i] = fill(NaN, num_total_points)
+            u_pp[i] = fill(NaN, num_total_points)
             rhs[i] = fill(NaN, num_total_points)
             tmp[i] = fill(NaN, num_total_points)
             for j in 1:4
@@ -108,9 +108,9 @@ mutable struct Level{NumState,NumDiagnostic}
             is_aligned,
             # data
             coordinates,
-            state,
-            state_prev,
-            state_prev_prev,
+            u,
+            u_p,
+            u_pp,
             rhs,
             tmp,
             runge_kutta_stages,
@@ -120,10 +120,10 @@ mutable struct Level{NumState,NumDiagnostic}
 end
 
 function cycle_state!(level::Level{NumState,NumDiagnostic}) where {NumState,NumDiagnostic}
-    let tmp = level.state_prev_prev
-        level.state_prev_prev = level.state_prev
-        level.state_prev = level.state
-        level.state = tmp
+    let tmp = level.u_pp
+        level.u_pp = level.u_p
+        level.u_p = level.u
+        level.u = tmp
     end
 end
 
