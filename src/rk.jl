@@ -91,7 +91,7 @@ function rk4_dense_output_y!(y, theta, h, yn, k)
     ck1 = theta - 3 * theta2 / 2 + 2 * theta3 / 3
     ck23 = theta2 - 2 * theta3 / 3
     ck4 = -theta2 / 2 + 2 * theta3 / 3
-    @. y = yn + (k[1] * ck1 + k[2] * ck23 + k[3] * ck23 + k[4] * ck4) * h
+    @. y = yn + (ck1 * k[1] + ck23 * (k[2] + k[3]) + ck4 * k[4]) * h
     return nothing
 end
 
@@ -100,7 +100,7 @@ function rk4_dense_output_dy!(dy, theta, h, yn, k)
     ck1 = 1 - 3 * theta + 2 * theta2
     ck23 = 2 * theta - 2 * theta2
     ck4 = -theta + 2 * theta2
-    @. dy = k[1] * ck1 + k[2] * ck23 + k[3] * ck23 + k[4] * ck4
+    @. dy = ck1 * k[1] + ck23 * (k[2] + k[3]) + ck4 * k[4]
     return nothing
 end
 
@@ -108,13 +108,13 @@ function rk4_dense_output_d2y!(d2y, theta, h, yn, k)
     ck1 = -3 + 4 * theta
     ck23 = 2 - 4 * theta
     ck4 = -1 + 4 * theta
-    h_inv = 1 / h
-    @. d2y = (k[1] * ck1 + k[2] * ck23 + k[3] * ck23 + k[4] * ck4) * h_inv
+    coeff = 1 / h
+    @. d2y = (ck1 * k[1] + ck23 * (k[2] + k[3]) + ck4 * k[4]) * coeff
     return nothing
 end
 
 function rk4_dense_output_d3y!(d3y, theta, h, yn, k)
-    h2_inv = 1 / (h * h)
-    @. d3y = (4 * k[1] - 4 * k[2] - 4 * k[3] + 4 * k[4]) * h2_inv
+    coeff = 4 / (h * h)
+    @. d3y = (k[1] - k[2] - k[3] + k[4]) * coef
     return nothing
 end
