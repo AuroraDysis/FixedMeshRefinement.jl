@@ -67,15 +67,15 @@ function step!(
     return nothing
 end
 
-function rk4!(f::Function, levf)
-    u = levf.u
-    u_p = levf.u_p
-    u_pp = levf.u_pp
-    r = levf.rhs
-    w = levf.w
-    lev = levf.lev
-    t = lev.time
-    dt = lev.dt
+function rk4!(f::Function, level)
+    u = level.state
+    u_p = level.state_prev
+    u_pp = level.state_prev_prev
+
+    r = level.rhs
+    w = level.workspace
+    t = level.time
+    dt = level.dt
 
     @. u_pp = u_p * 1.0
     @. u_p = u * 1.0
@@ -97,28 +97,33 @@ function rk4!(f::Function, levf)
     lev.time = t + dt
     f(lev, r, w)
     @. u += r * (dt / 6)
-    lev.time = t + dt
+    return lev.time = t + dt
 end
 
-function rk4_mongwane!(f::Function, levf)
-    u = levf.u
-    u_p = levf.u_p
-    r = levf.rhs
-    w = levf.w
-    k1 = levf.k[1]
-    k2 = levf.k[2]
-    k3 = levf.k[3]
-    k4 = levf.k[4]
-    lev = levf.lev
-    t = lev.time
-    dt = lev.dt
-    isrt = lev.is_lev1 ? 1 : 1 + lev.nbuf
-    iend = lev.is_lev1 ? lev.nxa : lev.nxa - lev.nbuf
+function rk4_mongwane!(
+    f::Function, level::Level{NumState,NumDiagnostic}
+) where {NumState,NumDiagnostic}
+    u = level.u
+    u_p = level.u_p
+    r = level.rhs
+    w = level.w
+    k1 = level.k[1]
+    k2 = level.k[2]
+    k3 = level.k[3]
+    k4 = level.k[4]
+    t = level.time
+    dt = level.dt
+    isrt = level.is_base_level ? 1 : 1 + level.num_buffer_points
+    iend = if level.is_base_level
+        level.num_total_points
+    else
+        level.num_total_points - level.num_buffer_points
+    end
 
     @. u_p = u * 1.0
-    lev.time = t
-    f(lev, r, u)
-    for v = 1:levf.nd
+    level.time = t
+    f(level, r, u)
+    for v in 1:NumState
         k1[v][isrt:iend] = r[v][isrt:iend] * dt
     end
     @. u += k1 * (1 / 6)
@@ -126,7 +131,7 @@ function rk4_mongwane!(f::Function, levf)
     @. w = u_p + k1 * (1 / 2)
     lev.time = t + 0.5 * dt
     f(lev, r, w)
-    for v = 1:levf.nd
+    for v in 1:NumState
         k2[v][isrt:iend] = r[v][isrt:iend] * dt
     end
     @. u += k2 * (1 / 3)
@@ -134,7 +139,7 @@ function rk4_mongwane!(f::Function, levf)
     @. w = u_p + k2 * (1 / 2)
     lev.time = t + 0.5 * dt
     f(lev, r, w)
-    for v = 1:levf.nd
+    for v in 1:NumState
         k3[v][isrt:iend] = r[v][isrt:iend] * dt
     end
     @. u += k3 * (1 / 3)
@@ -142,9 +147,9 @@ function rk4_mongwane!(f::Function, levf)
     @. w = u_p + k3
     lev.time = t + dt
     f(lev, r, w)
-    for v = 1:levf.nd
+    for v in 1:NumState
         k4[v][isrt:iend] = r[v][isrt:iend] * dt
     end
     @. u += k4 * (1 / 6)
-    lev.time = t + dt
+    return lev.time = t + dt
 end
