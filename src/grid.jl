@@ -104,7 +104,7 @@ mutable struct Level{NumState,NumDiagnostic}
     end
 end
 
-function cycle_state!(level::Level{NumState,NumDiagnostic}) where {NumState,NumDiagnostic}
+function cycle_state!(level::Level)
     level.u_pp .= level.u_p
     level.u_p .= level.u
     return nothing
