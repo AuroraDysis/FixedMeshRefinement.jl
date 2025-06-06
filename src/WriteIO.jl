@@ -13,7 +13,7 @@ function dump(dir_path, grid, it)
                         file,
                         it,
                         " ",
-                        level.time,
+                        level.t,
                         " ",
                         l,
                         " ",

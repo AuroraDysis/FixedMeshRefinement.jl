@@ -60,9 +60,9 @@ function MarchBackwards!(grid)
         @. u_pp = u_p
         @. u_p = u
         @. u = u_pp
-        grid.levels[l].level.time = 0.0
+        grid.levels[l].t = 0.0
     end
-    grid.time = 0.0
+    grid.t = 0.0
 end
 
 end # module InitialData

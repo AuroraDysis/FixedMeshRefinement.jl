@@ -23,7 +23,7 @@ mutable struct Level{NumState,NumDiagnostic}
     domain_box::Tuple{Float64,Float64}  # size computational domain (interior)
     dx::Float64
     dt::Float64
-    time::Float64
+    t::Float64
     dissipation::Float64
     is_base_level::Bool
     parent_map::Vector{Int}  # map between indexes of current and its parent level
@@ -131,7 +131,7 @@ mutable struct Grid{NumState,NumDiagnostic}
     num_levels::Int
     levels::Vector{Level{NumState,NumDiagnostic}}
     base_dt::Float64
-    time::Float64
+    t::Float64
     subcycling::Bool  # turn on subcycling or not
 
     function Grid{NumState,NumDiagnostic}(
@@ -281,7 +281,7 @@ function Base.show(
         println(io, "  domain_box  = ", grid.levels[i].domain_box)
         println(io, "  dx          = ", grid.levels[i].dx)
         println(io, "  dt          = ", grid.levels[i].dt)
-        println(io, "  time        = ", grid.levels[i].time)
+        println(io, "  t           = ", grid.levels[i].t)
         println(io, "  dissipation = ", grid.levels[i].dissipation)
     end
 end

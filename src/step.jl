@@ -21,7 +21,7 @@ function step!(
     end
 
     #-------------------------------------------------#
-    # march the other substeps to the same time slice #
+    # march the other substeps to the same t slice #
     #-------------------------------------------------#
     if grid.subcycling
         levels = grid.levels
@@ -30,8 +30,8 @@ function step!(
         for s in 2:(2^(max_level - 1))  # from second to final substep (of the finest level)
             for l in 2:max_level  # march all levels except the coarest (from coarse to fine)
                 if l == max_level || (
-                    isapprox(levels[l].time, levels[l + 1].time; rtol=1e-12) &&
-                    abs(levels[l].time - levels[1].time) > dt_min
+                    isapprox(levels[l].t, levels[l + 1].t; rtol=1e-12) &&
+                    abs(levels[l].t - levels[1].t) > dt_min
                 )
                     substeps[l] += 1
                     if l < max_level
@@ -60,9 +60,9 @@ function step!(
     end
 
     #------------------#
-    # update grid time #
+    # update grid t #
     #------------------#
-    grid.time = grid.levels[1].time
+    grid.t = grid.levels[1].t
 
     return nothing
 end
