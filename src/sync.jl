@@ -32,9 +32,9 @@ function transition_profile(xl, xh, x; type = 1)
 end
 
 #===============================================================================
-ApplyTransitionZone: apply transition zone
+apply_transition_zone: apply transition zone
 ===============================================================================#
-function ApplyTransitionZone(gfs, l, interp_in_time::Bool)
+function apply_transition_zone(grid, l, interp_in_time::Bool)
     nxa = grid.levs[l].nxa
     nbuf = grid.levs[l].nbuf
     ntrans = grid.levs[l].ntrans
@@ -82,11 +82,11 @@ function ApplyTransitionZone(gfs, l, interp_in_time::Bool)
 end
 
 #===============================================================================
-Prolongation_Mongwane: use Mongwane's method
+prolongation_mongwane: use Mongwane's method
     * from level l-1 to level l
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
-function Prolongation_Mongwane(gfs, l, interp_in_time::Bool)
+function prolongation_mongwane(grid, l, interp_in_time::Bool)
     nxa = grid.levs[l].nxa
     nbuf = grid.levs[l].nbuf
     ord_s = grid.levs[l].ord_s
@@ -138,11 +138,11 @@ function Prolongation_Mongwane(gfs, l, interp_in_time::Bool)
 end
 
 #===============================================================================
-Prolongation:
+prolongation:
     * from level l-1 to level l
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
-function Prolongation(gfs, l, interp_in_time::Bool; ord_t = 2)
+function prolongation(grid, l, interp_in_time::Bool; ord_t = 2)
     nxa = grid.levs[l].nxa
     nbuf = grid.levs[l].nbuf
     ord_s = grid.levs[l].ord_s
@@ -195,7 +195,7 @@ Restriction:
     * we assume that we always march fine level first (for l in lmax-1:-1:1)
     * we assume all the levels are at the same time slice
 ===============================================================================#
-function Restriction(gfs, l; apply_trans_zone = false)
+function Restriction(grid, l; apply_trans_zone = false)
     nxa = grid.levs[l+1].nxa
     nbuf = grid.levs[l+1].nbuf
     ntrans = grid.levs[l+1].ntrans
