@@ -108,6 +108,7 @@ mutable struct Level{NumState,NumDiagnostic}
 end
 
 mutable struct Grid{NumState,NumDiagnostic}
+    num_levels::Int
     levels::Vector{Level{NumState,NumDiagnostic}}
     base_dt::Float64
     time::Float64
@@ -126,13 +127,15 @@ mutable struct Grid{NumState,NumDiagnostic}
         dissipation=0.0,
         subcycling=true,
     )
+        num_levels = length(domain_boxes)
+
         # build the first level (base level)
         base_level_spatial_step =
             (domain_boxes[1][2] - domain_boxes[1][1]) / (base_level_num_points - 1)
         base_dt = if subcycling
             cfl_number * base_level_spatial_step
         else
-            cfl_number * base_level_spatial_step / 2^(length(domain_boxes) - 1)
+            cfl_number * base_level_spatial_step / 2^(num_levels - 1)
         end
         base_level = Level{NumState,NumDiagnostic}(
             base_level_num_points,
@@ -151,7 +154,7 @@ mutable struct Grid{NumState,NumDiagnostic}
         )
         levels = Vector{Level{NumState,NumDiagnostic}}([base_level])
         # build the rest levels
-        for i in 2:length(domain_boxes)
+        for i in 2:num_levels
             level_spatial_step = base_level_spatial_step / 2^(i - 1)
             level_time_step = (subcycling ? cfl_number * level_spatial_step : base_dt)
             parent_level = levels[i - 1]  # level lower than the current level (parent level)
@@ -209,7 +212,7 @@ mutable struct Grid{NumState,NumDiagnostic}
         end
 
         # construct
-        return new{NumState,NumDiagnostic}(levels, base_dt, initial_time, subcycling)
+        return new{NumState,NumDiagnostic}(num_levels, levels, base_dt, initial_time, subcycling)
     end
 end
 
