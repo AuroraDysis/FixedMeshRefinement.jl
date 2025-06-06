@@ -35,7 +35,7 @@ function step!(
                 )
                     substeps[l] += 1
                     if l < max_level
-                        restriction(grid, l; apply_trans_zone=apply_trans_zone)  # from l+1 to l
+                        restriction!(grid, l; apply_trans_zone=apply_trans_zone)  # from l+1 to l
                     end
                     # from l-1 to l
                     if mongwane
@@ -56,7 +56,7 @@ function step!(
     # restriction all levels #
     #------------------------#
     for l in (max_level - 1):-1:1  # notice that we restrict fine level first
-        restriction(grid, l; apply_trans_zone=apply_trans_zone)
+        restriction!(grid, l; apply_trans_zone=apply_trans_zone)
     end
 
     #------------------#

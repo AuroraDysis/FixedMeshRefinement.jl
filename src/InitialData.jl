@@ -19,7 +19,7 @@ function Gaussian!(grid; amp = 1.0, sig = 0.25, x0 = 0.0)
     end
     # restriction for consistence
     for l = lmax-1:-1:1
-        restriction(grid, l)
+        restriction!(grid, l)
     end
 end
 
@@ -34,7 +34,7 @@ function sinusoidal!(grid)
     end
     # restriction for consistence
     for l = lmax-1:-1:1
-        restriction(grid, l)
+        restriction!(grid, l)
     end
 end
 
