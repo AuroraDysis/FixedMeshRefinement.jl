@@ -152,7 +152,7 @@ mutable struct Grid{NumState,NumDiagnostic}
             [],
             [],
         )
-        levels = Vector{Level{NumState,NumDiagnostic}}([base_level])
+        levels = [base_level]
         # build the rest levels
         for i in 2:num_levels
             level_dx = base_dx / 2^(i - 1)
