@@ -5,7 +5,7 @@ function rk4!(f::Function, level)
     u_p = level.u_p
     u_pp = level.u_pp
 
-    du = level.rhs
+    rhs = level.rhs
     tmp = level.tmp
     t = level.time
     dt = level.dt
@@ -13,23 +13,23 @@ function rk4!(f::Function, level)
     @. u_pp = u_p
     @. u_p = u
     level.time = t
-    f(level, du, u)
-    @. u += du * (dt / 6)
+    f(level, rhs, u)
+    @. u += rhs * (dt / 6)
 
-    @. tmp = u_p + du * (dt / 2)
+    @. tmp = u_p + rhs * (dt / 2)
     level.time = t + 0.5 * dt
-    f(level, du, tmp)
-    @. u += du * (dt / 3)
+    f(level, rhs, tmp)
+    @. u += rhs * (dt / 3)
 
-    @. tmp = u_p + du * (dt / 2)
+    @. tmp = u_p + rhs * (dt / 2)
     level.time = t + 0.5 * dt
-    f(level, du, tmp)
-    @. u += du * (dt / 3)
+    f(level, rhs, tmp)
+    @. u += rhs * (dt / 3)
 
-    @. tmp = u_p + du * dt
+    @. tmp = u_p + rhs * dt
     level.time = t + dt
-    f(level, du, tmp)
-    @. u += du * (dt / 6)
+    f(level, rhs, tmp)
+    @. u += rhs * (dt / 6)
     return level.time = t + dt
 end
 
@@ -38,7 +38,7 @@ function rk4_mongwane!(
 ) where {NumState,NumDiagnostic}
     u = level.u
     u_p = level.u_p
-    du = level.rhs
+    rhs = level.rhs
     tmp = level.tmp
     k1 = level.k[1]
     k2 = level.k[2]
@@ -55,33 +55,33 @@ function rk4_mongwane!(
 
     @. u_p = u
     level.time = t
-    f(level, du, u)
+    f(level, rhs, u)
     for v in 1:NumState
-        k1[v][isrt:iend] = du[v][isrt:iend] * dt
+        k1[v][isrt:iend] = rhs[v][isrt:iend] * dt
     end
     @. u += k1 * (1 / 6)
 
     @. tmp = u_p + k1 * (1 / 2)
     level.time = t + 0.5 * dt
-    f(level, du, tmp)
+    f(level, rhs, tmp)
     for v in 1:NumState
-        k2[v][isrt:iend] = du[v][isrt:iend] * dt
+        k2[v][isrt:iend] = rhs[v][isrt:iend] * dt
     end
     @. u += k2 * (1 / 3)
 
     @. tmp = u_p + k2 * (1 / 2)
     level.time = t + 0.5 * dt
-    f(level, du, tmp)
+    f(level, rhs, tmp)
     for v in 1:NumState
-        k3[v][isrt:iend] = du[v][isrt:iend] * dt
+        k3[v][isrt:iend] = rhs[v][isrt:iend] * dt
     end
     @. u += k3 * (1 / 3)
 
     @. tmp = u_p + k3
     level.time = t + dt
-    f(level, du, tmp)
+    f(level, rhs, tmp)
     for v in 1:NumState
-        k4[v][isrt:iend] = du[v][isrt:iend] * dt
+        k4[v][isrt:iend] = rhs[v][isrt:iend] * dt
     end
     @. u += k4 * (1 / 6)
     return level.time = t + dt
