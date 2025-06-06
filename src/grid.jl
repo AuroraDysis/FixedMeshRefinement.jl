@@ -221,7 +221,7 @@ function Base.show(
 ) where {NumState,NumDiagnostic}
     println(io, "Grid Structure:")
     println(io, "  subcycling = ", grid.subcycling)
-    for i in 1:length(grid.levels)
+    for i in 1:grid.num_levels
         println(io, "level[", i, "],")
         println(io, "  num_interior_points       = ", grid.levels[i].num_interior_points)
         println(io, "  num_ghost_points          = ", grid.levels[i].num_ghost_points)
