@@ -79,25 +79,25 @@ function rk4!(f::Function, level)
 
     @. u_pp = u_p * 1.0
     @. u_p = u * 1.0
-    lev.time = t
-    f(lev, r, u)
+    level.time = t
+    f(level, r, u)
     @. u += r * (dt / 6)
 
     @. w = u_p + r * (dt / 2)
-    lev.time = t + 0.5 * dt
-    f(lev, r, w)
+    level.time = t + 0.5 * dt
+    f(level, r, w)
     @. u += r * (dt / 3)
 
     @. w = u_p + r * (dt / 2)
-    lev.time = t + 0.5 * dt
-    f(lev, r, w)
+    level.time = t + 0.5 * dt
+    f(level, r, w)
     @. u += r * (dt / 3)
 
     @. w = u_p + r * dt
-    lev.time = t + dt
-    f(lev, r, w)
+    level.time = t + dt
+    f(level, r, w)
     @. u += r * (dt / 6)
-    return lev.time = t + dt
+    return level.time = t + dt
 end
 
 function rk4_mongwane!(
@@ -129,27 +129,27 @@ function rk4_mongwane!(
     @. u += k1 * (1 / 6)
 
     @. w = u_p + k1 * (1 / 2)
-    lev.time = t + 0.5 * dt
-    f(lev, r, w)
+    level.time = t + 0.5 * dt
+    f(level, r, w)
     for v in 1:NumState
         k2[v][isrt:iend] = r[v][isrt:iend] * dt
     end
     @. u += k2 * (1 / 3)
 
     @. w = u_p + k2 * (1 / 2)
-    lev.time = t + 0.5 * dt
-    f(lev, r, w)
+    level.time = t + 0.5 * dt
+    f(level, r, w)
     for v in 1:NumState
         k3[v][isrt:iend] = r[v][isrt:iend] * dt
     end
     @. u += k3 * (1 / 3)
 
     @. w = u_p + k3
-    lev.time = t + dt
-    f(lev, r, w)
+    level.time = t + dt
+    f(level, r, w)
     for v in 1:NumState
         k4[v][isrt:iend] = r[v][isrt:iend] * dt
     end
     @. u += k4 * (1 / 6)
-    return lev.time = t + dt
+    return level.time = t + dt
 end
