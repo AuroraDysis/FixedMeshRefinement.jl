@@ -10,11 +10,11 @@ Initial Data Types:
     * Gaussian
 ===============================================================================#
 function Gaussian!(gfs; amp = 1.0, sig = 0.25, x0 = 0.0)
-    lmax = length(gfs.levs)
+    lmax = length(gfs.levels)
     for l = 1:lmax
-        psi = gfs.levs[l].u[1]
-        Pi = gfs.levs[l].u[2]
-        x = gfs.levs[l].x
+        psi = gfs.levels[l].u[1]
+        Pi = gfs.levels[l].u[2]
+        x = gfs.levels[l].x
         @. psi = amp * exp(-((x - x0) / sig)^2)
         @. Pi = 0.0
     end
@@ -25,11 +25,11 @@ function Gaussian!(gfs; amp = 1.0, sig = 0.25, x0 = 0.0)
 end
 
 function sinusoidal!(gfs)
-    lmax = length(gfs.levs)
+    lmax = length(gfs.levels)
     for l = 1:lmax
-        psi = gfs.levs[l].u[1]
-        Pi = gfs.levs[l].u[2]
-        x = gfs.levs[l].x
+        psi = gfs.levels[l].u[1]
+        Pi = gfs.levels[l].u[2]
+        x = gfs.levels[l].x
         @. psi = sin(2 * pi * (x - 0.0))
         @. Pi = -2 * pi * cos(2 * pi * (x - 0.0))
     end
@@ -49,19 +49,19 @@ function NegativeWaveRHS!(level, r, u)
 end
 
 function MarchBackwards!(gfs)
-    for l = 1:length(gfs.levs)
+    for l = 1:length(gfs.levels)
         if l > 1
             Sync.prolongation(gfs, l, false)
         end
-        ODESolver.rk4!(NegativeWaveRHS!, gfs.levs[l])
+        ODESolver.rk4!(NegativeWaveRHS!, gfs.levels[l])
         # save new u(-dt) -> u_p, u(0) -> u
-        u = gfs.levs[l].u
-        u_p = gfs.levs[l].u_p
-        u_pp = gfs.levs[l].u_pp
+        u = gfs.levels[l].u
+        u_p = gfs.levels[l].u_p
+        u_pp = gfs.levels[l].u_pp
         @. u_pp = u_p
         @. u_p = u
         @. u = u_pp
-        gfs.levs[l].level.time = 0.0
+        gfs.levels[l].level.time = 0.0
     end
     gfs.grid.time = 0.0
 end

@@ -35,19 +35,19 @@ end
 apply_transition_zone: apply transition zone
 ===============================================================================#
 function apply_transition_zone(grid, l, interp_in_time::Bool)
-    num_total_points = grid.levs[l].num_total_points
-    num_buffer_points = grid.levs[l].num_buffer_points
-    num_transition_points = grid.levs[l].num_transition_points
-    ord_s = grid.levs[l].ord_s
-    parent_map = grid.levs[l].parent_map
-    is_aligned = grid.levs[l].is_aligned
-    levf = grid.levs[l]
-    levc = grid.levs[l-1]
+    num_total_points = grid.levels[l].num_total_points
+    num_buffer_points = grid.levels[l].num_buffer_points
+    num_transition_points = grid.levels[l].num_transition_points
+    ord_s = grid.levels[l].ord_s
+    parent_map = grid.levels[l].parent_map
+    is_aligned = grid.levels[l].is_aligned
+    levf = grid.levels[l]
+    levc = grid.levels[l-1]
     # for transition zone
-    domain_box = grid.levs[l].domain_box
-    dxf = grid.levs[l].dx
-    @assert(isapprox(domain_box[1], grid.levs[l].x[1+num_buffer_points]; rtol = 1e-12))
-    @assert(isapprox(domain_box[2], grid.levs[l].x[num_total_points-num_buffer_points]; rtol = 1e-12))
+    domain_box = grid.levels[l].domain_box
+    dxf = grid.levels[l].dx
+    @assert(isapprox(domain_box[1], grid.levels[l].x[1+num_buffer_points]; rtol = 1e-12))
+    @assert(isapprox(domain_box[2], grid.levels[l].x[num_total_points-num_buffer_points]; rtol = 1e-12))
 
     for j = 1:2  # left or right
         a = (j == 1) ? domain_box[1] : domain_box[2]
@@ -58,7 +58,7 @@ function apply_transition_zone(grid, l, interp_in_time::Bool)
             for i = 1:num_transition_points
                 f = (j == 1) ? i + num_buffer_points : num_total_points - i + 1 - num_buffer_points
                 c = parent_map[f]
-                w = transition_profile(a, b, grid.levs[l].x[f])
+                w = transition_profile(a, b, grid.levels[l].x[f])
                 if is_aligned[f]
                     kcs = [levc.k[m][v][c] for m = 1:4]
                     ys = interp_in_time ? DenseOutput.y(0.5, uc_p[c], kcs) : uc_p[c]
@@ -87,14 +87,14 @@ prolongation_mongwane: use Mongwane's method
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
 function prolongation_mongwane(grid, l, interp_in_time::Bool)
-    num_total_points = grid.levs[l].num_total_points
-    num_buffer_points = grid.levs[l].num_buffer_points
-    ord_s = grid.levs[l].ord_s
-    parent_map = grid.levs[l].parent_map
-    is_aligned = grid.levs[l].is_aligned
-    dtc = grid.levs[l-1].dt
-    levf = grid.levs[l]
-    levc = grid.levs[l-1]
+    num_total_points = grid.levels[l].num_total_points
+    num_buffer_points = grid.levels[l].num_buffer_points
+    ord_s = grid.levels[l].ord_s
+    parent_map = grid.levels[l].parent_map
+    is_aligned = grid.levels[l].is_aligned
+    dtc = grid.levels[l-1].dt
+    levf = grid.levels[l]
+    levc = grid.levels[l-1]
 
     for j = 1:2  # left or right
         for v = 1:grid.NumState
@@ -143,13 +143,13 @@ prolongation:
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
 function prolongation(grid, l, interp_in_time::Bool; ord_t = 2)
-    num_total_points = grid.levs[l].num_total_points
-    num_buffer_points = grid.levs[l].num_buffer_points
-    ord_s = grid.levs[l].ord_s
-    parent_map = grid.levs[l].parent_map
-    is_aligned = grid.levs[l].is_aligned
-    levf = grid.levs[l]
-    levc = grid.levs[l-1]
+    num_total_points = grid.levels[l].num_total_points
+    num_buffer_points = grid.levels[l].num_buffer_points
+    ord_s = grid.levels[l].ord_s
+    parent_map = grid.levels[l].parent_map
+    is_aligned = grid.levels[l].is_aligned
+    levf = grid.levels[l]
+    levc = grid.levels[l-1]
 
     for j = 1:2  # left or right
         for v = 1:grid.NumState
@@ -196,16 +196,16 @@ restriction:
     * we assume all the levels are at the same time slice
 ===============================================================================#
 function restriction(grid, l; apply_trans_zone = false)
-    num_total_points = grid.levs[l+1].num_total_points
-    num_buffer_points = grid.levs[l+1].num_buffer_points
-    num_transition_points = grid.levs[l+1].num_transition_points
-    parent_map = grid.levs[l+1].parent_map
-    is_aligned = grid.levs[l+1].is_aligned
+    num_total_points = grid.levels[l+1].num_total_points
+    num_buffer_points = grid.levels[l+1].num_buffer_points
+    num_transition_points = grid.levels[l+1].num_transition_points
+    parent_map = grid.levels[l+1].parent_map
+    is_aligned = grid.levels[l+1].is_aligned
     isrt = apply_trans_zone ? 1 + num_buffer_points + num_transition_points : 1 + num_buffer_points
     iend = apply_trans_zone ? num_total_points - num_buffer_points - num_transition_points : num_total_points - num_buffer_points
     for v = 1:grid.NumState
-        uf = grid.levs[l+1].u[v]
-        uc = grid.levs[l].u[v]
+        uf = grid.levels[l+1].u[v]
+        uc = grid.levels[l].u[v]
         for f = isrt:iend  # only interior
             if is_aligned[f]
                 uc[parent_map[f]] = uf[f]

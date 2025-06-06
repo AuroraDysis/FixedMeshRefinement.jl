@@ -36,14 +36,14 @@ Energy:
     * calculate on base level (interior) only
 ===============================================================================#
 function Energy(gfs)
-    num_total_points = gfs.grid.levs[1].num_total_points
-    num_buffer_points = gfs.grid.levs[1].num_buffer_points
-    dx = gfs.grid.levs[1].dx
-    psi = gfs.levs[1].u[1]
-    Pi = gfs.levs[1].u[2]
+    num_total_points = gfs.grid.levels[1].num_total_points
+    num_buffer_points = gfs.grid.levels[1].num_buffer_points
+    dx = gfs.grid.levels[1].dx
+    psi = gfs.levels[1].u[1]
+    Pi = gfs.levels[1].u[2]
 
     dpsi = zeros(Float64, num_total_points)
-    Derivs.derivs_1st!(dpsi, psi, dx, gfs.grid.levs[1].finite_difference_order)
+    Derivs.derivs_1st!(dpsi, psi, dx, gfs.grid.levels[1].finite_difference_order)
 
     E::Float64 = 0.0
     for i = 1+num_buffer_points:num_total_points-num_buffer_points

@@ -5,9 +5,9 @@ function dump(dir_path, gfs, it)
         fname = dir_path * "/u.it" * lpad(string(it), 6, '0') * ".tsv"
         open(fname, "w") do file
             println(file, "# 1:iteation 2:time 3:level 4:i 5:x 6:psi 7:Pi")
-            for l = 1:length(gfs.levs)
-                level = gfs.grid.levs[l]
-                levfs = gfs.levs[l]
+            for l = 1:length(gfs.levels)
+                level = gfs.grid.levels[l]
+                levfs = gfs.levels[l]
                 for i = 1:length(levfs.x)
                     println(
                         file,

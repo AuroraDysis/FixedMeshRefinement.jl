@@ -1,9 +1,9 @@
 module Boundary
 
 function ApplyPeriodicBoundaryCondition!(gfs)
-    lev1fs = gfs.levs[1]
-    num_total_points = gfs.grid.levs[1].num_total_points
-    num_buffer_points = gfs.grid.levs[1].num_buffer_points
+    lev1fs = gfs.levels[1]
+    num_total_points = gfs.grid.levels[1].num_total_points
+    num_buffer_points = gfs.grid.levels[1].num_buffer_points
     for v = 1:gfs.NumState
         u = lev1fs.u[v]
         for i = 1:num_buffer_points
