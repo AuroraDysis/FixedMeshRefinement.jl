@@ -9,8 +9,8 @@ mutable struct Level{NumState,NumDiagnostic}
     finite_difference_order::Int  # finite difference order
     spatial_interpolation_order::Int  # interpolation order in space
     domain_box::Vector{Float64}  # size computational domain (interior)
-    spatial_step::Float64
-    time_step::Float64
+    dx::Float64
+    dt::Float64
     time::Float64
     dissipation::Float64
     is_base_level::Bool
@@ -46,11 +46,11 @@ mutable struct Level{NumState,NumDiagnostic}
         is_aligned,
     )
         num_total_points = num_interior_points + 2 * num_buffer_points
-        spatial_step = (domain_box[2] - domain_box[1]) / (num_interior_points - 1)
+        dx = (domain_box[2] - domain_box[1]) / (num_interior_points - 1)
 
         noffset = (num_total_points - num_interior_points) / 2  # take account of buffer zone
-        xmin = domain_box[1] - noffset * spatial_step
-        xmax = domain_box[2] + noffset * spatial_step
+        xmin = domain_box[1] - noffset * dx
+        xmax = domain_box[2] + noffset * dx
         coordinates = LinRange(xmin, xmax, num_total_points)
         state = Vector{Vector{Float64}}(undef, NumState)
         state_prev = Vector{Vector{Float64}}(undef, NumState)
@@ -87,7 +87,7 @@ mutable struct Level{NumState,NumDiagnostic}
             finite_difference_order,
             spatial_interpolation_order,
             domain_box,
-            spatial_step,
+            dx,
             dt,
             t,
             dissipation,
@@ -247,10 +247,10 @@ function Base.show(
                 ],
             )
         end
-        println(io, "  domain_box    = ", grid.levels[i].domain_box)
-        println(io, "  spatial_step  = ", grid.levels[i].spatial_step)
-        println(io, "  time_step     = ", grid.levels[i].time_step)
-        println(io, "  time          = ", grid.levels[i].time)
-        println(io, "  dissipation   = ", grid.levels[i].dissipation)
+        println(io, "  domain_box  = ", grid.levels[i].domain_box)
+        println(io, "  dx          = ", grid.levels[i].dx)
+        println(io, "  dt          = ", grid.levels[i].dt)
+        println(io, "  time        = ", grid.levels[i].time)
+        println(io, "  dissipation = ", grid.levels[i].dissipation)
     end
 end
