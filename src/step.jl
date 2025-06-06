@@ -35,7 +35,7 @@ function step!(
                 )
                     substeps[l] += 1
                     if l < max_level
-                        Sync.Restriction(grid, l; apply_trans_zone=apply_trans_zone)  # from l+1 to l
+                        Sync.restriction(grid, l; apply_trans_zone=apply_trans_zone)  # from l+1 to l
                     end
                     # from l-1 to l
                     if Mongwane
@@ -53,10 +53,10 @@ function step!(
     end
 
     #------------------------#
-    # Restriction all levels #
+    # restriction all levels #
     #------------------------#
     for l in (max_level - 1):-1:1  # notice that we restrict fine level first
-        Sync.Restriction(grid, l; apply_trans_zone=apply_trans_zone)
+        Sync.restriction(grid, l; apply_trans_zone=apply_trans_zone)
     end
 
     #------------------#

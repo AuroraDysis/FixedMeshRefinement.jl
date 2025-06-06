@@ -38,7 +38,7 @@ function Evolve!(f::Function, gfs; Mongwane = false, apply_trans_zone = false)
                 )
                     substeps[l] += 1
                     if l < lmax
-                        Sync.Restriction(gfs, l; apply_trans_zone)  # from l+1 to l
+                        Sync.restriction(gfs, l; apply_trans_zone)  # from l+1 to l
                     end
                     # from l-1 to l
                     Mongwane ?
@@ -54,10 +54,10 @@ function Evolve!(f::Function, gfs; Mongwane = false, apply_trans_zone = false)
     end
 
     #------------------------#
-    # Restriction all levels #
+    # restriction all levels #
     #------------------------#
     for l = lmax-1:-1:1  # notice that we restrict fine level first
-        Sync.Restriction(gfs, l; apply_trans_zone)
+        Sync.restriction(gfs, l; apply_trans_zone)
     end
 
     #------------------#

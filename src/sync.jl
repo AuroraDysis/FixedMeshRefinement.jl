@@ -190,12 +190,12 @@ function prolongation(grid, l, interp_in_time::Bool; ord_t = 2)
 end
 
 #===============================================================================
-Restriction:
+restriction:
     * from level l+1 to level l
     * we assume that we always march fine level first (for l in lmax-1:-1:1)
     * we assume all the levels are at the same time slice
 ===============================================================================#
-function Restriction(grid, l; apply_trans_zone = false)
+function restriction(grid, l; apply_trans_zone = false)
     nxa = grid.levs[l+1].nxa
     nbuf = grid.levs[l+1].nbuf
     ntrans = grid.levs[l+1].ntrans
