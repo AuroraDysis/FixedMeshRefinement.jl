@@ -77,8 +77,8 @@ function rk4!(f::Function, level)
     t = level.time
     dt = level.dt
 
-    @. u_pp = u_p * 1.0
-    @. u_p = u * 1.0
+    @. u_pp = u_p
+    @. u_p = u
     level.time = t
     f(level, r, u)
     @. u += r * (dt / 6)
