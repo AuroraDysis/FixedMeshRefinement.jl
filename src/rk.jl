@@ -1,14 +1,7 @@
 function rk4!(f::Function, level)
     cycle_state!(level)
 
-    u = level.u
-    u_p = level.u_p
-    u_pp = level.u_pp
-
-    rhs = level.rhs
-    tmp = level.tmp
-    t = level.t
-    dt = level.dt
+    (; u, u_p, u_pp, rhs, tmp, t, dt) = level
 
     @. u_pp = u_p
     @. u_p = u

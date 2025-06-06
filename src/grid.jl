@@ -120,11 +120,8 @@ mutable struct Level{NumState,NumDiagnostic}
 end
 
 function cycle_state!(level::Level{NumState,NumDiagnostic}) where {NumState,NumDiagnostic}
-    let tmp = level.u_pp
-        level.u_pp = level.u_p
-        level.u_p = level.u
-        level.u = tmp
-    end
+    @. level.u_pp = level.u_p
+    @. level.u_p = level.u
 end
 
 mutable struct Grid{NumState,NumDiagnostic}
