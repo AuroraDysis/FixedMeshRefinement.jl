@@ -130,12 +130,12 @@ mutable struct Grid{NumState,NumDiagnostic}
         num_levels = length(domain_boxes)
 
         # build the first level (base level)
-        base_level_dx =
+        base_dx =
             (domain_boxes[1][2] - domain_boxes[1][1]) / (base_level_num_points - 1)
         base_dt = if subcycling
-            cfl_number * base_level_dx
+            cfl_number * base_dx
         else
-            cfl_number * base_level_dx / 2^(num_levels - 1)
+            cfl_number * base_dx / 2^(num_levels - 1)
         end
         base_level = Level{NumState,NumDiagnostic}(
             base_level_num_points,
@@ -155,7 +155,7 @@ mutable struct Grid{NumState,NumDiagnostic}
         levels = Vector{Level{NumState,NumDiagnostic}}([base_level])
         # build the rest levels
         for i in 2:num_levels
-            level_dx = base_level_dx / 2^(i - 1)
+            level_dx = base_dx / 2^(i - 1)
             level_dt = (subcycling ? cfl_number * level_dx : base_dt)
             parent_level = levels[i - 1]  # level lower than the current level (parent level)
             # if we refine parent level everywhere
