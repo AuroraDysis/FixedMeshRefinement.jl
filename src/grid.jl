@@ -119,6 +119,14 @@ mutable struct Level{NumState,NumDiagnostic}
     end
 end
 
+function cycle_state!(level::Level{NumState,NumDiagnostic}) where {NumState,NumDiagnostic}
+    let tmp = level.state_prev_prev
+        level.state_prev_prev = level.state_prev
+        level.state_prev = level.state
+        level.state = tmp
+    end
+end
+
 mutable struct Grid{NumState,NumDiagnostic}
     num_levels::Int
     levels::Vector{Level{NumState,NumDiagnostic}}

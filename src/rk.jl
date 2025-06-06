@@ -1,10 +1,12 @@
 function rk4!(f::Function, level)
+    cycle_state!(level)
+
     u = level.state
     u_p = level.state_prev
     u_pp = level.state_prev_prev
 
-    r = level.rhs
-    w = level.workspace
+    du = level.rhs
+    tmp = level.workspace
     t = level.time
     dt = level.dt
 
@@ -14,20 +16,20 @@ function rk4!(f::Function, level)
     f(level, r, u)
     @. u += r * (dt / 6)
 
-    @. w = u_p + r * (dt / 2)
+    @. tmp = u_p + du * (dt / 2)
     level.time = t + 0.5 * dt
-    f(level, r, w)
-    @. u += r * (dt / 3)
+    f(level, du, tmp)
+    @. u += du * (dt / 3)
 
-    @. w = u_p + r * (dt / 2)
+    @. tmp = u_p + du * (dt / 2)
     level.time = t + 0.5 * dt
-    f(level, r, w)
-    @. u += r * (dt / 3)
+    f(level, du, tmp)
+    @. u += du * (dt / 3)
 
-    @. w = u_p + r * dt
+    @. tmp = u_p + du * dt
     level.time = t + dt
-    f(level, r, w)
-    @. u += r * (dt / 6)
+    f(level, du, tmp)
+    @. u += du * (dt / 6)
     return level.time = t + dt
 end
 
