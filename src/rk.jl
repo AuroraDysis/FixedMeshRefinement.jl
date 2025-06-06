@@ -34,10 +34,10 @@ end
 function rk4_mongwane!(
     f::Function, level::Level{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
-    u = level.u
-    u_p = level.u_p
+    u = level.state
+    u_p = level.state_prev
     r = level.rhs
-    w = level.w
+    w = level.workspace
     k1 = level.k[1]
     k2 = level.k[2]
     k3 = level.k[3]
