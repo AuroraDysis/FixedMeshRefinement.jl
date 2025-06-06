@@ -31,16 +31,16 @@ mutable struct Level{NumState,NumDiagnostic}
 
     # data
     coordinates::LinRange{Float64,Int}  # coordinates
-    u::Vector{Vector{Float64}}  # u vectors
-    u_p::Vector{Vector{Float64}}  # previous u vectors
-    u_pp::Vector{Vector{Float64}}  # previous previous u vectors
-    rhs::Vector{Vector{Float64}}  # rhs of u vectors
-    tmp::Vector{Vector{Float64}}  # intermediate u vectors
+    u::Matrix{Float64}  # u vectors
+    u_p::Matrix{Float64}  # previous u vectors
+    u_pp::Matrix{Float64}  # previous previous u vectors
+    rhs::Matrix{Float64}  # rhs of u vectors
+    tmp::Matrix{Float64}  # intermediate u vectors
     # intermediate u vectors for new subcycling
-    runge_kutta_stages::Vector{Vector{Vector{Float64}}}
+    runge_kutta_stages::Vector{Matrix{Float64}}
 
     # diagnostic variables
-    diag_state::Vector{Vector{Float64}}  # u vectors for diagnostic variables
+    diag_state::Matrix{Float64}  # u vectors for diagnostic variables
 
     function Level{NumState,NumDiagnostic}(
         num_interior_points,
@@ -64,30 +64,15 @@ mutable struct Level{NumState,NumDiagnostic}
         xmin = domain_box[1] - noffset * dx
         xmax = domain_box[2] + noffset * dx
         coordinates = LinRange(xmin, xmax, num_total_points)
-        u = Vector{Vector{Float64}}(undef, NumState)
-        u_p = Vector{Vector{Float64}}(undef, NumState)
-        u_pp = Vector{Vector{Float64}}(undef, NumState)
-        rhs = Vector{Vector{Float64}}(undef, NumState)
-        tmp = Vector{Vector{Float64}}(undef, NumState)
-        runge_kutta_stages = Vector{Vector{Vector{Float64}}}(undef, 4)
-        diag_state = Vector{Vector{Float64}}(undef, NumDiagnostic)
+        u = fill(NaN, num_total_points, NumState)
+        u_p = fill(NaN, num_total_points, NumState)
+        u_pp = fill(NaN, num_total_points, NumState)
+        rhs = fill(NaN, num_total_points, NumState)
+        tmp = fill(NaN, num_total_points, NumState)
+        runge_kutta_stages = Vector{Matrix{Float64}}(undef, 4)
+        diag_state = fill(NaN, num_total_points, NumDiagnostic)
         for j in 1:4
-            runge_kutta_stages[j] = Vector{Vector{Float64}}(undef, NumState)
-        end
-
-        for i in 1:NumState
-            u[i] = fill(NaN, num_total_points)
-            u_p[i] = fill(NaN, num_total_points)
-            u_pp[i] = fill(NaN, num_total_points)
-            rhs[i] = fill(NaN, num_total_points)
-            tmp[i] = fill(NaN, num_total_points)
-            for j in 1:4
-                runge_kutta_stages[j][i] = fill(NaN, num_total_points)
-            end
-        end
-
-        for i in 1:NumDiagnostic
-            diag_state[i] = fill(NaN, num_total_points)
+            runge_kutta_stages[j] = fill(NaN, num_total_points, NumState)
         end
 
         return new(
@@ -120,8 +105,9 @@ mutable struct Level{NumState,NumDiagnostic}
 end
 
 function cycle_state!(level::Level{NumState,NumDiagnostic}) where {NumState,NumDiagnostic}
-    @. level.u_pp = level.u_p
-    @. level.u_p = level.u
+    level.u_pp .= level.u_p
+    level.u_p .= level.u
+    return nothing
 end
 
 mutable struct Grid{NumState,NumDiagnostic}
