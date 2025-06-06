@@ -1,10 +1,8 @@
 function rk4!(f::Function, level)
+    (; u, u_p, rhs, tmp, t, dt) = level
+
     cycle_state!(level)
 
-    (; u, u_p, u_pp, rhs, tmp, t, dt) = level
-
-    @. u_pp = u_p
-    @. u_p = u
     level.t = t
     f(level, rhs, u)
     @. u += rhs * (dt / 6)
