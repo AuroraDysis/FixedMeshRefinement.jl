@@ -8,27 +8,27 @@ mutable struct Level{NumState,NumDiagnostic}
     num_total_points::Int64  # num of all grid points
     finite_difference_order::Int64  # finite difference order
     spatial_interpolation_order::Int64  # interpolation order in space
-    domain_box::Array{Float64,1}  # size computational domain (interior)
+    domain_box::Vector{Float64}  # size computational domain (interior)
     spatial_step::Float64
     time_step::Float64
     time::Float64
     dissipation::Float64
     is_base_level::Bool
-    parent_map::Array{Int64,1}  # map between indexes of current and its parent level
-    is_aligned::Array{Bool,1}  # if grid aligned with coarse grid
+    parent_map::Vector{Int64}  # map between indexes of current and its parent level
+    is_aligned::Vector{Bool}  # if grid aligned with coarse grid
 
     # data
-    coordinates::Array{Float64,1}  # coordinates
-    state::Array{Array{Float64,1},1}  # state vectors
-    state_prev::Array{Array{Float64,1},1}  # previous state vectors
-    state_prev_prev::Array{Array{Float64,1},1}  # previous previous state vectors
-    rhs::Array{Array{Float64,1},1}  # rhs of state vectors
-    workspace::Array{Array{Float64,1},1}  # intermediate state vectors
+    coordinates::Vector{Float64}  # coordinates
+    state::Vector{Vector{Float64}}  # state vectors
+    state_prev::Vector{Vector{Float64}}  # previous state vectors
+    state_prev_prev::Vector{Vector{Float64}}  # previous previous state vectors
+    rhs::Vector{Vector{Float64}}  # rhs of state vectors
+    workspace::Vector{Vector{Float64}}  # intermediate state vectors
     # intermediate state vectors for new subcycling
-    runge_kutta_stages::Array{Array{Array{Float64,1},1},1}
+    runge_kutta_stages::Vector{Vector{Vector{Float64}}}
 
     # diagnostic variables
-    diag_state::Array{Array{Float64,1},1}  # state vectors for diagnostic variables
+    diag_state::Vector{Vector{Float64}}  # state vectors for diagnostic variables
 
     function Level{NumState,NumDiagnostic}(
         num_interior_points,
@@ -51,16 +51,16 @@ mutable struct Level{NumState,NumDiagnostic}
         noffset = (num_total_points - num_interior_points) / 2  # take account of buffer zone
         xmin = domain_box[1] - noffset * spatial_step
         xmax = domain_box[2] + noffset * spatial_step
-        coordinates = LinRange(xmin, xmax, num_total_points)
-        state = Array{Array{Float64,1},1}(undef, NumState)
-        state_prev = Array{Array{Float64,1},1}(undef, NumState)
-        state_prev_prev = Array{Array{Float64,1},1}(undef, NumState)
-        rhs = Array{Array{Float64,1},1}(undef, NumState)
-        workspace = Array{Array{Float64,1},1}(undef, NumState)
-        runge_kutta_stages = Array{Array{Array{Float64,1},1},1}(undef, 4)
-        diag_state = Array{Array{Float64,1},1}(undef, NumDiagnostic)
+        coordinates = collect(LinRange(xmin, xmax, num_total_points))
+        state = Vector{Vector{Float64}}(undef, NumState)
+        state_prev = Vector{Vector{Float64}}(undef, NumState)
+        state_prev_prev = Vector{Vector{Float64}}(undef, NumState)
+        rhs = Vector{Vector{Float64}}(undef, NumState)
+        workspace = Vector{Vector{Float64}}(undef, NumState)
+        runge_kutta_stages = Vector{Vector{Vector{Float64}}}(undef, 4)
+        diag_state = Vector{Vector{Float64}}(undef, NumDiagnostic)
         for j in 1:4
-            runge_kutta_stages[j] = Array{Array{Float64,1},1}(undef, NumState)
+            runge_kutta_stages[j] = Vector{Vector{Float64}}(undef, NumState)
         end
 
         for i in 1:NumState
