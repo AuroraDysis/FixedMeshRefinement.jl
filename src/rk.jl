@@ -51,7 +51,7 @@ function rk4_mongwane!(
         level.num_total_points - level.num_buffer_points
     end
 
-    @. u_p = u * 1.0
+    @. u_p = u
     level.time = t
     f(level, r, u)
     for v in 1:NumState
