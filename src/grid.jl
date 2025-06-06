@@ -8,7 +8,7 @@ mutable struct Level{NumState,NumDiagnostic}
     num_total_points::Int  # num of all grid points
     finite_difference_order::Int  # finite difference order
     spatial_interpolation_order::Int  # interpolation order in space
-    domain_box::Vector{Float64}  # size computational domain (interior)
+    domain_box::Tuple{Float64,Float64}  # size computational domain (interior)
     dx::Float64
     dt::Float64
     time::Float64
@@ -116,7 +116,7 @@ mutable struct Grid{NumState,NumDiagnostic}
 
     function Grid{NumState,NumDiagnostic}(
         base_level_num_points,  # num of interior grid points at base level
-        domain_boxes::Vector{Vector{Float64}},
+        domain_boxes::Vector{Tuple{Float64,Float64}},
         num_ghost_points,
         num_buffer_points;
         num_transition_points=3,
