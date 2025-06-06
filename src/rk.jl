@@ -1,26 +1,29 @@
 function rk4!(f::Function, level)
     (; u, u_p, rhs, tmp, t, dt) = level
+    sixth_dt = dt / 6
+    third_dt = dt / 3
+    half_dt = dt / 2
 
     cycle_state!(level)
 
     level.t = t
     f(level, rhs, u)
-    @. u += rhs * (dt / 6)
+    @. u += sixth_dt * rhs
 
-    @. tmp = u_p + rhs * (dt / 2)
-    level.t = t + 0.5 * dt
+    @. tmp = u_p + half_dt * rhs
+    level.t = t + half_dt
     f(level, rhs, tmp)
-    @. u += rhs * (dt / 3)
+    @. u += third_dt * rhs
 
-    @. tmp = u_p + rhs * (dt / 2)
-    level.t = t + 0.5 * dt
+    @. tmp = u_p + half_dt * rhs
+    level.t = t + half_dt
     f(level, rhs, tmp)
-    @. u += rhs * (dt / 3)
+    @. u += third_dt * rhs
 
-    @. tmp = u_p + rhs * dt
+    @. tmp = u_p + dt * rhs
     level.t = t + dt
     f(level, rhs, tmp)
-    @. u += rhs * (dt / 6)
+    @. u += sixth_dt * rhs
     return level.t = t + dt
 end
 
@@ -28,16 +31,9 @@ function rk4_mongwane!(
     f::Function, level::Level{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
     (; u, u_p, rhs, tmp, k, t, dt) = level
-    u = level.u
-    u_p = level.u_p
-    rhs = level.rhs
-    tmp = level.tmp
-    k1 = level.k[1]
-    k2 = level.k[2]
-    k3 = level.k[3]
-    k4 = level.k[4]
-    t = level.t
-    dt = level.dt
+
+    k1, k2, k3, k4 = level.k
+
     isrt = level.is_base_level ? 1 : 1 + level.num_buffer_points
     iend = if level.is_base_level
         level.num_total_points
