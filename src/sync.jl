@@ -38,7 +38,7 @@ function apply_transition_zone(grid, l, interp_in_time::Bool)
     num_total_points = grid.levels[l].num_total_points
     num_buffer_points = grid.levels[l].num_buffer_points
     num_transition_points = grid.levels[l].num_transition_points
-    ord_s = grid.levels[l].ord_s
+    spatial_interpolation_order = grid.levels[l].spatial_interpolation_order
     parent_map = grid.levels[l].parent_map
     is_aligned = grid.levels[l].is_aligned
     levf = grid.levels[l]
@@ -64,7 +64,7 @@ function apply_transition_zone(grid, l, interp_in_time::Bool)
                     ys = interp_in_time ? DenseOutput.y(0.5, uc_p[c], kcs) : uc_p[c]
                     uf[f] = (1 - w) * ys + w * uf[f]
                 else
-                    nys = ord_s + 1
+                    nys = spatial_interpolation_order + 1
                     ioffset = (mod(nys, 2) == 0) ? div(nys, 2) : div(nys, 2) + 1
                     ys = zeros(Float64, nys)
                     for ic = 1:nys
@@ -74,7 +74,7 @@ function apply_transition_zone(grid, l, interp_in_time::Bool)
                             interp_in_time ? DenseOutput.y(0.5, uc_p[ic_grid], kcs) :
                             uc_p[ic_grid]
                     end
-                    uf[f] = (1 - w) * Algo.Interpolation(ys, ioffset, ord_s) + w * uf[f]
+                    uf[f] = (1 - w) * Algo.Interpolation(ys, ioffset, spatial_interpolation_order) + w * uf[f]
                 end
             end
         end
@@ -89,7 +89,7 @@ prolongation_mongwane: use Mongwane's method
 function prolongation_mongwane(grid, l, interp_in_time::Bool)
     num_total_points = grid.levels[l].num_total_points
     num_buffer_points = grid.levels[l].num_buffer_points
-    ord_s = grid.levels[l].ord_s
+    spatial_interpolation_order = grid.levels[l].spatial_interpolation_order
     parent_map = grid.levels[l].parent_map
     is_aligned = grid.levels[l].is_aligned
     dtc = grid.levels[l-1].dt
@@ -113,7 +113,7 @@ function prolongation_mongwane(grid, l, interp_in_time::Bool)
                     # setting u
                     uf[f] = interp_in_time ? DenseOutput.y(0.5, uc_p[c], kcs) : uc_p[c]
                 else
-                    nys = ord_s + 1
+                    nys = spatial_interpolation_order + 1
                     ioffset = (mod(nys, 2) == 0) ? div(nys, 2) : div(nys, 2) + 1
                     kfss = zeros(Float64, 3, nys)
                     ys = zeros(Float64, nys)
@@ -127,10 +127,10 @@ function prolongation_mongwane(grid, l, interp_in_time::Bool)
                     end
                     # setting k
                     for m = 1:3
-                        levf.k[m][v][f] = Algo.Interpolation(kfss[m, :], ioffset, ord_s)
+                        levf.k[m][v][f] = Algo.Interpolation(kfss[m, :], ioffset, spatial_interpolation_order)
                     end
                     # setting u
-                    uf[f] = Algo.Interpolation(ys, ioffset, ord_s)
+                    uf[f] = Algo.Interpolation(ys, ioffset, spatial_interpolation_order)
                 end
             end
         end
@@ -145,7 +145,7 @@ prolongation:
 function prolongation(grid, l, interp_in_time::Bool; ord_t = 2)
     num_total_points = grid.levels[l].num_total_points
     num_buffer_points = grid.levels[l].num_buffer_points
-    ord_s = grid.levels[l].ord_s
+    spatial_interpolation_order = grid.levels[l].spatial_interpolation_order
     parent_map = grid.levels[l].parent_map
     is_aligned = grid.levels[l].is_aligned
     levf = grid.levels[l]
@@ -164,7 +164,7 @@ function prolongation(grid, l, interp_in_time::Bool; ord_t = 2)
                     if is_aligned[f]
                         uf[f] = Algo.Interpolation([uc_pp[c], uc_p[c], uc[c]], 2, ord_t)
                     else
-                        nucss = ord_s + 1
+                        nucss = spatial_interpolation_order + 1
                         ioffset = (mod(nucss, 2) == 0) ? div(nucss, 2) : div(nucss, 2) + 1
                         ucss = zeros(Float64, 3, nucss)
                         for ic = 1:nucss
@@ -172,7 +172,7 @@ function prolongation(grid, l, interp_in_time::Bool; ord_t = 2)
                             ucss[:, ic] = [uc_pp[ic_grid], uc_p[ic_grid], uc[ic_grid]]
                         end
                         uf[f] = Algo.Interpolation(
-                            [Algo.Interpolation(ucss[m, :], ioffset, ord_s) for m = 1:3],
+                            [Algo.Interpolation(ucss[m, :], ioffset, spatial_interpolation_order) for m = 1:3],
                             2,
                             ord_t,
                         )
@@ -182,7 +182,7 @@ function prolongation(grid, l, interp_in_time::Bool; ord_t = 2)
                 for i = 1:num_buffer_points
                     f = (j == 1) ? i : num_total_points - i + 1
                     c = parent_map[f]
-                    uf[f] = ((is_aligned[f]) ? uc_p[c] : Algo.Interpolation(uc_p, c, ord_s))
+                    uf[f] = ((is_aligned[f]) ? uc_p[c] : Algo.Interpolation(uc_p, c, spatial_interpolation_order))
                 end
             end
         end
