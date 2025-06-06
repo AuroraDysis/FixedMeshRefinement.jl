@@ -178,26 +178,33 @@ mutable struct Grid{NumState,NumDiagnostic}
             )
             level_domain_box = domain_boxes[i]
             # find those two which are closest to current level boundaries using binary search
-            min_index = searchsortednearest(parent_level_grid_points, level_domain_box[1])
-            max_index = searchsortednearest(parent_level_grid_points, level_domain_box[2])
-            level_domain = [
-                parent_level_grid_points[min_index], parent_level_grid_points[max_index]
-            ]
-            level_num_interior_points = (max_index - min_index) + 1  # (floor(Int, (parent_level_grid_points[max_index] - parent_level_grid_points[min_index]) / level_dx)) + 1
+            level_min_idx = searchsortednearest(
+                parent_level_grid_points, level_domain_box[1]
+            )
+            level_max_idx = searchsortednearest(
+                parent_level_grid_points, level_domain_box[2]
+            )
+            level_domain = (
+                parent_level_grid_points[level_min_idx],
+                parent_level_grid_points[level_max_idx],
+            )
+            level_num_interior_points = (level_max_idx - level_min_idx) + 1
             # maps between two levels
             parent_map =
                 div.(
                     (
-                        ((min_index - num_buffer_points):(max_index + num_buffer_points)) .+
-                        1
+                        (
+                            (level_min_idx - num_buffer_points):(level_max_idx + num_buffer_points)
+                        ) .+ 1
                     ),
                     2,
                 ) .+ num_buffer_points
             is_aligned =
                 mod.(
                     (
-                        ((min_index - num_buffer_points):(max_index + num_buffer_points)) .+
-                        1
+                        (
+                            (level_min_idx - num_buffer_points):(level_max_idx + num_buffer_points)
+                        ) .+ 1
                     ),
                     2,
                 ) .== 0
