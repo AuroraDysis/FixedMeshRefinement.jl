@@ -1,5 +1,17 @@
 export Level, Grid
 
+# Find the index of the nearest value in a sorted array
+function searchsortednearest(a::AbstractVector, x)
+    idx = searchsortedfirst(a, x)
+    if idx == 1
+        return 1
+    elseif idx > length(a)
+        return length(a)
+    else
+        return abs(a[idx] - x) < abs(a[idx - 1] - x) ? idx : idx - 1
+    end
+end
+
 mutable struct Level{NumState,NumDiagnostic}
     num_interior_points::Int  # num of interior grid points
     num_ghost_points::Int  # num of ghost points
@@ -130,8 +142,7 @@ mutable struct Grid{NumState,NumDiagnostic}
         num_levels = length(domain_boxes)
 
         # build the coarsest level (base level)
-        base_dx =
-            (domain_boxes[1][2] - domain_boxes[1][1]) / (base_level_num_points - 1)
+        base_dx = (domain_boxes[1][2] - domain_boxes[1][1]) / (base_level_num_points - 1)
         base_dt = if subcycling
             cfl * base_dx
         else
@@ -166,11 +177,9 @@ mutable struct Grid{NumState,NumDiagnostic}
                 (parent_level.num_interior_points - 1) * 2 + 1,
             )
             level_domain_box = domain_boxes[i]
-            # find those two which are closest to current level boundaries
-            min_index = argmin(abs.(parent_level_grid_points .- level_domain_box[1]))
-            max_index = argmin(abs.(parent_level_grid_points .- level_domain_box[2]))
-            #imin = findall(x->abs(x - domain_boxes[i][1]) <= level_dx + 1e-12, parent_level_grid_points)[1]
-            #imax = findall(x->abs(x - domain_boxes[i][2]) <= level_dx + 1e-12, parent_level_grid_points)[end]
+            # find those two which are closest to current level boundaries using binary search
+            min_index = searchsortednearest(parent_level_grid_points, level_domain_box[1])
+            max_index = searchsortednearest(parent_level_grid_points, level_domain_box[2])
             level_domain = [
                 parent_level_grid_points[min_index], parent_level_grid_points[max_index]
             ]
@@ -214,7 +223,9 @@ mutable struct Grid{NumState,NumDiagnostic}
         end
 
         # construct
-        return new{NumState,NumDiagnostic}(num_levels, levels, base_dt, initial_time, subcycling)
+        return new{NumState,NumDiagnostic}(
+            num_levels, levels, base_dt, initial_time, subcycling
+        )
     end
 end
 
@@ -223,7 +234,7 @@ function Base.show(
 ) where {NumState,NumDiagnostic}
     println(io, "Grid Structure:")
     println(io, "  subcycling = ", grid.subcycling)
-    for i in 1:grid.num_levels
+    for i in 1:(grid.num_levels)
         println(io, "level[", i, "],")
         println(io, "  num_interior_points       = ", grid.levels[i].num_interior_points)
         println(io, "  num_ghost_points          = ", grid.levels[i].num_ghost_points)
