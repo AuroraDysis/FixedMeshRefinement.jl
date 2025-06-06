@@ -1,4 +1,4 @@
-using BergerOligerAMR
+using FixedMeshRefinement
 using BenchmarkTools
 
 SUITE = BenchmarkGroup()

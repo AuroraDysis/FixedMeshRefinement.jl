@@ -1,14 +1,14 @@
-using BergerOligerAMR
+using FixedMeshRefinement
 using Documenter
 
-DocMeta.setdocmeta!(BergerOligerAMR, :DocTestSetup, :(using BergerOligerAMR); recursive=true)
+DocMeta.setdocmeta!(FixedMeshRefinement, :DocTestSetup, :(using FixedMeshRefinement); recursive=true)
 
 makedocs(;
-    modules=[BergerOligerAMR],
+    modules=[FixedMeshRefinement],
     authors="Zhen Zhong <auroradysis@gmail.com> and contributors",
-    sitename="BergerOligerAMR.jl",
+    sitename="FixedMeshRefinement.jl",
     format=Documenter.HTML(;
-        canonical="https://AuroraDysis.github.io/BergerOligerAMR.jl",
+        canonical="https://AuroraDysis.github.io/FixedMeshRefinement.jl",
         edit_link="main",
         assets=String[],
     ),
@@ -18,6 +18,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/AuroraDysis/BergerOligerAMR.jl",
+    repo="github.com/AuroraDysis/FixedMeshRefinement.jl",
     devbranch="main",
 )

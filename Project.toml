@@ -1,4 +1,4 @@
-name = "BergerOligerAMR"
+name = "FixedMeshRefinement"
 uuid = "ffe09bc1-ac12-45d3-a3dd-425211443744"
 authors = ["Zhen Zhong <auroradysis@gmail.com> and contributors"]
 version = "1.0.0-DEV"

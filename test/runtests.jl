@@ -1,14 +1,14 @@
-using BergerOligerAMR
+using FixedMeshRefinement
 using Test
 using Aqua
 using JET
 
-@testset "BergerOligerAMR.jl" begin
+@testset "FixedMeshRefinement.jl" begin
     @testset "Code quality (Aqua.jl)" begin
-        Aqua.test_all(BergerOligerAMR)
+        Aqua.test_all(FixedMeshRefinement)
     end
     @testset "Code linting (JET.jl)" begin
-        JET.test_package(BergerOligerAMR; target_defined_modules = true)
+        JET.test_package(FixedMeshRefinement; target_defined_modules = true)
     end
     # Write your tests here.
 end

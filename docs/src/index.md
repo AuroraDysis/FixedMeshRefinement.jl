@@ -1,14 +1,14 @@
 ```@meta
-CurrentModule = BergerOligerAMR
+CurrentModule = FixedMeshRefinement
 ```
 
-# BergerOligerAMR
+# FixedMeshRefinement
 
-Documentation for [BergerOligerAMR](https://github.com/AuroraDysis/BergerOligerAMR.jl).
+Documentation for [FixedMeshRefinement](https://github.com/AuroraDysis/FixedMeshRefinement.jl).
 
 ```@index
 ```
 
 ```@autodocs
-Modules = [BergerOligerAMR]
+Modules = [FixedMeshRefinement]
 ```

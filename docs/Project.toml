@@ -1,3 +1,3 @@
 [deps]
-BergerOligerAMR = "ffe09bc1-ac12-45d3-a3dd-425211443744"
+FixedMeshRefinement = "ffe09bc1-ac12-45d3-a3dd-425211443744"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
