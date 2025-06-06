@@ -130,12 +130,12 @@ mutable struct Grid{NumState,NumDiagnostic}
         num_levels = length(domain_boxes)
 
         # build the first level (base level)
-        base_level_spatial_step =
+        base_level_dx =
             (domain_boxes[1][2] - domain_boxes[1][1]) / (base_level_num_points - 1)
         base_dt = if subcycling
-            cfl_number * base_level_spatial_step
+            cfl_number * base_level_dx
         else
-            cfl_number * base_level_spatial_step / 2^(num_levels - 1)
+            cfl_number * base_level_dx / 2^(num_levels - 1)
         end
         base_level = Level{NumState,NumDiagnostic}(
             base_level_num_points,
@@ -155,8 +155,8 @@ mutable struct Grid{NumState,NumDiagnostic}
         levels = Vector{Level{NumState,NumDiagnostic}}([base_level])
         # build the rest levels
         for i in 2:num_levels
-            level_spatial_step = base_level_spatial_step / 2^(i - 1)
-            level_time_step = (subcycling ? cfl_number * level_spatial_step : base_dt)
+            level_dx = base_level_dx / 2^(i - 1)
+            level_dt = (subcycling ? cfl_number * level_dx : base_dt)
             parent_level = levels[i - 1]  # level lower than the current level (parent level)
             # if we refine parent level everywhere
             parent_level_grid_points = LinRange(
@@ -167,12 +167,12 @@ mutable struct Grid{NumState,NumDiagnostic}
             # find those two which are closest to current level boundaries
             min_index = argmin(abs.(parent_level_grid_points .- domain_boxes[i][1]))
             max_index = argmin(abs.(parent_level_grid_points .- domain_boxes[i][2]))
-            #imin = findall(x->abs(x - domain_boxes[i][1]) <= level_spatial_step + 1e-12, parent_level_grid_points)[1]
-            #imax = findall(x->abs(x - domain_boxes[i][2]) <= level_spatial_step + 1e-12, parent_level_grid_points)[end]
+            #imin = findall(x->abs(x - domain_boxes[i][1]) <= level_dx + 1e-12, parent_level_grid_points)[1]
+            #imax = findall(x->abs(x - domain_boxes[i][2]) <= level_dx + 1e-12, parent_level_grid_points)[end]
             level_domain = [
                 parent_level_grid_points[min_index], parent_level_grid_points[max_index]
             ]
-            level_num_interior_points = (max_index - min_index) + 1  # (floor(Int, (parent_level_grid_points[max_index] - parent_level_grid_points[min_index]) / level_spatial_step)) + 1
+            level_num_interior_points = (max_index - min_index) + 1  # (floor(Int, (parent_level_grid_points[max_index] - parent_level_grid_points[min_index]) / level_dx)) + 1
             # maps between two levels
             parent_map =
                 div.(
@@ -201,7 +201,7 @@ mutable struct Grid{NumState,NumDiagnostic}
                     finite_difference_order,
                     spatial_interpolation_order,
                     level_domain,
-                    level_time_step,
+                    level_dt,
                     initial_time,
                     dissipation,
                     false,
