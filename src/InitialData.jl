@@ -1,7 +1,6 @@
 module InitialData
 
 include("Derivs.jl")
-include("Sync.jl")
 include("ODESolver.jl")
 include("Physical.jl")
 
@@ -20,7 +19,7 @@ function Gaussian!(grid; amp = 1.0, sig = 0.25, x0 = 0.0)
     end
     # restriction for consistence
     for l = lmax-1:-1:1
-        Sync.restriction(grid, l)
+        restriction(grid, l)
     end
 end
 
@@ -35,7 +34,7 @@ function sinusoidal!(grid)
     end
     # restriction for consistence
     for l = lmax-1:-1:1
-        Sync.restriction(grid, l)
+        restriction(grid, l)
     end
 end
 
@@ -51,7 +50,7 @@ end
 function MarchBackwards!(grid)
     for l = 1:length(grid.levels)
         if l > 1
-            Sync.prolongation(grid, l, false)
+            prolongation(grid, l, false)
         end
         ODESolver.rk4!(NegativeWaveRHS!, grid.levels[l])
         # save new u(-dt) -> u_p, u(0) -> u
