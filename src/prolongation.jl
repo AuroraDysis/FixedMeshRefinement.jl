@@ -245,8 +245,8 @@ function prolongation!(
                     # spatial interpolation
                     prolongation_interpolate!(
                         @view(uf[fidx, :]),
-                        [@view(buffer[:, m]) for m in 1:num_spatial_interpolation_points],
-                        2,
+                        [@view(buffer[m, :]) for m in 1:num_spatial_interpolation_points],
+                        ioffset,
                         spatial_interpolation_order,
                     )
                 end
