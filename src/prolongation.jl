@@ -161,12 +161,16 @@ prolongation_mongwane!: use Mongwane's method
     * from level l-1 to level l
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
-function prolongation_mongwane!(grid, l, interp_in_time::Bool)
+function prolongation_mongwane!(grid, l)
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
-    (; num_total_points, num_buffer_points, spatial_interpolation_order, parent_indices) =
-        fine_level
+    (;
+        num_total_points,
+        num_buffer_points,
+        spatial_interpolation_order,
+        time_interpolation_order,
+    ) = fine_level
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
     soffset = if mod(num_spatial_interpolation_points, 2) == 0
@@ -174,6 +178,8 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     else
         div(num_spatial_interpolation_points, 2) + 1
     end
+
+    interp_in_time = time_interpolation_order > 0
 
     dtc = coarse_level.dt
 
@@ -206,8 +212,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
                 fine_level.k[m][v][fidx] = kfs[m]
             end
             # setting u
-            uf[fidx] =
-                interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
+            uf[fidx] = interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
         else
             kfss = zeros(Float64, 3, num_spatial_interpolation_points)
             ys = zeros(Float64, num_spatial_interpolation_points)
@@ -283,10 +288,7 @@ function prolongation!(
                 # time interpolation
                 prolongation_time_interpolate!(
                     @view(uf[fidx, :]),
-                    [
-                        @view(statec[m][cidx, :]) for
-                        m in 1:(time_interpolation_order + 1)
-                    ],
+                    [@view(statec[m][cidx, :]) for m in 1:(time_interpolation_order + 1)],
                     time_interpolation_order,
                 )
             else
