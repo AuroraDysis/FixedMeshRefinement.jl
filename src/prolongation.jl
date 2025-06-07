@@ -53,20 +53,23 @@ end
 #===============================================================================
 Functions needed by Mongwane's subcycling method
 ===============================================================================#
-function calc_kfs_from_kcs!(kfs, kcs, dtc, interp_in_time::Bool)
-    t0_f = interp_in_time ? 0.5 : 0.0
+function calc_kfs_from_kcs!(kfs, kcs, dtc, interp_in_time::Bool, tmp)
+    theta = interp_in_time ? 0.5 : 0.0
     dtf = 0.5 * dtc
-    rk4_dense_output_dy!(tmp, t0_f, dtc, kcs)
+    d1yc = tmp[1]
+    d2yc = tmp[2]
+    d3yc = tmp[3]
+    rk4_dense_output_dy!(d1yc, theta, dtc, kcs)
+    rk4_dense_output_d2y!(d2yc, theta, dtc, kcs)
+    rk4_dense_output_d3y!(d3yc, theta, dtc, kcs)
 
-    d1yc = DenseOutput.dy1(t0_f, dtc, kcs)
-    d2yc = DenseOutput.dy2(t0_f, dtc, kcs)
-    d3yc = DenseOutput.dy3(t0_f, dtc, kcs)
     fyd2yc = 4 * (kcs[3] - kcs[2]) / dtc^3
-    return [
-        dtf * d1yc,
-        dtf * d1yc + 0.5 * dtf^2 * d2yc + 0.125 * dtf^3 * (d3yc - fyd2yc),
-        dtf * d1yc + 0.5 * dtf^2 * d2yc + 0.125 * dtf^3 * (d3yc + fyd2yc),
-    ]
+
+    @. kfs[1] = dtf * d1yc
+    @. kfs[2] = dtf * d1yc + 0.5 * dtf^2 * d2yc + 0.125 * dtf^3 * (d3yc - fyd2yc)
+    @. kfs[3] = dtf * d1yc + 0.5 * dtf^2 * d2yc + 0.125 * dtf^3 * (d3yc + fyd2yc)
+
+    return nothing
 end
 
 function transition_profile(xl, xh, x; type=1)
@@ -200,20 +203,18 @@ function prolongation_mongwane!(grid, l)
             (num_total_points - num_buffer_points + i)
         end
         is_aligned = mod(fidx, 2) == 0
-        cidx = fidx2cidx(fine_level, fidx)
 
         if is_aligned
+            cidx = fidx2cidx(fine_level, fidx)
+
             kcs = [view(kc[m], cidx, :) for m in 1:4]
             kfs = [view(kf[m], fidx, :) for m in 1:3]
-
-            kfs = calc_kfs_from_kcs!(kcs, dtc, interp_in_time)
-            # setting k
-            for m in 1:3
-                fine_level.k[m][v][fidx] = kfs[m]
-            end
+            calc_kfs_from_kcs!(kfs, kcs, dtc, interp_in_time)
             # setting u
             uf[fidx] = interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
         else
+            cidx = fidx2cidx(fine_level, fidx - 1)
+
             kfss = zeros(Float64, 3, num_spatial_interpolation_points)
             ys = zeros(Float64, num_spatial_interpolation_points)
             for ic in 1:nys
