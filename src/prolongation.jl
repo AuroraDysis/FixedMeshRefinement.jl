@@ -164,7 +164,7 @@ prolongation_mongwane!: use Mongwane's method
     * from level l-1 to level l
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
-function prolongation_mongwane!(grid, l)
+function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
@@ -181,8 +181,6 @@ function prolongation_mongwane!(grid, l)
     else
         div(num_spatial_interpolation_points, 2) + 1
     end
-
-    interp_in_time = time_interpolation_order > 0
 
     dtc = coarse_level.dt
 
@@ -245,7 +243,7 @@ prolongation!:
     * time interpolation is used when time_interpolation_order > 0
 ===============================================================================#
 function prolongation!(
-    grid::Grid{NumState,NumDiagnostic}, l::Int
+    grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool
 ) where {NumState,NumDiagnostic}
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
@@ -263,8 +261,6 @@ function prolongation!(
     else
         div(num_spatial_interpolation_points, 2) + 1
     end
-
-    interp_in_time = time_interpolation_order > 0
 
     statef = fine_level.state
     statec = coarse_level.state
