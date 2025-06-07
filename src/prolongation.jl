@@ -177,9 +177,15 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     # j: 1: left, 2: right
     for j in 1:2
         for i in 1:num_buffer_points
-            fidx = (j == 1) ? i : num_total_points - i + 1
-            cidx = parent_map[fidx]
-            if is_aligned[fidx]
+            fidx = if (j == 1)
+                (num_buffer_points + 1 - i)
+            else
+                (num_total_points - num_buffer_points + i)
+            end
+            is_aligned = mod(fidx, 2) == 0
+            cidx = fidx2cidx(fine_level, fidx)
+
+            if is_aligned
                 kcs = [coarse_level.k[m][v][cidx] for m in 1:4]
                 kfs = calc_kfs_from_kcs(kcs, dtc, interp_in_time)
                 # setting k
