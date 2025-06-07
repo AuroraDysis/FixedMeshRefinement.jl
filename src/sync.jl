@@ -38,8 +38,13 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
-    (; num_total_points, num_buffer_points, num_transition_points, spatial_interpolation_order, parent_indices) =
-        fine_level
+    (;
+        num_total_points,
+        num_buffer_points,
+        num_transition_points,
+        spatial_interpolation_order,
+        parent_indices,
+    ) = fine_level
 
     # for transition zone
     domain_box = fine_level.domain_box
@@ -104,14 +109,13 @@ prolongation_mongwane!: use Mongwane's method
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
 function prolongation_mongwane!(grid, l, interp_in_time::Bool)
-    num_total_points = grid.levels[l].num_total_points
-    num_buffer_points = grid.levels[l].num_buffer_points
-    spatial_interpolation_order = grid.levels[l].spatial_interpolation_order
-    parent_map = grid.levels[l].parent_map
-    is_aligned = grid.levels[l].is_aligned
-    dtc = grid.levels[l - 1].dt
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
+
+    (; num_total_points, num_buffer_points, spatial_interpolation_order, parent_indices) =
+        fine_level
+
+    dtc = coarse_level.dt
 
     for j in 1:2  # left or right
         for v in 1:(grid.NumState)
