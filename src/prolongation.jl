@@ -168,9 +168,14 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
 
     dtc = coarse_level.dt
 
-    for j in 1:2  # left or right
-        uf = fine_level.u[v]
-        uc_p = coarse_level.u_p[v]
+    fstate = fine_level.state
+    cstate = coarse_level.state
+
+    uf = fstate[end]
+    uc_p = cstate[end - 1]
+
+    # j: 1: left, 2: right
+    for j in 1:2
         for i in 1:num_buffer_points
             fidx = (j == 1) ? i : num_total_points - i + 1
             cidx = parent_map[fidx]
