@@ -107,6 +107,24 @@ function cycle_state!(level::Level)
     return nothing
 end
 
+function fidx2cidx(fine_level::Level, fidx::Int)
+    (; is_base_level, parent_indices) = fine_level
+
+    if is_base_level
+        error("fidx2cidx is not defined for base level")
+    end
+
+    parent_idx_left = parent_indices[1]
+    offset = fidx - parent_idx_left
+
+    if mod(offset, 2) != 0
+        error("fidx = $fidx is not aligned with any point in parent level")
+    end
+
+    half_offset = div(offset, 2)
+    return parent_idx_left + half_offset
+end
+
 mutable struct Grid{NumState,NumDiagnostic}
     num_levels::Int
     levels::Vector{Level{NumState,NumDiagnostic}}
@@ -148,8 +166,7 @@ mutable struct Grid{NumState,NumDiagnostic}
             initial_time,
             dissipation,
             true,
-            Int[],
-            Int[],
+            (0:0),
         )
         levels = [base_level]
 
