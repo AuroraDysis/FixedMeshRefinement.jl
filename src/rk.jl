@@ -43,22 +43,18 @@ function rk4_mongwane!(
         level.num_total_points - level.num_buffer_points
     end
 
-    level.t = t
-    f(level, k1, u)
+    f(level, k1, u, t)
 
     @. tmp = u_p + half_dt * k1
-    level.t = t + half_dt
-    f(level, k2, tmp)
+    f(level, k2, tmp, t + half_dt)
 
     @. tmp = u_p + half_dt * k2
-    level.t = t + half_dt
-    f(level, k3, tmp)
+    f(level, k3, tmp, t + half_dt)
 
-    @. tmp = u_p + k3
-    level.t = t + dt
-    f(level, k4, tmp)
+    @. tmp = u_p + dt * k3
+    f(level, k4, tmp, t + dt)
 
-    @. u = u_p + (k1 + 2 * (k2 + k3) + k4) * sixth_dt
+    @. u = u_p + sixth_dt * (2 * (k2 + k3) + (k1 + k4))
 
     u[1:(isrt - 1), :] .= NaN
     u[(iend + 1):end, :] .= NaN
