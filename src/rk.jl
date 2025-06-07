@@ -1,19 +1,10 @@
-function rk4!(level::Level, f::Function; mongwane=false)
+function rk4!(level::Level, f::Function)
     (; u, u_p, tmp, k, t, dt) = level
     sixth_dt = dt / 6
     half_dt = dt / 2
 
     k1, k2, k3, k4 = k
 
-    isrt = level.is_base_level ? 1 : 1 + level.num_buffer_points
-    iend = if level.is_base_level
-        level.num_total_points
-    else
-        level.num_total_points - level.num_buffer_points
-    end
-
-    k1_left = k1[1:(isrt - 1), :]
-    k1_right = k1[(iend + 1):end, :]
     f(level, k1, u, t)
 
     @. tmp = u_p + half_dt * k1
