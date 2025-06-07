@@ -1,16 +1,18 @@
 function prolongation_interpolate!(res, u, i, order)
     if order == 1
+        # {0.5, 0.5}
         @. res = (u[i] + u[i + 1]) * 0.5
     elseif order == 2
-        @. res = (-u[i - 1] + 6 * u[i] + 3 * u[i + 1]) * 0.125
+        # {-0.125, 0.75, 0.375}
+        @. res = -0.125 * u[i - 1] + 0.75 * u[i] + 0.375 * u[i + 1]
     elseif order == 3
-        @. res = (-u[i - 1] + 9 * u[i] + 9 * u[i + 1] - u[i + 2]) * 0.0625
+        # {-0.0625, 0.5625, 0.5625, -0.0625}
+        @. res = -0.0625 * (u[i - 1] + u[i + 2]) + 0.5625 * (u[i] + u[i + 1])
     elseif order == 5
+        # {0.0117188, -0.0976563, 0.585938, 0.585938, -0.0976563, 0.0117188}
         @. res =
-            (
-                3 * u[i - 2] - 25 * u[i - 1] + 150 * u[i] + 150 * u[i + 1] - 25 * u[i + 2] +
-                3 * u[i + 3]
-            ) / 256
+            0.0117188 * (u[i - 2] + u[i + 3]) - 0.0976563 * (u[i - 1] + u[i + 2]) +
+            0.585938 * (u[i] + u[i + 1])
     else
         println("Interpolation order not supported yet: order = ", order)
         exit()
