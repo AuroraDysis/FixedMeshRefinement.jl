@@ -1,3 +1,21 @@
+function interpolate(u, i, order)
+    if order == 1
+        return (u[i] + u[i + 1]) * 0.5
+    elseif order == 2
+        return (-u[i - 1] + 6 * u[i] + 3 * u[i + 1]) * 0.125
+    elseif order == 3
+        return (-u[i - 1] + 9 * u[i] + 9 * u[i + 1] - u[i + 2]) * 0.0625
+    elseif order == 5
+        return (
+            3 * u[i - 2] - 25 * u[i - 1] + 150 * u[i] + 150 * u[i + 1] - 25 * u[i + 2] +
+            3 * u[i + 3]
+        ) / 256
+    else
+        println("Interpolation order not supported yet: order = ", order)
+        exit()
+    end
+end
+
 #===============================================================================
 Functions needed by Mongwane's subcycling method
 ===============================================================================#
@@ -94,8 +112,7 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
                         end
                     end
                     uf[f] =
-                        (1 - w) *
-                        Algo.Interpolation(ys, ioffset, spatial_interpolation_order) +
+                        (1 - w) * interpolate(ys, ioffset, spatial_interpolation_order) +
                         w * uf[f]
                 end
             end
@@ -150,12 +167,12 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
                     end
                     # setting k
                     for m in 1:3
-                        fine_level.k[m][v][f] = Algo.Interpolation(
+                        fine_level.k[m][v][f] = interpolate(
                             kfss[m, :], ioffset, spatial_interpolation_order
                         )
                     end
                     # setting u
-                    uf[f] = Algo.Interpolation(ys, ioffset, spatial_interpolation_order)
+                    uf[f] = interpolate(ys, ioffset, spatial_interpolation_order)
                 end
             end
         end
@@ -185,7 +202,7 @@ function prolongation!(grid::Grid, l::Int, interp_in_time::Bool; ord_t=2)
                 f = (j == 1) ? i : num_total_points - i + 1
                 c = parent_map[f]
                 if is_aligned[f]
-                    uf[f] = Algo.Interpolation([uc_pp[c], uc_p[c], uc[c]], 2, ord_t)
+                    uf[f] = interpolate([uc_pp[c], uc_p[c], uc[c]], 2, ord_t)
                 else
                     nucss = spatial_interpolation_order + 1
                     ioffset = (mod(nucss, 2) == 0) ? div(nucss, 2) : div(nucss, 2) + 1
@@ -194,11 +211,10 @@ function prolongation!(grid::Grid, l::Int, interp_in_time::Bool; ord_t=2)
                         ic_grid = c + ic - ioffset
                         ucss[:, ic] = [uc_pp[ic_grid], uc_p[ic_grid], uc[ic_grid]]
                     end
-                    uf[f] = Algo.Interpolation(
+                    uf[f] = interpolate(
                         [
-                            Algo.Interpolation(
-                                ucss[m, :], ioffset, spatial_interpolation_order
-                            ) for m in 1:3
+                            interpolate(ucss[m, :], ioffset, spatial_interpolation_order)
+                            for m in 1:3
                         ],
                         2,
                         ord_t,
@@ -213,7 +229,7 @@ function prolongation!(grid::Grid, l::Int, interp_in_time::Bool; ord_t=2)
                     if (is_aligned[f])
                         uc_p[c]
                     else
-                        Algo.Interpolation(uc_p, c, spatial_interpolation_order)
+                        interpolate(uc_p, c, spatial_interpolation_order)
                     end
                 )
             end
