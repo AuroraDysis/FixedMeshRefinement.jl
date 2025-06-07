@@ -53,7 +53,7 @@ end
 #===============================================================================
 Functions needed by Mongwane's subcycling method
 ===============================================================================#
-function calc_kfs_from_kcs!(kfs, kcs, dtc, interp_in_time::Bool, tmp)
+function calc_kfs_from_kcs!(kfs, kcs, dtc, tmp, interp_in_time::Bool)
     theta = interp_in_time ? 0.5 : 0.0
     dtf = 0.5 * dtc
     d1yc = tmp[1]
