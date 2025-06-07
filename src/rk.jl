@@ -1,33 +1,4 @@
 function rk4!(level::Level, f::Function)
-    (; u, u_p, rhs, tmp, t, dt) = level
-    sixth_dt = dt / 6
-    third_dt = dt / 3
-    half_dt = dt / 2
-
-    cycle_state!(level)
-
-    level.t = t
-    f(level, rhs, u)
-    @. u += sixth_dt * rhs
-
-    @. tmp = u_p + half_dt * rhs
-    level.t = t + half_dt
-    f(level, rhs, tmp)
-    @. u += third_dt * rhs
-
-    @. tmp = u_p + half_dt * rhs
-    level.t = t + half_dt
-    f(level, rhs, tmp)
-    @. u += third_dt * rhs
-
-    @. tmp = u_p + dt * rhs
-    level.t = t + dt
-    f(level, rhs, tmp)
-    @. u += sixth_dt * rhs
-    return level.t = t + dt
-end
-
-function rk4_mongwane!(level::Level, f::Function)
     (; u, u_p, tmp, k, t, dt) = level
     sixth_dt = dt / 6
     half_dt = dt / 2
