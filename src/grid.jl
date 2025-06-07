@@ -19,6 +19,7 @@ mutable struct Level{NumState,NumDiagnostic}
     num_transition_points::Int  # num of transition zone points
     num_total_points::Int  # num of all grid points
     finite_difference_order::Int  # finite difference order
+    time_interpolation_order::Int  # interpolation order in time
     spatial_interpolation_order::Int  # interpolation order in space
     domain_box::Tuple{Float64,Float64}  # size computational domain (interior)
     dx::Float64
@@ -61,9 +62,8 @@ mutable struct Level{NumState,NumDiagnostic}
         xmin = domain_box[1] - noffset * dx
         xmax = domain_box[2] + noffset * dx
         coordinates = LinRange(xmin, xmax, num_total_points)
-        state = [
-            fill(NaN, num_total_points, NumState) for _ in 1:(time_interpolation_order + 1)
-        ]
+        time_levels = max(time_interpolation_order + 1, 2)
+        state = [fill(NaN, num_total_points, NumState) for _ in 1:time_levels]
         rhs = fill(NaN, num_total_points, NumState)
         tmp = fill(NaN, num_total_points, NumState)
         runge_kutta_stages = Vector{Matrix{Float64}}(undef, 4)
