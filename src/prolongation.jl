@@ -1,4 +1,4 @@
-function prolongation_interpolate!(res, u, i, order)
+function prolongation_spatial_interpolate!(res, u, i, order)
     if order == 1
         # {0.5, 0.5}
         @. res = (u[i] + u[i + 1]) * 0.5
@@ -287,7 +287,7 @@ function prolongation!(
                         )
                     end
                     # spatial interpolation
-                    prolongation_interpolate!(
+                    prolongation_spatial_interpolate!(
                         @view(uf[fidx, :]),
                         [@view(buffer[m, :]) for m in 1:num_spatial_interpolation_points],
                         soffset,
@@ -309,7 +309,7 @@ function prolongation!(
                 else
                     cidx = fidx2cidx(fine_level, fidx - 1)
                     # spatial interpolation
-                    prolongation_interpolate!(
+                    prolongation_spatial_interpolate!(
                         @view(uf[fidx, :]),
                         [
                             @view(uc_p[cidx + ic - soffset, :]) for
