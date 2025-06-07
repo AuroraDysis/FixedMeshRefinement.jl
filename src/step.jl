@@ -34,18 +34,23 @@ function step!(
                     abs(levels[l].t - levels[1].t) > dt_min
                 )
                     substeps[l] += 1
+                    interp_in_time = mod(substeps[l], 2) == 0
+
                     if l < max_level
                         restriction!(grid, l; apply_trans_zone=apply_trans_zone)  # from l+1 to l
                     end
+
                     # from l-1 to l
                     if mongwane
-                        prolongation_mongwane!(grid, l, mod(substeps[l], 2) == 0)
+                        prolongation_mongwane!(grid, l, interp_in_time)
                     else
-                        prolongation!(grid, l, mod(substeps[l], 2) == 0)
+                        prolongation!(grid, l, interp_in_time)
                     end
+
                     if apply_trans_zone
-                        apply_transition_zone!(grid, l, mod(substeps[l], 2) == 0)
+                        apply_transition_zone!(grid, l, interp_in_time)
                     end
+
                     rk4!(grid.levels[l], f)
                 end
             end
