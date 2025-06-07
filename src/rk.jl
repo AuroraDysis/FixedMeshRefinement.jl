@@ -1,5 +1,11 @@
 function rk4!(level::Level, f::Function)
-    (; u, u_p, tmp, k, t, dt) = level
+    (; state, tmp, k, t, dt) = level
+
+    cycle_state!(level)
+
+    u = state[end]
+    u_p = state[end - 1]
+
     sixth_dt = dt / 6
     half_dt = dt / 2
 
