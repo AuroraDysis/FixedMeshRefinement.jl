@@ -1,23 +1,20 @@
-# function interpolate(u, i, order)
-#     if order == 1
-#         return (u[i] + u[i + 1]) * 0.5
-#     elseif order == 2
-#         return (-u[i - 1] + 6 * u[i] + 3 * u[i + 1]) * 0.125
-#     elseif order == 3
-#         return (-u[i - 1] + 9 * u[i] + 9 * u[i + 1] - u[i + 2]) * 0.0625
-#     elseif order == 5
-#         return (
-#             3 * u[i - 2] - 25 * u[i - 1] + 150 * u[i] + 150 * u[i + 1] - 25 * u[i + 2] +
-#             3 * u[i + 3]
-#         ) / 256
-#     else
-#         println("Interpolation order not supported yet: order = ", order)
-#         exit()
-#     end
-# end
-
-function prolongation_interpolate!(res, u_pp, u_p, u)
-    @. res = -0.125 * u_pp + 0.75 * u_p + 0.375 * u
+function prolongation_interpolate!(res, u, i, order)
+    if order == 1
+        @. res = (u[i] + u[i + 1]) * 0.5
+    elseif order == 2
+        @. res = (-u[i - 1] + 6 * u[i] + 3 * u[i + 1]) * 0.125
+    elseif order == 3
+        @. res = (-u[i - 1] + 9 * u[i] + 9 * u[i + 1] - u[i + 2]) * 0.0625
+    elseif order == 5
+        @. res =
+            (
+                3 * u[i - 2] - 25 * u[i - 1] + 150 * u[i] + 150 * u[i + 1] - 25 * u[i + 2] +
+                3 * u[i + 3]
+            ) / 256
+    else
+        println("Interpolation order not supported yet: order = ", order)
+        exit()
+    end
 end
 
 #===============================================================================
@@ -188,13 +185,15 @@ end
 prolongation!:
     * from level l-1 to level l
     * we assume that we always march coarse level first (for l in 2:lmax)
+    * 2nd order time interpolation is used
 ===============================================================================#
-function prolongation!(grid::Grid, l::Int, interp_in_time::Bool; ord_t=2)
+function prolongation!(
+    grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool
+) where {NumState,NumDiagnostic}
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
-    (; num_total_points, num_buffer_points, spatial_interpolation_order, parent_indices) =
-        fine_level
+    (; num_total_points, num_buffer_points, spatial_interpolation_order) = fine_level
 
     # j: 1: left, 2: right
     for j in 1:2
@@ -213,23 +212,42 @@ function prolongation!(grid::Grid, l::Int, interp_in_time::Bool; ord_t=2)
                 is_aligned = mod(fidx, 2) == 0
                 if is_aligned
                     cidx = fidx2cidx(fine_level, fidx)
-                    # second order time interpolation
-                    prolongation_interpolate!(uf[fidx], uc_pp[cidx], uc_p[cidx], uc[cidx])
-                else
-                    nucss = spatial_interpolation_order + 1
-                    ioffset = (mod(nucss, 2) == 0) ? div(nucss, 2) : div(nucss, 2) + 1
-                    ucss = zeros(Float64, 3, nucss)
-                    for ic in 1:nucss
-                        ic_grid = cidx + ic - ioffset
-                        ucss[:, ic] = [uc_pp[ic_grid], uc_p[ic_grid], uc[ic_grid]]
-                    end
-                    uf[fidx] = interpolate(
-                        [
-                            interpolate(ucss[m, :], ioffset, spatial_interpolation_order)
-                            for m in 1:3
-                        ],
+                    # 2nd order time interpolation
+                    prolongation_interpolate!(
+                        @view(uf[fidx, :]),
+                        [@view(uc_pp[cidx, :]), @view(uc_p[cidx, :]), @view(uc[cidx, :])],
                         2,
-                        ord_t,
+                        2,
+                    )
+                else
+                    cidx = fidx2cidx(fine_level, fidx - 1)
+                    num_spatial_interpolation_points = spatial_interpolation_order + 1
+                    ioffset = if mod(num_spatial_interpolation_points, 2) == 0
+                        div(num_spatial_interpolation_points, 2)
+                    else
+                        div(num_spatial_interpolation_points, 2) + 1
+                    end
+                    buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
+                    for ic in 1:num_spatial_interpolation_points
+                        ic_grid = cidx + ic - ioffset
+                        # 2nd order time interpolation
+                        prolongation_interpolate!(
+                            @view(buffer[ic, :]),
+                            [
+                                @view(uc_pp[ic_grid, :]),
+                                @view(uc_p[ic_grid, :]),
+                                @view(uc[ic_grid, :])
+                            ],
+                            2,
+                            2,
+                        )
+                    end
+                    # spatial interpolation
+                    prolongation_interpolate!(
+                        @view(uf[fidx, :]),
+                        [@view(buffer[:, m]) for m in 1:num_spatial_interpolation_points],
+                        2,
+                        spatial_interpolation_order,
                     )
                 end
             end
