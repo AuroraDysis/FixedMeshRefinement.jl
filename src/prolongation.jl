@@ -101,10 +101,10 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
                     uf[fidx] = (1 - w) * ys + w * uf[fidx]
                 else
                     nys = spatial_interpolation_order + 1
-                    ioffset = (mod(nys, 2) == 0) ? div(nys, 2) : div(nys, 2) + 1
+                    soffset = (mod(nys, 2) == 0) ? div(nys, 2) : div(nys, 2) + 1
                     ys = zeros(Float64, nys)
                     for ic in 1:nys
-                        ic_grid = cidx + ic - ioffset
+                        ic_grid = cidx + ic - soffset
                         kcs = [coarse_level.k[m][v][ic_grid] for m in 1:4]
                         ys[ic] = if interp_in_time
                             DenseOutput.y(0.5, uc_p[ic_grid], kcs)
@@ -113,7 +113,7 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
                         end
                     end
                     uf[fidx] =
-                        (1 - w) * interpolate(ys, ioffset, spatial_interpolation_order) +
+                        (1 - w) * interpolate(ys, soffset, spatial_interpolation_order) +
                         w * uf[fidx]
                 end
             end
@@ -154,11 +154,11 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
                         interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
                 else
                     nys = spatial_interpolation_order + 1
-                    ioffset = (mod(nys, 2) == 0) ? div(nys, 2) : div(nys, 2) + 1
+                    soffset = (mod(nys, 2) == 0) ? div(nys, 2) : div(nys, 2) + 1
                     kfss = zeros(Float64, 3, nys)
                     ys = zeros(Float64, nys)
                     for ic in 1:nys
-                        ic_grid = cidx + ic - ioffset
+                        ic_grid = cidx + ic - soffset
                         kcs = [coarse_level.k[m][v][ic_grid] for m in 1:4]
                         kfss[:, ic] = calc_kfs_from_kcs(kcs, dtc, interp_in_time)
                         ys[ic] = if interp_in_time
@@ -170,11 +170,11 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
                     # setting k
                     for m in 1:3
                         fine_level.k[m][v][fidx] = interpolate(
-                            kfss[m, :], ioffset, spatial_interpolation_order
+                            kfss[m, :], soffset, spatial_interpolation_order
                         )
                     end
                     # setting u
-                    uf[fidx] = interpolate(ys, ioffset, spatial_interpolation_order)
+                    uf[fidx] = interpolate(ys, soffset, spatial_interpolation_order)
                 end
             end
         end
@@ -185,23 +185,48 @@ end
 prolongation!:
     * from level l-1 to level l
     * we assume that we always march coarse level first (for l in 2:lmax)
-    * 2nd order time interpolation is used
+    * time interpolation is used when time_interpolation_order > 0
 ===============================================================================#
 function prolongation!(
-    grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool
+    grid::Grid{NumState,NumDiagnostic}, l::Int
 ) where {NumState,NumDiagnostic}
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
-    (; num_total_points, num_buffer_points, spatial_interpolation_order) = fine_level
+    (;
+        num_total_points,
+        num_buffer_points,
+        spatial_interpolation_order,
+        time_interpolation_order,
+    ) = fine_level
+
+    num_spatial_interpolation_points = spatial_interpolation_order + 1
+    soffset = if mod(num_spatial_interpolation_points, 2) == 0
+        div(num_spatial_interpolation_points, 2)
+    else
+        div(num_spatial_interpolation_points, 2) + 1
+    end
+
+    interp_in_time = time_interpolation_order > 0
+
+    if interp_in_time
+        num_time_interpolation_points = time_interpolation_order + 1
+        toffset = if mod(num_time_interpolation_points, 2) == 0
+            div(num_time_interpolation_points, 2)
+        else
+            div(num_time_interpolation_points, 2) + 1
+        end
+    end
+
+    fstate = fine_level.state
+    cstate = coarse_level.state
+
+    uf = fine_level.state[end]
+    uc_p = coarse_level.state[end - 1]
 
     # j: 1: left, 2: right
     for j in 1:2
-        uf = fine_level.u
-        uc_p = coarse_level.u_p
         if interp_in_time
-            uc = coarse_level.u
-            uc_pp = coarse_level.u_pp
             for i in 1:num_buffer_points
                 # from nearest point to the boundary
                 fidx = if (j == 1)
@@ -212,41 +237,38 @@ function prolongation!(
                 is_aligned = mod(fidx, 2) == 0
                 if is_aligned
                     cidx = fidx2cidx(fine_level, fidx)
-                    # 2nd order time interpolation
+                    # time interpolation
                     prolongation_interpolate!(
                         @view(uf[fidx, :]),
-                        [@view(uc_pp[cidx, :]), @view(uc_p[cidx, :]), @view(uc[cidx, :])],
-                        2,
-                        2,
+                        [
+                            @view(cstate[m][cidx, :]) for
+                            m in 1:num_time_interpolation_points
+                        ],
+                        toffset,
+                        time_interpolation_order,
                     )
                 else
                     cidx = fidx2cidx(fine_level, fidx - 1)
-                    num_spatial_interpolation_points = spatial_interpolation_order + 1
-                    ioffset = if mod(num_spatial_interpolation_points, 2) == 0
-                        div(num_spatial_interpolation_points, 2)
-                    else
-                        div(num_spatial_interpolation_points, 2) + 1
-                    end
+
                     buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
                     for ic in 1:num_spatial_interpolation_points
-                        ic_grid = cidx + ic - ioffset
-                        # 2nd order time interpolation
+                        ic_grid = cidx + ic - soffset
+                        # time interpolation
                         prolongation_interpolate!(
                             @view(buffer[ic, :]),
                             [
-                                @view(uc_pp[ic_grid, :]),
-                                @view(uc_p[ic_grid, :]),
-                                @view(uc[ic_grid, :])
+                                @view(cstate[m][ic_grid, :]) for
+                                m in 1:num_time_interpolation_points
                             ],
-                            2,
-                            2,
+                            toffset,
+                            time_interpolation_order,
                         )
                     end
                     # spatial interpolation
                     prolongation_interpolate!(
                         @view(uf[fidx, :]),
                         [@view(buffer[m, :]) for m in 1:num_spatial_interpolation_points],
-                        ioffset,
+                        soffset,
                         spatial_interpolation_order,
                     )
                 end
@@ -264,17 +286,14 @@ function prolongation!(
                     uf[fidx] = uc_p[cidx]
                 else
                     cidx = fidx2cidx(fine_level, fidx - 1)
-                    num_spatial_interpolation_points = spatial_interpolation_order + 1
-                    ioffset = if mod(num_spatial_interpolation_points, 2) == 0
-                        div(num_spatial_interpolation_points, 2)
-                    else
-                        div(num_spatial_interpolation_points, 2) + 1
-                    end
                     # spatial interpolation
                     prolongation_interpolate!(
                         @view(uf[fidx, :]),
-                        [@view(uc_p[cidx + ic - ioffset, :]) for ic in 1:num_spatial_interpolation_points],
-                        ioffset,
+                        [
+                            @view(uc_p[cidx + ic - soffset, :]) for
+                            ic in 1:num_spatial_interpolation_points
+                        ],
+                        soffset,
                         spatial_interpolation_order,
                     )
                 end
