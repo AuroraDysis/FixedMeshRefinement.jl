@@ -223,8 +223,8 @@ function prolongation!(
     fstate = fine_level.state
     cstate = coarse_level.state
 
-    uf = fine_level.state[end]
-    uc_p = coarse_level.state[end - 1]
+    uf = fstate[end]
+    uc_p = cstate[end - 1]
 
     # j: 1: left, 2: right
     for j in 1:2
