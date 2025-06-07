@@ -187,50 +187,48 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     uc_p = statec[end - 1]
 
     # j: 1: left, 2: right
-    for j in 1:2
-        for i in 1:num_buffer_points
-            fidx = if (j == 1)
-                (num_buffer_points + 1 - i)
-            else
-                (num_total_points - num_buffer_points + i)
-            end
-            is_aligned = mod(fidx, 2) == 0
-            cidx = fidx2cidx(fine_level, fidx)
+    for i in 1:num_buffer_points, j in 1:2
+        fidx = if (j == 1)
+            (num_buffer_points + 1 - i)
+        else
+            (num_total_points - num_buffer_points + i)
+        end
+        is_aligned = mod(fidx, 2) == 0
+        cidx = fidx2cidx(fine_level, fidx)
 
-            if is_aligned
-                kcs = [view(kc[m], cidx, :) for m in 1:4]
-                kfs = [view(kf[m], fidx, :) for m in 1:3]
+        if is_aligned
+            kcs = [view(kc[m], cidx, :) for m in 1:4]
+            kfs = [view(kf[m], fidx, :) for m in 1:3]
 
-                kfs = calc_kfs_from_kcs!(kcs, dtc, interp_in_time)
-                # setting k
-                for m in 1:3
-                    fine_level.k[m][v][fidx] = kfs[m]
-                end
-                # setting u
-                uf[fidx] =
-                    interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
-            else
-                kfss = zeros(Float64, 3, num_spatial_interpolation_points)
-                ys = zeros(Float64, num_spatial_interpolation_points)
-                for ic in 1:nys
-                    ic_grid = cidx + ic - soffset
-                    kcs = [coarse_level.k[m][v][ic_grid] for m in 1:4]
-                    kfss[:, ic] = calc_kfs_from_kcs!(kcs, dtc, interp_in_time)
-                    ys[ic] = if interp_in_time
-                        DenseOutput.y(0.5, uc_p[ic_grid], kcs)
-                    else
-                        uc_p[ic_grid]
-                    end
-                end
-                # setting k
-                for m in 1:3
-                    fine_level.k[m][v][fidx] = interpolate(
-                        kfss[m, :], soffset, spatial_interpolation_order
-                    )
-                end
-                # setting u
-                uf[fidx] = interpolate(ys, soffset, spatial_interpolation_order)
+            kfs = calc_kfs_from_kcs!(kcs, dtc, interp_in_time)
+            # setting k
+            for m in 1:3
+                fine_level.k[m][v][fidx] = kfs[m]
             end
+            # setting u
+            uf[fidx] =
+                interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
+        else
+            kfss = zeros(Float64, 3, num_spatial_interpolation_points)
+            ys = zeros(Float64, num_spatial_interpolation_points)
+            for ic in 1:nys
+                ic_grid = cidx + ic - soffset
+                kcs = [coarse_level.k[m][v][ic_grid] for m in 1:4]
+                kfss[:, ic] = calc_kfs_from_kcs!(kcs, dtc, interp_in_time)
+                ys[ic] = if interp_in_time
+                    DenseOutput.y(0.5, uc_p[ic_grid], kcs)
+                else
+                    uc_p[ic_grid]
+                end
+            end
+            # setting k
+            for m in 1:3
+                fine_level.k[m][v][fidx] = interpolate(
+                    kfss[m, :], soffset, spatial_interpolation_order
+                )
+            end
+            # setting u
+            uf[fidx] = interpolate(ys, soffset, spatial_interpolation_order)
         end
     end
 end
