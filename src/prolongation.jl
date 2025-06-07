@@ -20,7 +20,32 @@ function prolongation_interpolate!(res, u, i, order)
             0.0117188 * (u[i - 2] + u[i + 3]) - 0.0976563 * (u[i - 1] + u[i + 2]) +
             0.585938 * (u[i] + u[i + 1])
     else
-        println("Interpolation order not supported yet: order = ", order)
+        println("Spatial interpolation order not supported yet: order = ", order)
+        exit()
+    end
+end
+
+# u from oldest to newest
+function prolongation_time_interpolate!(res, u, order)
+    length(u) == order + 1 || error("Length of u must be equal to order + 1")
+
+    if order == 1
+        # {0.5, 0.5}
+        @. res = (u[1] + u[2]) * 0.5
+    elseif order == 2
+        # {-0.125, 0.75, 0.375}
+        @. res = -0.125 * u[1] + 0.75 * u[2] + 0.375 * u[3]
+    elseif order == 3
+        # {0.0625, -0.3125, 0.9375, 0.3125}
+        @. res = 0.0625 * u[1] - 0.3125 * u[2] + 0.9375 * u[3] + 0.3125 * u[4]
+    elseif order == 4
+        # {-0.0390625, 0.21875, -0.546875, 1.09375, 0.2734375}
+        @. res =
+            -0.0390625 * u[1] + 0.21875 * u[2] - 0.546875 * u[3] +
+            1.09375 * u[4] +
+            0.2734375 * u[5]
+    else
+        println("Time interpolation order not supported yet: order = ", order)
         exit()
     end
 end
@@ -217,15 +242,6 @@ function prolongation!(
 
     interp_in_time = time_interpolation_order > 0
 
-    if interp_in_time
-        num_time_interpolation_points = time_interpolation_order + 1
-        toffset = if mod(num_time_interpolation_points, 2) == 0
-            div(num_time_interpolation_points, 2)
-        else
-            div(num_time_interpolation_points, 2) + 1
-        end
-    end
-
     fstate = fine_level.state
     cstate = coarse_level.state
 
@@ -246,13 +262,12 @@ function prolongation!(
                 if is_aligned
                     cidx = fidx2cidx(fine_level, fidx)
                     # time interpolation
-                    prolongation_interpolate!(
+                    prolongation_time_interpolate!(
                         @view(uf[fidx, :]),
                         [
                             @view(cstate[m][cidx, :]) for
-                            m in 1:num_time_interpolation_points
+                            m in 1:(time_interpolation_order + 1)
                         ],
-                        toffset,
                         time_interpolation_order,
                     )
                 else
@@ -262,13 +277,12 @@ function prolongation!(
                     for ic in 1:num_spatial_interpolation_points
                         ic_grid = cidx + ic - soffset
                         # time interpolation
-                        prolongation_interpolate!(
+                        prolongation_time_interpolate!(
                             @view(buffer[ic, :]),
                             [
                                 @view(cstate[m][ic_grid, :]) for
-                                m in 1:num_time_interpolation_points
+                                m in 1:(time_interpolation_order + 1)
                             ],
-                            toffset,
                             time_interpolation_order,
                         )
                     end
