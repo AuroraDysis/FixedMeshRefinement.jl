@@ -4,17 +4,18 @@ include("Derivs.jl")
 include("Boundary.jl")
 
 #===============================================================================
-WaveRHS!:
+rhs_wave!:
     * rhs of wave equation
         dot(psi) = Pi
         dot(Pi)  = ddpsi
 ===============================================================================#
-function WaveRHS!(level, r, u)
+function rhs_wave!(level, rhs, u, t)
     psi = u[1]
     Pi = u[2]
-    psi_rhs = r[1]
-    Pi_rhs = r[2]
+    psi_rhs = rhs[1]
+    Pi_rhs = rhs[2]
 
+    # TODO: improve performance by using pre-allocated arrays
     ddpsi = zeros(Float64, level.num_total_points)
     psi_diss = zeros(Float64, level.num_total_points)
     Pi_diss = zeros(Float64, level.num_total_points)
@@ -26,7 +27,7 @@ function WaveRHS!(level, r, u)
     @. Pi_rhs = ddpsi + level.dissipation * Pi_diss
 
     if level.is_base_level
-        Boundary.ApplyPeriodicBoundaryConditionRHS!(level, r)
+        Boundary.ApplyPeriodicBoundaryConditionRHS!(level, rhs)
     end
 end
 
@@ -46,7 +47,7 @@ function Energy(grid)
     Derivs.derivs_1st!(dpsi, psi, dx, grid.levels[1].finite_difference_order)
 
     E::Float64 = 0.0
-    for i = 1+num_buffer_points:num_total_points-num_buffer_points
+    for i in (1 + num_buffer_points):(num_total_points - num_buffer_points)
         E += (0.5 * Pi[i] * Pi[i] + 0.5 * dpsi[i] * dpsi[i])
     end
     return E * dx

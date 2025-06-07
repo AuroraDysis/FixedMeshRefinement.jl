@@ -43,7 +43,7 @@ Spectial Treatment for prolongation!
     * evolve backwards to file u_p
 ===============================================================================#
 function NegativeWaveRHS!(level, r, u)
-    Physical.WaveRHS!(level, r, u)
+    Physical.rhs_wave!(level, r, u)
     @. r = -r
 end
 
