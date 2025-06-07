@@ -1,4 +1,4 @@
-function rk4!(f::Function, level)
+function rk4!(level::Level, f::Function)
     (; u, u_p, rhs, tmp, t, dt) = level
     sixth_dt = dt / 6
     third_dt = dt / 3
@@ -27,9 +27,7 @@ function rk4!(f::Function, level)
     return level.t = t + dt
 end
 
-function rk4_mongwane!(
-    f::Function, level::Level{NumState,NumDiagnostic}
-) where {NumState,NumDiagnostic}
+function rk4_mongwane!(level::Level, f::Function)
     (; u, u_p, tmp, k, t, dt) = level
     sixth_dt = dt / 6
     half_dt = dt / 2

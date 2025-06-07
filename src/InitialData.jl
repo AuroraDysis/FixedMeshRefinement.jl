@@ -52,7 +52,7 @@ function MarchBackwards!(grid)
         if l > 1
             prolongation(grid, l, false)
         end
-        ODESolver.rk4!(NegativeWaveRHS!, grid.levels[l])
+        ODESolver.rk4!(grid.levels[l], NegativeWaveRHS!)
         # save new u(-dt) -> u_p, u(0) -> u
         u = grid.levels[l].u
         u_p = grid.levels[l].u_p

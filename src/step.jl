@@ -17,7 +17,7 @@ function step!(
                 apply_transition_zone(grid, l, false)
             end
         end
-        mongwane ? rk4_mongwane!(f, grid.levels[l]) : rk4!(f, grid.levels[l])
+        mongwane ? rk4_mongwane!(grid.levels[l], f) : rk4!(grid.levels[l], f)
     end
 
     #-------------------------------------------------#
@@ -46,7 +46,7 @@ function step!(
                     if apply_trans_zone
                         apply_transition_zone(grid, l, mod(substeps[l], 2) == 0)
                     end
-                    mongwane ? rk4_mongwane!(f, grid.levels[l]) : rk4!(f, grid.levels[l])
+                    mongwane ? rk4_mongwane!(grid.levels[l], f) : rk4!(grid.levels[l], f)
                 end
             end
         end
