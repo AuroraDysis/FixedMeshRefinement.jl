@@ -53,9 +53,11 @@ end
 #===============================================================================
 Functions needed by Mongwane's subcycling method
 ===============================================================================#
-function calc_kfs_from_kcs(kcs, dtc, interp_in_time::Bool)
+function calc_kfs_from_kcs!(kfs, kcs, dtc, interp_in_time::Bool)
     t0_f = interp_in_time ? 0.5 : 0.0
     dtf = 0.5 * dtc
+    rk4_dense_output_dy!(tmp, t0_f, dtc, kcs)
+
     d1yc = DenseOutput.dy1(t0_f, dtc, kcs)
     d2yc = DenseOutput.dy2(t0_f, dtc, kcs)
     d3yc = DenseOutput.dy3(t0_f, dtc, kcs)
@@ -166,6 +168,13 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     (; num_total_points, num_buffer_points, spatial_interpolation_order, parent_indices) =
         fine_level
 
+    num_spatial_interpolation_points = spatial_interpolation_order + 1
+    soffset = if mod(num_spatial_interpolation_points, 2) == 0
+        div(num_spatial_interpolation_points, 2)
+    else
+        div(num_spatial_interpolation_points, 2) + 1
+    end
+
     dtc = coarse_level.dt
 
     statef = fine_level.state
@@ -189,8 +198,10 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
             cidx = fidx2cidx(fine_level, fidx)
 
             if is_aligned
-                kcs = [coarse_level.k[m][v][cidx] for m in 1:4]
-                kfs = calc_kfs_from_kcs(kcs, dtc, interp_in_time)
+                kcs = [view(kc[m], cidx, :) for m in 1:4]
+                kfs = [view(kf[m], fidx, :) for m in 1:3]
+
+                kfs = calc_kfs_from_kcs!(kcs, dtc, interp_in_time)
                 # setting k
                 for m in 1:3
                     fine_level.k[m][v][fidx] = kfs[m]
@@ -199,14 +210,12 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
                 uf[fidx] =
                     interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
             else
-                nys = spatial_interpolation_order + 1
-                soffset = (mod(nys, 2) == 0) ? div(nys, 2) : div(nys, 2) + 1
-                kfss = zeros(Float64, 3, nys)
-                ys = zeros(Float64, nys)
+                kfss = zeros(Float64, 3, num_spatial_interpolation_points)
+                ys = zeros(Float64, num_spatial_interpolation_points)
                 for ic in 1:nys
                     ic_grid = cidx + ic - soffset
                     kcs = [coarse_level.k[m][v][ic_grid] for m in 1:4]
-                    kfss[:, ic] = calc_kfs_from_kcs(kcs, dtc, interp_in_time)
+                    kfss[:, ic] = calc_kfs_from_kcs!(kcs, dtc, interp_in_time)
                     ys[ic] = if interp_in_time
                         DenseOutput.y(0.5, uc_p[ic_grid], kcs)
                     else
@@ -261,76 +270,73 @@ function prolongation!(
     uc_p = statec[end - 1]
 
     # j: 1: left, 2: right
-    for j in 1:2
-        if interp_in_time
-            for i in 1:num_buffer_points
-                # from nearest point to the boundary
-                fidx = if (j == 1)
-                    (num_buffer_points + 1 - i)
-                else
-                    (num_total_points - num_buffer_points + i)
-                end
-                is_aligned = mod(fidx, 2) == 0
-                if is_aligned
-                    cidx = fidx2cidx(fine_level, fidx)
+    if interp_in_time
+        buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
+        for i in 1:num_buffer_points, j in 1:2
+            # from nearest point to the boundary
+            fidx = if (j == 1)
+                (num_buffer_points + 1 - i)
+            else
+                (num_total_points - num_buffer_points + i)
+            end
+            is_aligned = mod(fidx, 2) == 0
+            if is_aligned
+                cidx = fidx2cidx(fine_level, fidx)
+                # time interpolation
+                prolongation_time_interpolate!(
+                    @view(uf[fidx, :]),
+                    [
+                        @view(statec[m][cidx, :]) for
+                        m in 1:(time_interpolation_order + 1)
+                    ],
+                    time_interpolation_order,
+                )
+            else
+                cidx = fidx2cidx(fine_level, fidx - 1)
+                for ic in 1:num_spatial_interpolation_points
+                    ic_grid = cidx + ic - soffset
                     # time interpolation
                     prolongation_time_interpolate!(
-                        @view(uf[fidx, :]),
+                        @view(buffer[ic, :]),
                         [
-                            @view(statec[m][cidx, :]) for
+                            @view(statec[m][ic_grid, :]) for
                             m in 1:(time_interpolation_order + 1)
                         ],
                         time_interpolation_order,
                     )
-                else
-                    cidx = fidx2cidx(fine_level, fidx - 1)
-
-                    buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
-                    for ic in 1:num_spatial_interpolation_points
-                        ic_grid = cidx + ic - soffset
-                        # time interpolation
-                        prolongation_time_interpolate!(
-                            @view(buffer[ic, :]),
-                            [
-                                @view(statec[m][ic_grid, :]) for
-                                m in 1:(time_interpolation_order + 1)
-                            ],
-                            time_interpolation_order,
-                        )
-                    end
-                    # spatial interpolation
-                    prolongation_spatial_interpolate!(
-                        @view(uf[fidx, :]),
-                        [@view(buffer[m, :]) for m in 1:num_spatial_interpolation_points],
-                        soffset,
-                        spatial_interpolation_order,
-                    )
                 end
+                # spatial interpolation
+                prolongation_spatial_interpolate!(
+                    @view(uf[fidx, :]),
+                    [@view(buffer[m, :]) for m in 1:num_spatial_interpolation_points],
+                    soffset,
+                    spatial_interpolation_order,
+                )
             end
-        else
-            for i in 1:num_buffer_points
-                fidx = if (j == 1)
-                    (num_buffer_points + 1 - i)
-                else
-                    (num_total_points - num_buffer_points + i)
-                end
-                is_aligned = mod(fidx, 2) == 0
-                if is_aligned
-                    cidx = fidx2cidx(fine_level, fidx)
-                    uf[fidx] = uc_p[cidx]
-                else
-                    cidx = fidx2cidx(fine_level, fidx - 1)
-                    # spatial interpolation
-                    prolongation_spatial_interpolate!(
-                        @view(uf[fidx, :]),
-                        [
-                            @view(uc_p[cidx + ic - soffset, :]) for
-                            ic in 1:num_spatial_interpolation_points
-                        ],
-                        soffset,
-                        spatial_interpolation_order,
-                    )
-                end
+        end
+    else
+        for i in 1:num_buffer_points, j in 1:2
+            fidx = if (j == 1)
+                (num_buffer_points + 1 - i)
+            else
+                (num_total_points - num_buffer_points + i)
+            end
+            is_aligned = mod(fidx, 2) == 0
+            if is_aligned
+                cidx = fidx2cidx(fine_level, fidx)
+                uf[fidx] = uc_p[cidx]
+            else
+                cidx = fidx2cidx(fine_level, fidx - 1)
+                # spatial interpolation
+                prolongation_spatial_interpolate!(
+                    @view(uf[fidx, :]),
+                    [
+                        @view(uc_p[cidx + ic - soffset, :]) for
+                        ic in 1:num_spatial_interpolation_points
+                    ],
+                    soffset,
+                    spatial_interpolation_order,
+                )
             end
         end
     end
