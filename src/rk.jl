@@ -30,9 +30,8 @@ end
 function rk4_mongwane!(
     f::Function, level::Level{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
-    (; u, u_p, rhs, tmp, k, t, dt) = level
+    (; u, u_p, tmp, k, t, dt) = level
     sixth_dt = dt / 6
-    third_dt = dt / 3
     half_dt = dt / 2
 
     k1, k2, k3, k4 = k
@@ -44,30 +43,30 @@ function rk4_mongwane!(
         level.num_total_points - level.num_buffer_points
     end
 
-    @. u_p = u
     level.t = t
-    f(level, rhs, u)
-    k1[isrt:iend, :] .= rhs[isrt:iend, :]
-    @. u += k1 * sixth_dt
+    f(level, k1, u)
 
     @. tmp = u_p + half_dt * k1
     level.t = t + half_dt
-    f(level, rhs, tmp)
-    k2[isrt:iend, :] .= rhs[isrt:iend, :]
-    @. u += third_dt * k2
+    f(level, k2, tmp)
 
     @. tmp = u_p + half_dt * k2
     level.t = t + half_dt
-    f(level, rhs, tmp)
-    k3[isrt:iend, :] .= rhs[isrt:iend, :]
-    @. u += third_dt * k3
+    f(level, k3, tmp)
 
     @. tmp = u_p + k3
     level.t = t + dt
-    f(level, rhs, tmp)
-    k4[isrt:iend, :] .= rhs[isrt:iend, :]
-    @. u += sixth_dt * k4
-    return level.t = t + dt
+    f(level, k4, tmp)
+
+    @. u = u_p + (k1 + 2 * (k2 + k3) + k4) * sixth_dt
+
+    u[1:(isrt - 1), :] .= NaN
+    u[(iend + 1):end, :] .= NaN
+
+    # update time
+    level.t = t + dt
+
+    return nothing
 end
 
 function rk4_dense_output_y!(y, theta, h, yn, k)
