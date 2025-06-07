@@ -35,16 +35,14 @@ end
 apply_transition_zone!: apply transition zone
 ===============================================================================#
 function apply_transition_zone!(grid, l, interp_in_time::Bool)
-    num_total_points = grid.levels[l].num_total_points
-    num_buffer_points = grid.levels[l].num_buffer_points
-    num_transition_points = grid.levels[l].num_transition_points
-    spatial_interpolation_order = grid.levels[l].spatial_interpolation_order
-    parent_map = grid.levels[l].parent_map
-    is_aligned = grid.levels[l].is_aligned
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
+
+    (; num_total_points, num_buffer_points, num_transition_points, spatial_interpolation_order, parent_indices) =
+        fine_level
+
     # for transition zone
-    domain_box = grid.levels[l].domain_box
+    domain_box = fine_level.domain_box
     dxf = grid.levels[l].dx
     @assert(isapprox(domain_box[1], grid.levels[l].x[1 + num_buffer_points]; rtol=1e-12))
     @assert(
