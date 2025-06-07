@@ -232,7 +232,7 @@ function restriction!(grid, l; apply_trans_zone=false)
     fine_level = grid.levels[l + 1]
     coarse_level = grid.levels[l]
 
-    (; num_total_points, num_buffer_points, num_transition_points, parent_map, is_aligned) =
+    (; num_total_points, num_buffer_points, num_transition_points, parent_indices) =
         fine_level
 
     isrt = if apply_trans_zone
@@ -247,13 +247,13 @@ function restriction!(grid, l; apply_trans_zone=false)
         num_total_points - num_buffer_points
     end
 
-    uf = fine_level.u
+    uf = @view(fine_level.u[isrt:2:iend, :])
     uc = coarse_level.u
-    uc .= uf[isrt:2:iend, :]
 
-    for f in isrt:iend # only interior
-        if is_aligned[f]
-            uc[parent_map[f], :] .= uf[f, :]
-        end
+    if apply_trans_zone
+        noffset = div(num_transition_points + 1, 2)
+        uc[parent_indices[(1 + noffset):(end - noffset)]] .= uf
+    else
+        uc[parent_indices] .= uf
     end
 end

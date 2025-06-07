@@ -179,8 +179,8 @@ mutable struct Grid{NumState,NumDiagnostic}
             level_num_interior_points = (level_max_idx - level_min_idx) + 1
             # maps between two levels
             parent_map(i) = div(i + 1, 2)
-            parent_idx_left = parent_map(level_min_idx - num_buffer_points)
-            parent_idx_right = parent_map(level_max_idx + num_buffer_points)
+            parent_idx_left = parent_map(level_min_idx)
+            parent_idx_right = parent_map(level_max_idx)
             parent_indices = parent_idx_left:parent_idx_right
 
             # check coordinates are aligned
