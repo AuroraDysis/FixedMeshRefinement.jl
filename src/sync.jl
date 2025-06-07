@@ -176,11 +176,11 @@ function prolongation!(grid::Grid, l::Int, interp_in_time::Bool; ord_t=2)
 
     # j: 1: left, 2: right
     for j in 1:2
-        uf = fine_level.u[v]
-        uc_p = coarse_level.u_p[v]
+        uf = fine_level.u
+        uc_p = coarse_level.u_p
         if interp_in_time
-            uc = coarse_level.u[v]
-            uc_pp = coarse_level.u_pp[v]
+            uc = coarse_level.u
+            uc_pp = coarse_level.u_pp
             for i in 1:num_buffer_points
                 f = (j == 1) ? i : num_total_points - i + 1
                 c = parent_map[f]
