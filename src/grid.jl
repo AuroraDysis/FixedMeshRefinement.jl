@@ -26,8 +26,7 @@ mutable struct Level{NumState,NumDiagnostic}
     t::Float64
     dissipation::Float64
     is_base_level::Bool
-    parent_map::Vector{Int}  # map between indexes of current and its parent level
-    is_aligned::Vector{Bool}  # if grid aligned with coarse grid
+    parent_indices::UnitRange{Int}
 
     # data
     coordinates::LinRange{Float64,Int}  # coordinates
@@ -54,8 +53,7 @@ mutable struct Level{NumState,NumDiagnostic}
         t,
         dissipation,
         is_base_level,
-        parent_map,
-        is_aligned,
+        parent_indices,
     )
         num_total_points = num_interior_points + 2 * num_buffer_points
         dx = (domain_box[2] - domain_box[1]) / (num_interior_points - 1)
@@ -89,8 +87,7 @@ mutable struct Level{NumState,NumDiagnostic}
             t,
             dissipation,
             is_base_level,
-            parent_map,
-            is_aligned,
+            parent_indices,
             # data
             coordinates,
             u,
@@ -181,24 +178,31 @@ mutable struct Grid{NumState,NumDiagnostic}
             )
             level_num_interior_points = (level_max_idx - level_min_idx) + 1
             # maps between two levels
-            parent_map =
-                div.(
-                    (
-                        (
-                            (level_min_idx - num_buffer_points):(level_max_idx + num_buffer_points)
-                        ) .+ 1
-                    ),
-                    2,
-                ) .+ num_buffer_points
-            is_aligned =
-                mod.(
-                    (
-                        (
-                            (level_min_idx - num_buffer_points):(level_max_idx + num_buffer_points)
-                        ) .+ 1
-                    ),
-                    2,
-                ) .== 0
+            parent_map(i) = div(i + 1, 2)
+            parent_idx_left = parent_map(level_min_idx - num_buffer_points)
+            parent_idx_right = parent_map(level_max_idx + num_buffer_points)
+            parent_indices = parent_idx_left:parent_idx_right
+
+            # check coordinates are aligned
+            (
+                isapprox(
+                    parent_level.coordinates[parent_indices[1]], level_domain[1]; rtol=1e-12
+                ) && isapprox(
+                    parent_level.coordinates[parent_indices[end]],
+                    level_domain[2];
+                    rtol=1e-12,
+                )
+            ) || error(
+                "Level $i: Coordinates are not aligned: ",
+                parent_level.coordinates[parent_indices[1]],
+                " != ",
+                level_domain[1],
+                " or ",
+                parent_level.coordinates[parent_indices[end]],
+                " != ",
+                level_domain[2],
+            )
+
             # build level
             push!(
                 levels,
@@ -214,8 +218,7 @@ mutable struct Grid{NumState,NumDiagnostic}
                     initial_time,
                     dissipation,
                     false,
-                    parent_map,
-                    is_aligned,
+                    parent_indices,
                 ),
             )
         end
