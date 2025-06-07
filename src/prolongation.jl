@@ -206,7 +206,6 @@ function prolongation_mongwane!(grid, l)
 
         if is_aligned
             cidx = fidx2cidx(fine_level, fidx)
-
             kcs = [view(kc[m], cidx, :) for m in 1:4]
             kfs = [view(kf[m], fidx, :) for m in 1:3]
             calc_kfs_from_kcs!(kfs, kcs, dtc, interp_in_time)
