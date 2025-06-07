@@ -21,7 +21,7 @@ function step!(
     end
 
     #-------------------------------------------------#
-    # march the other substeps to the same t slice #
+    # march the other substeps to the same time slice #
     #-------------------------------------------------#
     if grid.subcycling
         levels = grid.levels
