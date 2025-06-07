@@ -23,6 +23,7 @@ function restriction!(grid, l; apply_trans_zone=false)
         num_total_points - num_buffer_points
     end
 
+    # TODO: implement average down and fourth-order interpolation
     uf = @view(fine_level.u[isrt:2:iend, :])
     uc = coarse_level.u
 
