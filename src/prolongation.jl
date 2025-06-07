@@ -168,11 +168,14 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
 
     dtc = coarse_level.dt
 
-    fstate = fine_level.state
-    cstate = coarse_level.state
+    statef = fine_level.state
+    statec = coarse_level.state
 
-    uf = fstate[end]
-    uc_p = cstate[end - 1]
+    kf = fine_level.k
+    kc = coarse_level.k
+
+    uf = statef[end]
+    uc_p = statec[end - 1]
 
     # j: 1: left, 2: right
     for j in 1:2
@@ -251,11 +254,11 @@ function prolongation!(
 
     interp_in_time = time_interpolation_order > 0
 
-    fstate = fine_level.state
-    cstate = coarse_level.state
+    statef = fine_level.state
+    statec = coarse_level.state
 
-    uf = fstate[end]
-    uc_p = cstate[end - 1]
+    uf = statef[end]
+    uc_p = statec[end - 1]
 
     # j: 1: left, 2: right
     for j in 1:2
@@ -274,7 +277,7 @@ function prolongation!(
                     prolongation_time_interpolate!(
                         @view(uf[fidx, :]),
                         [
-                            @view(cstate[m][cidx, :]) for
+                            @view(statec[m][cidx, :]) for
                             m in 1:(time_interpolation_order + 1)
                         ],
                         time_interpolation_order,
@@ -289,7 +292,7 @@ function prolongation!(
                         prolongation_time_interpolate!(
                             @view(buffer[ic, :]),
                             [
-                                @view(cstate[m][ic_grid, :]) for
+                                @view(statec[m][ic_grid, :]) for
                                 m in 1:(time_interpolation_order + 1)
                             ],
                             time_interpolation_order,
