@@ -30,16 +30,14 @@ mutable struct Level{NumState,NumDiagnostic}
 
     # data
     coordinates::LinRange{Float64,Int}  # coordinates
-    u::Matrix{Float64}  # u vectors
-    u_p::Matrix{Float64}  # previous u vectors
-    u_pp::Matrix{Float64}  # previous previous u vectors
-    rhs::Matrix{Float64}  # rhs of u vectors
-    tmp::Matrix{Float64}  # intermediate u vectors
-    # intermediate u vectors for new subcycling
+    state::Vector{Matrix{Float64}}  # state vectors at different time levels
+    rhs::Matrix{Float64}  # rhs of state vectors
+    tmp::Matrix{Float64}  # intermediate state vectors
+    # intermediate state vectors for new subcycling
     runge_kutta_stages::Vector{Matrix{Float64}}
 
     # diagnostic variables
-    diag_state::Matrix{Float64}  # u vectors for diagnostic variables
+    diag_state::Matrix{Float64}  # state vectors for diagnostic variables
 
     function Level{NumState,NumDiagnostic}(
         num_interior_points,
@@ -47,6 +45,7 @@ mutable struct Level{NumState,NumDiagnostic}
         num_buffer_points,
         num_transition_points,
         finite_difference_order,
+        time_interpolation_order,
         spatial_interpolation_order,
         domain_box,
         dt,
@@ -62,9 +61,9 @@ mutable struct Level{NumState,NumDiagnostic}
         xmin = domain_box[1] - noffset * dx
         xmax = domain_box[2] + noffset * dx
         coordinates = LinRange(xmin, xmax, num_total_points)
-        u = fill(NaN, num_total_points, NumState)
-        u_p = fill(NaN, num_total_points, NumState)
-        u_pp = fill(NaN, num_total_points, NumState)
+        state = [
+            fill(NaN, num_total_points, NumState) for _ in 1:(time_interpolation_order + 1)
+        ]
         rhs = fill(NaN, num_total_points, NumState)
         tmp = fill(NaN, num_total_points, NumState)
         runge_kutta_stages = Vector{Matrix{Float64}}(undef, 4)
@@ -90,9 +89,7 @@ mutable struct Level{NumState,NumDiagnostic}
             parent_indices,
             # data
             coordinates,
-            u,
-            u_p,
-            u_pp,
+            state,
             rhs,
             tmp,
             runge_kutta_stages,
@@ -102,8 +99,11 @@ mutable struct Level{NumState,NumDiagnostic}
 end
 
 function cycle_state!(level::Level)
-    level.u_pp .= level.u_p
-    level.u_p .= level.u
+    (; state, time_interpolation_order) = level
+    # shift state vectors
+    for i in 1:time_interpolation_order
+        state[i] .= state[i + 1]
+    end
     return nothing
 end
 
@@ -139,6 +139,7 @@ mutable struct Grid{NumState,NumDiagnostic}
         num_buffer_points;
         num_transition_points=3,
         finite_difference_order=4,
+        time_interpolation_order=2,
         spatial_interpolation_order=5,
         cfl=0.25,
         initial_time=0.0,
@@ -160,6 +161,7 @@ mutable struct Grid{NumState,NumDiagnostic}
             num_buffer_points,
             num_transition_points,
             finite_difference_order,
+            time_interpolation_order,
             spatial_interpolation_order,
             domain_boxes[1],
             base_dt,
@@ -229,6 +231,7 @@ mutable struct Grid{NumState,NumDiagnostic}
                     num_buffer_points,
                     num_transition_points,
                     finite_difference_order,
+                    time_interpolation_order,
                     spatial_interpolation_order,
                     level_domain,
                     level_dt,
