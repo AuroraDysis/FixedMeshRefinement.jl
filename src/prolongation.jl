@@ -253,15 +253,31 @@ function prolongation!(
             end
         else
             for i in 1:num_buffer_points
-                fidx = (j == 1) ? i : num_total_points - i + 1
-                cidx = parent_map[fidx]
-                uf[fidx] = (
-                    if (is_aligned[fidx])
-                        uc_p[cidx]
+                fidx = if (j == 1)
+                    (num_buffer_points + 1 - i)
+                else
+                    (num_total_points - num_buffer_points + i)
+                end
+                is_aligned = mod(fidx, 2) == 0
+                if is_aligned
+                    cidx = fidx2cidx(fine_level, fidx)
+                    uf[fidx] = uc_p[cidx]
+                else
+                    cidx = fidx2cidx(fine_level, fidx - 1)
+                    num_spatial_interpolation_points = spatial_interpolation_order + 1
+                    ioffset = if mod(num_spatial_interpolation_points, 2) == 0
+                        div(num_spatial_interpolation_points, 2)
                     else
-                        interpolate(uc_p, cidx, spatial_interpolation_order)
+                        div(num_spatial_interpolation_points, 2) + 1
                     end
-                )
+                    # spatial interpolation
+                    prolongation_interpolate!(
+                        @view(uf[fidx, :]),
+                        [@view(uc_p[cidx + ic - ioffset, :]) for ic in 1:num_spatial_interpolation_points],
+                        ioffset,
+                        spatial_interpolation_order,
+                    )
+                end
             end
         end
     end
