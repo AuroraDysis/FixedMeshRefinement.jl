@@ -41,8 +41,8 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
     spatial_interpolation_order = grid.levels[l].spatial_interpolation_order
     parent_map = grid.levels[l].parent_map
     is_aligned = grid.levels[l].is_aligned
-    levf = grid.levels[l]
-    levc = grid.levels[l - 1]
+    fine_level = grid.levels[l]
+    coarse_level = grid.levels[l - 1]
     # for transition zone
     domain_box = grid.levels[l].domain_box
     dxf = grid.levels[l].dx
@@ -63,8 +63,8 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
             domain_box[2] - (num_transition_points - 1) * dxf
         end
         for v in 1:(grid.NumState)
-            uf = levf.u[v]
-            uc_p = levc.u_p[v]
+            uf = fine_level.u[v]
+            uc_p = coarse_level.u_p[v]
             for i in 1:num_transition_points
                 f = if (j == 1)
                     i + num_buffer_points
@@ -74,7 +74,7 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
                 c = parent_map[f]
                 w = transition_profile(a, b, grid.levels[l].x[f])
                 if is_aligned[f]
-                    kcs = [levc.k[m][v][c] for m in 1:4]
+                    kcs = [coarse_level.k[m][v][c] for m in 1:4]
                     ys = interp_in_time ? DenseOutput.y(0.5, uc_p[c], kcs) : uc_p[c]
                     uf[f] = (1 - w) * ys + w * uf[f]
                 else
@@ -83,7 +83,7 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
                     ys = zeros(Float64, nys)
                     for ic in 1:nys
                         ic_grid = c + ic - ioffset
-                        kcs = [levc.k[m][v][ic_grid] for m in 1:4]
+                        kcs = [coarse_level.k[m][v][ic_grid] for m in 1:4]
                         ys[ic] = if interp_in_time
                             DenseOutput.y(0.5, uc_p[ic_grid], kcs)
                         else
@@ -112,22 +112,22 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     parent_map = grid.levels[l].parent_map
     is_aligned = grid.levels[l].is_aligned
     dtc = grid.levels[l - 1].dt
-    levf = grid.levels[l]
-    levc = grid.levels[l - 1]
+    fine_level = grid.levels[l]
+    coarse_level = grid.levels[l - 1]
 
     for j in 1:2  # left or right
         for v in 1:(grid.NumState)
-            uf = levf.u[v]
-            uc_p = levc.u_p[v]
+            uf = fine_level.u[v]
+            uc_p = coarse_level.u_p[v]
             for i in 1:num_buffer_points
                 f = (j == 1) ? i : num_total_points - i + 1
                 c = parent_map[f]
                 if is_aligned[f]
-                    kcs = [levc.k[m][v][c] for m in 1:4]
+                    kcs = [coarse_level.k[m][v][c] for m in 1:4]
                     kfs = calc_kfs_from_kcs(kcs, dtc, interp_in_time)
                     # setting k
                     for m in 1:3
-                        levf.k[m][v][f] = kfs[m]
+                        fine_level.k[m][v][f] = kfs[m]
                     end
                     # setting u
                     uf[f] = interp_in_time ? DenseOutput.y(0.5, uc_p[c], kcs) : uc_p[c]
@@ -138,7 +138,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
                     ys = zeros(Float64, nys)
                     for ic in 1:nys
                         ic_grid = c + ic - ioffset
-                        kcs = [levc.k[m][v][ic_grid] for m in 1:4]
+                        kcs = [coarse_level.k[m][v][ic_grid] for m in 1:4]
                         kfss[:, ic] = calc_kfs_from_kcs(kcs, dtc, interp_in_time)
                         ys[ic] = if interp_in_time
                             DenseOutput.y(0.5, uc_p[ic_grid], kcs)
@@ -148,7 +148,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
                     end
                     # setting k
                     for m in 1:3
-                        levf.k[m][v][f] = Algo.Interpolation(
+                        fine_level.k[m][v][f] = Algo.Interpolation(
                             kfss[m, :], ioffset, spatial_interpolation_order
                         )
                     end
@@ -165,22 +165,20 @@ prolongation!:
     * from level l-1 to level l
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
-function prolongation!(grid, l, interp_in_time::Bool; ord_t=2)
-    num_total_points = grid.levels[l].num_total_points
-    num_buffer_points = grid.levels[l].num_buffer_points
-    spatial_interpolation_order = grid.levels[l].spatial_interpolation_order
-    parent_map = grid.levels[l].parent_map
-    is_aligned = grid.levels[l].is_aligned
-    levf = grid.levels[l]
-    levc = grid.levels[l - 1]
+function prolongation!(grid::Grid, l::Int, interp_in_time::Bool; ord_t=2)
+    fine_level = grid.levels[l]
+    coarse_level = grid.levels[l - 1]
+
+    (; num_total_points, num_buffer_points, spatial_interpolation_order, parent_indices) =
+        fine_level
 
     for j in 1:2  # left or right
         for v in 1:(grid.NumState)
-            uf = levf.u[v]
-            uc_p = levc.u_p[v]
+            uf = fine_level.u[v]
+            uc_p = coarse_level.u_p[v]
             if interp_in_time
-                uc = levc.u[v]
-                uc_pp = levc.u_pp[v]
+                uc = coarse_level.u[v]
+                uc_pp = coarse_level.u_pp[v]
                 for i in 1:num_buffer_points
                     f = (j == 1) ? i : num_total_points - i + 1
                     c = parent_map[f]
@@ -252,8 +250,8 @@ function restriction!(grid, l; apply_trans_zone=false)
 
     if apply_trans_zone
         noffset = div(num_transition_points + 1, 2)
-        uc[parent_indices[(1 + noffset):(end - noffset)]] .= uf
+        uc[parent_indices[(1 + noffset):(end - noffset)], :] .= uf
     else
-        uc[parent_indices] .= uf
+        uc[parent_indices, :] .= uf
     end
 end
