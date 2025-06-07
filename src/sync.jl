@@ -32,9 +32,9 @@ function transition_profile(xl, xh, x; type = 1)
 end
 
 #===============================================================================
-apply_transition_zone: apply transition zone
+apply_transition_zone!: apply transition zone
 ===============================================================================#
-function apply_transition_zone(grid, l, interp_in_time::Bool)
+function apply_transition_zone!(grid, l, interp_in_time::Bool)
     num_total_points = grid.levels[l].num_total_points
     num_buffer_points = grid.levels[l].num_buffer_points
     num_transition_points = grid.levels[l].num_transition_points
@@ -82,11 +82,11 @@ function apply_transition_zone(grid, l, interp_in_time::Bool)
 end
 
 #===============================================================================
-prolongation_mongwane: use Mongwane's method
+prolongation_mongwane!: use Mongwane's method
     * from level l-1 to level l
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
-function prolongation_mongwane(grid, l, interp_in_time::Bool)
+function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     num_total_points = grid.levels[l].num_total_points
     num_buffer_points = grid.levels[l].num_buffer_points
     spatial_interpolation_order = grid.levels[l].spatial_interpolation_order
@@ -138,11 +138,11 @@ function prolongation_mongwane(grid, l, interp_in_time::Bool)
 end
 
 #===============================================================================
-prolongation:
+prolongation!:
     * from level l-1 to level l
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
-function prolongation(grid, l, interp_in_time::Bool; ord_t = 2)
+function prolongation!(grid, l, interp_in_time::Bool; ord_t = 2)
     num_total_points = grid.levels[l].num_total_points
     num_buffer_points = grid.levels[l].num_buffer_points
     spatial_interpolation_order = grid.levels[l].spatial_interpolation_order

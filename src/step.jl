@@ -9,12 +9,12 @@ function step!(
     for l in 1:max_level  # notice that we march coarse level first
         if l > 1
             if mongwane
-                prolongation_mongwane(grid, l, false)
+                prolongation_mongwane!(grid, l, false)
             else
-                prolongation(grid, l, false)
+                prolongation!(grid, l, false)
             end
             if apply_trans_zone
-                apply_transition_zone(grid, l, false)
+                apply_transition_zone!(grid, l, false)
             end
         end
         rk4!(grid.levels[l], f)
@@ -39,12 +39,12 @@ function step!(
                     end
                     # from l-1 to l
                     if mongwane
-                        prolongation_mongwane(grid, l, mod(substeps[l], 2) == 0)
+                        prolongation_mongwane!(grid, l, mod(substeps[l], 2) == 0)
                     else
-                        prolongation(grid, l, mod(substeps[l], 2) == 0)
+                        prolongation!(grid, l, mod(substeps[l], 2) == 0)
                     end
                     if apply_trans_zone
-                        apply_transition_zone(grid, l, mod(substeps[l], 2) == 0)
+                        apply_transition_zone!(grid, l, mod(substeps[l], 2) == 0)
                     end
                     rk4!(grid.levels[l], f)
                 end

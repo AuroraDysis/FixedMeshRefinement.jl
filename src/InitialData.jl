@@ -39,7 +39,7 @@ function sinusoidal!(grid)
 end
 
 #===============================================================================
-Spectial Treatment for prolongation
+Spectial Treatment for prolongation!
     * evolve backwards to file u_p
 ===============================================================================#
 function NegativeWaveRHS!(level, r, u)
@@ -50,7 +50,7 @@ end
 function MarchBackwards!(grid)
     for l = 1:length(grid.levels)
         if l > 1
-            prolongation(grid, l, false)
+            prolongation!(grid, l, false)
         end
         rk4!(grid.levels[l], NegativeWaveRHS!)
         # save new u(-dt) -> u_p, u(0) -> u
