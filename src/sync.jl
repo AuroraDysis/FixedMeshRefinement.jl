@@ -172,49 +172,48 @@ function prolongation!(grid::Grid, l::Int, interp_in_time::Bool; ord_t=2)
     (; num_total_points, num_buffer_points, spatial_interpolation_order, parent_indices) =
         fine_level
 
-    for j in 1:2  # left or right
-        for v in 1:(grid.NumState)
-            uf = fine_level.u[v]
-            uc_p = coarse_level.u_p[v]
-            if interp_in_time
-                uc = coarse_level.u[v]
-                uc_pp = coarse_level.u_pp[v]
-                for i in 1:num_buffer_points
-                    f = (j == 1) ? i : num_total_points - i + 1
-                    c = parent_map[f]
-                    if is_aligned[f]
-                        uf[f] = Algo.Interpolation([uc_pp[c], uc_p[c], uc[c]], 2, ord_t)
-                    else
-                        nucss = spatial_interpolation_order + 1
-                        ioffset = (mod(nucss, 2) == 0) ? div(nucss, 2) : div(nucss, 2) + 1
-                        ucss = zeros(Float64, 3, nucss)
-                        for ic in 1:nucss
-                            ic_grid = c + ic - ioffset
-                            ucss[:, ic] = [uc_pp[ic_grid], uc_p[ic_grid], uc[ic_grid]]
-                        end
-                        uf[f] = Algo.Interpolation(
-                            [
-                                Algo.Interpolation(
-                                    ucss[m, :], ioffset, spatial_interpolation_order
-                                ) for m in 1:3
-                            ],
-                            2,
-                            ord_t,
-                        )
+    # j: 1: left, 2: right
+    for j in 1:2
+        uf = fine_level.u[v]
+        uc_p = coarse_level.u_p[v]
+        if interp_in_time
+            uc = coarse_level.u[v]
+            uc_pp = coarse_level.u_pp[v]
+            for i in 1:num_buffer_points
+                f = (j == 1) ? i : num_total_points - i + 1
+                c = parent_map[f]
+                if is_aligned[f]
+                    uf[f] = Algo.Interpolation([uc_pp[c], uc_p[c], uc[c]], 2, ord_t)
+                else
+                    nucss = spatial_interpolation_order + 1
+                    ioffset = (mod(nucss, 2) == 0) ? div(nucss, 2) : div(nucss, 2) + 1
+                    ucss = zeros(Float64, 3, nucss)
+                    for ic in 1:nucss
+                        ic_grid = c + ic - ioffset
+                        ucss[:, ic] = [uc_pp[ic_grid], uc_p[ic_grid], uc[ic_grid]]
                     end
-                end
-            else
-                for i in 1:num_buffer_points
-                    f = (j == 1) ? i : num_total_points - i + 1
-                    c = parent_map[f]
-                    uf[f] = (
-                        if (is_aligned[f])
-                            uc_p[c]
-                        else
-                            Algo.Interpolation(uc_p, c, spatial_interpolation_order)
-                        end
+                    uf[f] = Algo.Interpolation(
+                        [
+                            Algo.Interpolation(
+                                ucss[m, :], ioffset, spatial_interpolation_order
+                            ) for m in 1:3
+                        ],
+                        2,
+                        ord_t,
                     )
                 end
+            end
+        else
+            for i in 1:num_buffer_points
+                f = (j == 1) ? i : num_total_points - i + 1
+                c = parent_map[f]
+                uf[f] = (
+                    if (is_aligned[f])
+                        uc_p[c]
+                    else
+                        Algo.Interpolation(uc_p, c, spatial_interpolation_order)
+                    end
+                )
             end
         end
     end
