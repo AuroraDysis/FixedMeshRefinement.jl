@@ -151,8 +151,8 @@ mutable struct Grid{NumState,NumDiagnostic}
             initial_time,
             dissipation,
             true,
-            [],
-            [],
+            Int[],
+            Int[],
         )
         levels = [base_level]
 
