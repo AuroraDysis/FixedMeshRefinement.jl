@@ -1,4 +1,4 @@
-function rk4!(level::Level, f::Function)
+function rk4!(level::Level, f::Function; mongwane=false)
     (; u, u_p, tmp, k, t, dt) = level
     sixth_dt = dt / 6
     half_dt = dt / 2
@@ -12,6 +12,8 @@ function rk4!(level::Level, f::Function)
         level.num_total_points - level.num_buffer_points
     end
 
+    k1_left = k1[1:(isrt - 1), :]
+    k1_right = k1[(iend + 1):end, :]
     f(level, k1, u, t)
 
     @. tmp = u_p + half_dt * k1
@@ -24,9 +26,6 @@ function rk4!(level::Level, f::Function)
     f(level, k4, tmp, t + dt)
 
     @. u = u_p + sixth_dt * (2 * (k2 + k3) + (k1 + k4))
-
-    u[1:(isrt - 1), :] .= NaN
-    u[(iend + 1):end, :] .= NaN
 
     # update time
     level.t = t + dt
