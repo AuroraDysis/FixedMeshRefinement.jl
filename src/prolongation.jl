@@ -176,6 +176,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
         num_buffer_points,
         spatial_interpolation_order,
         time_interpolation_order,
+        buffer_indices,
     ) = fine_level
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
@@ -198,13 +199,9 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     # buffer points for Yn
     Yn_buffer = fine_level.Yn_buffer
 
-    # j: 1: left, 2: right
-    for j in 1:2, i in 1:num_buffer_points
-        fidx = if (j == 1)
-            (num_buffer_points + 1 - i)
-        else
-            (num_total_points - num_buffer_points + i)
-        end
+    # dir: 1: left, 2: right
+    for dir in 1:2, i in 1:num_buffer_points
+        fidx = buffer_indices[dir][i]
         is_aligned = mod(fidx, 2) == 0
 
         if is_aligned
