@@ -139,6 +139,8 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
     uf = statef[end]
     uc_p = statec[end - 1]
 
+    aligned_buffer = zeros(Float64, NumState)
+
     for dir in 1:2  # left or right
         a = dir == 1 ? domain_box[1] : domain_box[2]
         b = if dir == 1
@@ -158,8 +160,13 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
             if is_aligned
                 cidx = fidx2cidx(fine_level, fidx)
                 kcs = [view(kc[m], cidx, :) for m in 1:4]
-                ys = interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
-                uf[fidx] = (1 - w) * ys + w * uf[fidx]
+                yn = @view(uc_p[cidx, :])
+                if interp_in_time
+                    rk4_dense_output_y!(aligned_buffer, 0.5, dtc, yn, kcs)
+                else
+                    aligned_buffer .= yn
+                end
+                @. uf[fidx, :] = (1 - w) * aligned_buffer + w * @view(uf[fidx, :])
             else
                 cidx = fidx2cidx(fine_level, fidx - 1)
                 ys = zeros(Float64, num_spatial_interpolation_points)
