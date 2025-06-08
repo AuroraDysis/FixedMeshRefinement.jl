@@ -123,6 +123,13 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
         )
     )
 
+    num_spatial_interpolation_points = spatial_interpolation_order + 1
+    soffset = if mod(num_spatial_interpolation_points, 2) == 0
+        div(num_spatial_interpolation_points, 2)
+    else
+        div(num_spatial_interpolation_points, 2) + 1
+    end
+
     for dir in 1:2  # left or right
         a = (dir == 1) ? domain_box[1] : domain_box[2]
         b = if (dir == 1)
@@ -146,10 +153,8 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
                     ys = interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
                     uf[fidx] = (1 - w) * ys + w * uf[fidx]
                 else
-                    nys = spatial_interpolation_order + 1
-                    soffset = (mod(nys, 2) == 0) ? div(nys, 2) : div(nys, 2) + 1
-                    ys = zeros(Float64, nys)
-                    for ic in 1:nys
+                    ys = zeros(Float64, num_spatial_interpolation_points)
+                    for ic in 1:num_spatial_interpolation_points
                         ic_grid = cidx + ic - soffset
                         kcs = [coarse_level.k[m][v][ic_grid] for m in 1:4]
                         ys[ic] = if interp_in_time
