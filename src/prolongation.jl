@@ -228,7 +228,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
                 # else
                 #     uc_p[ic_grid]
                 # end
-                interpolate!(ys, soffset, spatial_interpolation_order)
+                prolongation_spatial_interpolate!(Yn_buffer, ys, soffset, spatial_interpolation_order)
             end
             # # setting k
             # for m in 1:3
