@@ -77,7 +77,8 @@ mutable struct Level{NumState,NumDiagnostic}
             Yn_buffer[j] = fill(NaN, num_buffer_points, 2, NumState)
         end
         buffer_indices = (
-            1:num_buffer_points, (num_total_points - num_buffer_points + 1):num_total_points
+            num_buffer_points:-1:1,
+            (num_total_points - num_buffer_points + 1):num_total_points,
         )
 
         return new(
