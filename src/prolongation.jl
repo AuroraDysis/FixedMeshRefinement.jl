@@ -144,11 +144,11 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
 
         for i in 1:num_transition_points
             fidx = if dir == 1
-                i + num_buffer_points
+                num_buffer_points + i
             else
-                num_total_points - i + 1 - num_buffer_points
+                num_total_points - num_buffer_points + 1 - i
             end
-            cidx = parent_map[fidx]
+            cidx = fidx2cidx(fine_level, fidx)
             w = transition_profile(a, b, fine_level.x[fidx])
             if is_aligned[fidx]
                 kcs = [coarse_level.k[m][v][cidx] for m in 1:4]
