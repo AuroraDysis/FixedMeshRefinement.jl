@@ -242,6 +242,9 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
             end
         end
     end
+
+    # fill fine level buffer
+    fill_buffer!(uf, fine_level, 1)
 end
 
 #===============================================================================
