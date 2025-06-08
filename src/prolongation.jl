@@ -118,9 +118,9 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
         )
     )
 
-    for j in 1:2  # left or right
-        a = (j == 1) ? domain_box[1] : domain_box[2]
-        b = if (j == 1)
+    for dir in 1:2  # left or right
+        a = (dir == 1) ? domain_box[1] : domain_box[2]
+        b = if (dir == 1)
             domain_box[1] + (num_transition_points - 1) * dxf
         else
             domain_box[2] - (num_transition_points - 1) * dxf
@@ -129,7 +129,7 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
             uf = fine_level.u[v]
             uc_p = coarse_level.u_p[v]
             for i in 1:num_transition_points
-                fidx = if (j == 1)
+                fidx = if (dir == 1)
                     i + num_buffer_points
                 else
                     num_total_points - i + 1 - num_buffer_points
@@ -206,7 +206,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
 
         if is_aligned
             cidx = fidx2cidx(fine_level, fidx)
-            buffer = [view(Yn_buffer[rk_stage], i, j, :) for rk_stage in 1:3]
+            buffer = [view(Yn_buffer[rk_stage], i, dir, :) for rk_stage in 1:3]
             kcs = [view(kc[m], cidx, :) for m in 1:4]
             calc_kfs_from_kcs!(buffer, kcs, dtc, interp_in_time)
             # setting u
