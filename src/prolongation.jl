@@ -20,8 +20,7 @@ function prolongation_spatial_interpolate!(res, u, i, order)
             0.0117188 * (u[i - 2] + u[i + 3]) - 0.0976563 * (u[i - 1] + u[i + 2]) +
             0.585938 * (u[i] + u[i + 1])
     else
-        println("Spatial interpolation order not supported yet: order = ", order)
-        exit()
+        error("Spatial interpolation order not supported yet: order = ", order)
     end
 end
 
@@ -45,8 +44,7 @@ function prolongation_time_interpolate!(res, u, order)
             1.09375 * u[4] +
             0.2734375 * u[5]
     else
-        println("Time interpolation order not supported yet: order = ", order)
-        exit()
+        error("Time interpolation order not supported yet: order = ", order)
     end
 end
 
