@@ -51,12 +51,12 @@ end
 #===============================================================================
 Functions needed by Mongwane's subcycling method
 ===============================================================================#
-function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool, tmp)
+function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool, dytmp)
     theta = interp_in_time ? 0.5 : 0.0
 
-    d1y = tmp[1]
-    d2y = tmp[2]
-    d3y = tmp[3]
+    d1y = dytmp[1]
+    d2y = dytmp[2]
+    d3y = dytmp[3]
 
     Y1 = Yn_buffer[1]
     Y2 = Yn_buffer[2]
@@ -239,6 +239,9 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
         zeros(Float64, num_spatial_interpolation_points, NumState) for _ in 1:4
     ]
 
+    # Yn buffer
+    dytmp = [zeros(Float64, NumState) for _ in 1:3]
+
     # dir: 1: left, 2: right
     for dir in 1:2, i in 1:num_buffer_points
         fidx = buffer_indices[dir][i]
@@ -249,7 +252,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
             buffer = [view(Yn_buffer[rk_stage], i, :, dir) for rk_stage in 1:4]
             yn = @view(uc_p[cidx, :])
             kcs = [view(kc[m], cidx, :) for m in 1:4]
-            calc_Yn_from_kcs!(buffer, yn, kcs, dtc, interp_in_time)
+            calc_Yn_from_kcs!(buffer, yn, kcs, dtc, interp_in_time, dytmp)
         else
             cidx = fidx2cidx(fine_level, fidx - 1)
 
@@ -258,7 +261,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
                 kcs = [view(kc[m], ic_grid, :) for m in 1:4]
                 yn = @view(uc_p[ic_grid, :])
                 sbuffer = [view(spatial_buffer[rk_stage], ic, :) for rk_stage in 1:4]
-                calc_Yn_from_kcs!(sbuffer, yn, kcs, dtc, interp_in_time)
+                calc_Yn_from_kcs!(sbuffer, yn, kcs, dtc, interp_in_time, dytmp)
             end
             for rk_stage in 1:4
                 prolongation_spatial_interpolate!(
