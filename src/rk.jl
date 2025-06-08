@@ -9,7 +9,7 @@ function fill_buffer!(u, level::Level, stage::Int)
 end
 
 function rk4!(level::Level, f::Function; mongwane::Bool=false)
-    (; state, tmp, k, t, dt, Yn_buffer, num_buffer_points, buffer_indices) = level
+    (; state, tmp, k, t, dt) = level
 
     cycle_state!(level)
 
