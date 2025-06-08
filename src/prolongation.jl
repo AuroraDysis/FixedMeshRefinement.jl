@@ -53,13 +53,20 @@ end
 #===============================================================================
 Functions needed by Mongwane's subcycling method
 ===============================================================================#
-function calc_Yn_from_kcs!(buffer, yn, kcs, dtc, interp_in_time::Bool)
+function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool)
     theta = interp_in_time ? 0.5 : 0.0
     dtf = 0.5 * dtc
 
-    Y2 = buffer[2]
-    Y3 = buffer[3]
-    Y4 = buffer[4]
+    Y1 = Yn_buffer[1]
+    Y2 = Yn_buffer[2]
+    Y3 = Yn_buffer[3]
+    Y4 = Yn_buffer[4]
+
+    if interp_in_time
+        rk4_dense_output_y!(@view(Y1[i, dir, :]), 0.5, dtc, yn, kcs)
+    else
+        Y1 .= yn
+    end
 
     rk4_dense_output_dy!(Y2, theta, dtc, yn, kcs)
     rk4_dense_output_d2y!(Y3, theta, dtc, yn, kcs)
@@ -67,7 +74,7 @@ function calc_Yn_from_kcs!(buffer, yn, kcs, dtc, interp_in_time::Bool)
 
     fyd2yc = 4 * (kcs[3] - kcs[2]) / dtc^3
 
-    @. Y2[1] = dtf * d1yc
+    @. Y2[1] = yn + dtf * d1yc
     @. Y3[2] = dtf * d1yc + 0.5 * dtf^2 * d2yc + 0.125 * dtf^3 * (d3yc - fyd2yc)
     @. Y4[3] = dtf * d1yc + 0.5 * dtf^2 * d2yc + 0.125 * dtf^3 * (d3yc + fyd2yc)
 
@@ -208,11 +215,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
             kcs = [view(kc[m], cidx, :) for m in 1:4]
             calc_Yn_from_kcs!(buffer, yn, kcs, dtc, interp_in_time)
             Y1 = buffer[1]
-            if interp_in_time
-                rk4_dense_output_y!(@view(Y1[i, dir, :]), 0.5, dtc, yn, kcs)
-            else
-                Y1 .= yn
-            end
+
         else
             cidx = fidx2cidx(fine_level, fidx - 1)
 
