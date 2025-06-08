@@ -179,7 +179,6 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     (;
         num_buffer_points,
         spatial_interpolation_order,
-        time_interpolation_order,
         buffer_indices,
     ) = fine_level
 
