@@ -77,13 +77,12 @@ function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool, dytmp)
     r = 0.5
     r2 = r * r
     r3 = r2 * r
+    k2 = kcs[2]
+    k3 = kcs[3]
     @. Y2 = Y1 + dtc * (0.5 * r * d1y)
     @. Y3 =
-        Y1 +
-        dtc *
-        (0.5 * r * d1y + 0.25 * r2 * d2y + 0.0625 * r3 * (d3y + 4.0 * (kcs[3] - kcs[2])))
-    @. Y4 =
-        Y1 + dtc * (r * d1y + 0.5 * r2 * d2y + 0.125 * r3 * (d3y - 4.0 * (kcs[3] - kcs[2])))
+        Y1 + dtc * (0.5 * r * d1y + 0.25 * r2 * d2y + 0.0625 * r3 * (d3y + 4.0 * (k3 - k2)))
+    @. Y4 = Y1 + dtc * (r * d1y + 0.5 * r2 * d2y + 0.125 * r3 * (d3y - 4.0 * (k3 - k2)))
 
     return nothing
 end
