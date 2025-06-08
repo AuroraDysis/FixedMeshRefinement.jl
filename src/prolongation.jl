@@ -199,7 +199,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     Yn_buffer = fine_level.Yn_buffer
 
     # j: 1: left, 2: right
-    for i in 1:num_buffer_points, j in 1:2
+    for j in 1:2, i in 1:num_buffer_points
         fidx = if (j == 1)
             (num_buffer_points + 1 - i)
         else
@@ -274,11 +274,11 @@ function prolongation!(
     uf = statef[end]
     uc_p = statec[end - 1]
 
-    # j: 1: left, 2: right
     if interp_in_time
         buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
-        for j in 1:2, i in 1:num_buffer_points
-            fidx = buffer_indices[j][i]
+        # dir: 1: left, 2: right
+        for dir in 1:2, i in 1:num_buffer_points
+            fidx = buffer_indices[dir][i]
             is_aligned = mod(fidx, 2) == 0
             if is_aligned
                 cidx = fidx2cidx(fine_level, fidx)
@@ -312,8 +312,9 @@ function prolongation!(
             end
         end
     else
-        for j in 1:2, i in 1:num_buffer_points
-            fidx = buffer_indices[j][i]
+        # dir: 1: left, 2: right
+        for dir in 1:2, i in 1:num_buffer_points
+            fidx = buffer_indices[dir][i]
             is_aligned = mod(fidx, 2) == 0
             if is_aligned
                 cidx = fidx2cidx(fine_level, fidx)
