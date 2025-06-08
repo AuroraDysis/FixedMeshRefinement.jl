@@ -83,7 +83,13 @@ end
 
 function transition_profile(xl, xh, x; type=1)
     t0 = (x - xl) / (xh - xl)
-    t = t0 < 0 ? 0 : (t0 > 1 ? 1 : t0)
+    t = if t0 < 0.0
+        0.0
+    elseif t0 > 1.0
+        1.0
+    else
+        t0
+    end
 
     if type == 1  # boxstep
         return t
