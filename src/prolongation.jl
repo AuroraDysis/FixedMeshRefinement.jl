@@ -137,36 +137,35 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
         else
             domain_box[2] - (num_transition_points - 1) * dxf
         end
-        for v in 1:(grid.NumState)
-            uf = fine_level.u[v]
-            uc_p = coarse_level.u_p[v]
-            for i in 1:num_transition_points
-                fidx = if (dir == 1)
-                    i + num_buffer_points
-                else
-                    num_total_points - i + 1 - num_buffer_points
-                end
-                cidx = parent_map[fidx]
-                w = transition_profile(a, b, fine_level.x[fidx])
-                if is_aligned[fidx]
-                    kcs = [coarse_level.k[m][v][cidx] for m in 1:4]
-                    ys = interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
-                    uf[fidx] = (1 - w) * ys + w * uf[fidx]
-                else
-                    ys = zeros(Float64, num_spatial_interpolation_points)
-                    for ic in 1:num_spatial_interpolation_points
-                        ic_grid = cidx + ic - soffset
-                        kcs = [coarse_level.k[m][v][ic_grid] for m in 1:4]
-                        ys[ic] = if interp_in_time
-                            DenseOutput.y(0.5, uc_p[ic_grid], kcs)
-                        else
-                            uc_p[ic_grid]
-                        end
+x
+        uf = fine_level.u[v]
+        uc_p = coarse_level.u_p[v]
+        for i in 1:num_transition_points
+            fidx = if (dir == 1)
+                i + num_buffer_points
+            else
+                num_total_points - i + 1 - num_buffer_points
+            end
+            cidx = parent_map[fidx]
+            w = transition_profile(a, b, fine_level.x[fidx])
+            if is_aligned[fidx]
+                kcs = [coarse_level.k[m][v][cidx] for m in 1:4]
+                ys = interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
+                uf[fidx] = (1 - w) * ys + w * uf[fidx]
+            else
+                ys = zeros(Float64, num_spatial_interpolation_points)
+                for ic in 1:num_spatial_interpolation_points
+                    ic_grid = cidx + ic - soffset
+                    kcs = [coarse_level.k[m][v][ic_grid] for m in 1:4]
+                    ys[ic] = if interp_in_time
+                        DenseOutput.y(0.5, uc_p[ic_grid], kcs)
+                    else
+                        uc_p[ic_grid]
                     end
-                    uf[fidx] =
-                        (1 - w) * interpolate(ys, soffset, spatial_interpolation_order) +
-                        w * uf[fidx]
                 end
+                uf[fidx] =
+                    (1 - w) * interpolate(ys, soffset, spatial_interpolation_order) +
+                    w * uf[fidx]
             end
         end
     end
