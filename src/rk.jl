@@ -48,13 +48,3 @@ function rk4!(level::Level, f::Function; mongwane::Bool=false)
 
     return nothing
 end
-
-function rk4_dense_output_y!(y, theta, h, yn, k)
-    theta2 = theta * theta
-    theta3 = theta2 * theta
-    ck1 = theta - 3 * theta2 / 2 + 2 * theta3 / 3
-    ck23 = theta2 - 2 * theta3 / 3
-    ck4 = -theta2 / 2 + 2 * theta3 / 3
-    @. y = yn + (ck1 * k[1] + ck23 * (k[2] + k[3]) + ck4 * k[4]) * h
-    return nothing
-end
