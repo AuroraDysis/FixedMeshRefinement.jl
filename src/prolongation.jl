@@ -128,16 +128,20 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
         div(num_spatial_interpolation_points, 2) + 1
     end
 
+    statef = fine_level.state
+    statec = coarse_level.state
+
+    uf = statef[end]
+    uc_p = statec[end - 1]
+
     for dir in 1:2  # left or right
-        a = (dir == 1) ? domain_box[1] : domain_box[2]
-        b = if (dir == 1)
+        a = dir == 1 ? domain_box[1] : domain_box[2]
+        b = if dir == 1
             domain_box[1] + (num_transition_points - 1) * dxf
         else
             domain_box[2] - (num_transition_points - 1) * dxf
         end
-        x
-        uf = fine_level.u[v]
-        uc_p = coarse_level.u_p[v]
+
         for i in 1:num_transition_points
             fidx = if (dir == 1)
                 i + num_buffer_points
