@@ -149,14 +149,14 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
                 num_total_points - num_buffer_points + 1 - i
             end
             is_aligned = mod(i + 1, 2) == 0
-
-            cidx = parent_map[fidx]
             w = transition_profile(a, b, fine_level.x[fidx])
             if is_aligned
+                cidx = fidx2cidx(fine_level, fidx)
                 kcs = [coarse_level.k[m][v][cidx] for m in 1:4]
                 ys = interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
                 uf[fidx] = (1 - w) * ys + w * uf[fidx]
             else
+                cidx = fidx2cidx(fine_level, fidx - 1)
                 ys = zeros(Float64, num_spatial_interpolation_points)
                 for ic in 1:num_spatial_interpolation_points
                     ic_grid = cidx + ic - soffset
