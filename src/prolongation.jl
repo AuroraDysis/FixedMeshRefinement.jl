@@ -134,6 +134,8 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
     statef = fine_level.state
     statec = coarse_level.state
 
+    kc = coarse_level.k
+
     uf = statef[end]
     uc_p = statec[end - 1]
 
@@ -155,7 +157,7 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
             w = transition_profile(a, b, fine_level.x[fidx])
             if is_aligned
                 cidx = fidx2cidx(fine_level, fidx)
-                kcs = [coarse_level.k[m][v][cidx] for m in 1:4]
+                kcs = [view(kc[m], cidx, :) for m in 1:4]
                 ys = interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
                 uf[fidx] = (1 - w) * ys + w * uf[fidx]
             else
