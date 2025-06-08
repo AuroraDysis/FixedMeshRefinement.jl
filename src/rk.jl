@@ -13,7 +13,6 @@ function rk4!(level::Level, f::Function; mongwane::Bool=false)
 
     cycle_state!(level)
 
-    u = state[end]
     u_p = state[end - 1]
 
     sixth_dt = dt / 6
@@ -41,6 +40,7 @@ function rk4!(level::Level, f::Function; mongwane::Bool=false)
     end
     f(level, k4, tmp, t + dt)
 
+    u = state[end]
     @. u = u_p + sixth_dt * (2 * (k2 + k3) + (k1 + k4))
 
     # update time
