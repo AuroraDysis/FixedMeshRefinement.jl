@@ -28,6 +28,7 @@ mutable struct Level{NumState,NumDiagnostic}
     dissipation::Float64
     is_base_level::Bool
     parent_indices::UnitRange{Int}
+    buffer_indices::NTuple{2,UnitRange{Int}}
 
     # data
     coordinates::LinRange{Float64,Int}  # coordinates
@@ -37,7 +38,7 @@ mutable struct Level{NumState,NumDiagnostic}
 
     # intermediate state vectors for new subcycling
     k::Vector{Matrix{Float64}}
-    Yn::Vector{Matrix{Float64}}
+    Yn_buffer::Vector{Array{Float64,3}}
 
     # diagnostic variables
     diag_state::Matrix{Float64}  # state vectors for diagnostic variables
@@ -69,12 +70,15 @@ mutable struct Level{NumState,NumDiagnostic}
         rhs = fill(NaN, num_total_points, NumState)
         tmp = fill(NaN, num_total_points, NumState)
         k = Vector{Matrix{Float64}}(undef, 4)
-        Yn_buffer = Vector{Matrix{Float64}}(undef, 4)
+        Yn_buffer = Vector{Array{Float64,3}}(undef, 4)
         diag_state = fill(NaN, num_total_points, NumDiagnostic)
         for j in 1:4
             k[j] = fill(NaN, num_total_points, NumState)
-            Yn_buffer[j] = fill(NaN, num_buffer_points, NumState)
+            Yn_buffer[j] = fill(NaN, num_buffer_points, 2, NumState)
         end
+        buffer_indices = (
+            1:num_buffer_points, (num_total_points - num_buffer_points + 1):num_total_points
+        )
 
         return new(
             num_interior_points,
@@ -91,6 +95,7 @@ mutable struct Level{NumState,NumDiagnostic}
             dissipation,
             is_base_level,
             parent_indices,
+            buffer_indices,
             # data
             coordinates,
             state,
