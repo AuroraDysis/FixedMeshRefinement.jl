@@ -98,8 +98,7 @@ function transition_profile(xl, xh, x; type=1)
     elseif type == 3  # smootherstep
         return 10 * t^3 - 15 * t^4 + 6 * t^5
     else
-        println("Transition profile (type $type) is not supported yet.")
-        exit()
+        error("Transition profile (type $type) is not supported yet.")
     end
 end
 
