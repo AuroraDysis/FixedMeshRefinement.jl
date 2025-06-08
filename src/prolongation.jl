@@ -143,7 +143,7 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
         end
 
         for i in 1:num_transition_points
-            fidx = if (dir == 1)
+            fidx = if dir == 1
                 i + num_buffer_points
             else
                 num_total_points - i + 1 - num_buffer_points
