@@ -203,6 +203,11 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     # buffer points for Yn
     Yn_buffer = fine_level.Yn_buffer
 
+    # buffer points for spatial interpolation
+    spatial_buffer = [
+        zeros(Float64, num_spatial_interpolation_points, NumState) for _ in 1:4
+    ]
+
     # dir: 1: left, 2: right
     for dir in 1:2, i in 1:num_buffer_points
         fidx = buffer_indices[dir][i]
@@ -217,27 +222,24 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
         else
             cidx = fidx2cidx(fine_level, fidx - 1)
 
-            ys = zeros(Float64, num_spatial_interpolation_points, 4)
-            for ic in 1:nys
+            for ic in 1:num_spatial_interpolation_points
                 ic_grid = cidx + ic - soffset
                 kcs = [view(kc[m], ic_grid, :) for m in 1:4]
                 yn = @view(uc_p[ic_grid, :])
-                calc_Yn_from_kcs!(@view(ys[ic, :]), yn, kcs, dtc, interp_in_time)
-                # ys[ic] = if interp_in_time
-                #     DenseOutput.y(0.5, uc_p[ic_grid], kcs)
-                # else
-                #     uc_p[ic_grid]
-                # end
-                prolongation_spatial_interpolate!(Yn_buffer, ys, soffset, spatial_interpolation_order)
+                sbuffer = [view(spatial_buffer[rk_stage], ic, :) for rk_stage in 1:4]
+                calc_Yn_from_kcs!(sbuffer, yn, kcs, dtc, interp_in_time)
             end
-            # # setting k
-            # for m in 1:3
-            #     fine_level.k[m][v][fidx] = interpolate(
-            #         kfss[m, :], soffset, spatial_interpolation_order
-            #     )
-            # end
-            # # setting u
-            # uf[fidx] = interpolate(ys, soffset, spatial_interpolation_order)
+            for rk_stage in 1:4
+                prolongation_spatial_interpolate!(
+                    view(Yn_buffer[rk_stage], i, dir, :),
+                    [
+                        view(spatial_buffer[rk_stage], ic, :) for
+                        ic in 1:num_spatial_interpolation_points
+                    ],
+                    soffset,
+                    spatial_interpolation_order,
+                )
+            end
         end
     end
 end
