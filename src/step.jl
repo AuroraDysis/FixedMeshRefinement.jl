@@ -17,7 +17,7 @@ function step!(
                 apply_transition_zone!(grid, l, false)
             end
         end
-        rk4!(grid.levels[l], f)
+        rk4!(grid.levels[l], f; mongwane=mongwane)
     end
 
     #-------------------------------------------------#
@@ -51,7 +51,7 @@ function step!(
                         apply_transition_zone!(grid, l, interp_in_time)
                     end
 
-                    rk4!(grid.levels[l], f)
+                    rk4!(grid.levels[l], f; mongwane=mongwane)
                 end
             end
         end
