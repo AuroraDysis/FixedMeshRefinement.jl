@@ -66,7 +66,7 @@ function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool, tmp)
     Y4 = Yn_buffer[4]
 
     if interp_in_time
-        rk4_dense_output_y!(@view(Y1[i, :, dir]), 0.5, dtc, yn, kcs)
+        rk4_dense_output_y!(Y1, 0.5, dtc, yn, kcs)
     else
         Y1 .= yn
     end
@@ -76,9 +76,9 @@ function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool, tmp)
     rk4_dense_output_d3y!(d3y, theta, dtc, yn, kcs)
 
     @. fyd2y = 4 * (kcs[3] - kcs[2]) / dtc^3
-    @. Y2[1] = yn + dtf * d1y
-    @. Y3[2] = yn + dtf * d1y + 0.5 * dtf^2 * d2y + 0.125 * dtf^3 * (d3y - fyd2y)
-    @. Y4[3] = yn + dtf * d1y + 0.5 * dtf^2 * d2y + 0.125 * dtf^3 * (d3y + fyd2y)
+    @. Y2 = yn + dtf * d1y
+    @. Y3 = yn + dtf * d1y + 0.5 * dtf^2 * d2y + 0.0625 * dtc^3 * (d3y - fyd2y)
+    @. Y4 = yn + dtc * d1y + 0.5 * dtf^2 * d2y + 0.125 * dtc^3 * (d3y + fyd2y)
 
     return nothing
 end
