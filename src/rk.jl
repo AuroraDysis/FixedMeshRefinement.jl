@@ -1,5 +1,5 @@
-function rk4!(level::Level, f::Function)
-    (; state, tmp, k, t, dt) = level
+function rk4!(level::Level, f::Function; mongwane::Bool=false)
+    (; state, tmp, k, t, dt, Yn_buffer, num_buffer_points, buffer_indices) = level
 
     cycle_state!(level)
 
@@ -11,15 +11,39 @@ function rk4!(level::Level, f::Function)
 
     k1, k2, k3, k4 = k
 
-    f(level, k1, u, t)
+    if mongwane
+        Y1 = Yn_buffer[1]
+        for dir in 1:2
+            u_p[buffer_indices[dir], :] .= @view(Y1[:, :, dir])
+        end
+    end
+    f(level, k1, u_p, t)
 
     @. tmp = u_p + half_dt * k1
+    if mongwane
+        Y2 = Yn_buffer[2]
+        for dir in 1:2
+            tmp[buffer_indices[dir], :] .= @view(Y2[:, :, dir])
+        end
+    end
     f(level, k2, tmp, t + half_dt)
 
     @. tmp = u_p + half_dt * k2
+    if mongwane
+        Y3 = Yn_buffer[3]
+        for dir in 1:2
+            tmp[buffer_indices[dir], :] .= @view(Y3[:, :, dir])
+        end
+    end
     f(level, k3, tmp, t + half_dt)
 
     @. tmp = u_p + dt * k3
+    if mongwane
+        Y4 = Yn_buffer[4]
+        for dir in 1:2
+            tmp[buffer_indices[dir], :] .= @view(Y4[:, :, dir])
+        end
+    end
     f(level, k4, tmp, t + dt)
 
     @. u = u_p + sixth_dt * (2 * (k2 + k3) + (k1 + k4))

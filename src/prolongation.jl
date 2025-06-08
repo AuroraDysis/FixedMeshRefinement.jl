@@ -63,7 +63,7 @@ function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool)
     Y4 = Yn_buffer[4]
 
     if interp_in_time
-        rk4_dense_output_y!(@view(Y1[i, dir, :]), 0.5, dtc, yn, kcs)
+        rk4_dense_output_y!(@view(Y1[i, :, dir]), 0.5, dtc, yn, kcs)
     else
         Y1 .= yn
     end
@@ -215,7 +215,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
 
         if is_aligned
             cidx = fidx2cidx(fine_level, fidx)
-            buffer = [view(Yn_buffer[rk_stage], i, dir, :) for rk_stage in 1:4]
+            buffer = [view(Yn_buffer[rk_stage], i, :, dir) for rk_stage in 1:4]
             yn = @view(uc_p[cidx, :])
             kcs = [view(kc[m], cidx, :) for m in 1:4]
             calc_Yn_from_kcs!(buffer, yn, kcs, dtc, interp_in_time)
@@ -231,7 +231,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
             end
             for rk_stage in 1:4
                 prolongation_spatial_interpolate!(
-                    view(Yn_buffer[rk_stage], i, dir, :),
+                    view(Yn_buffer[rk_stage], i, :, dir),
                     [
                         view(spatial_buffer[rk_stage], ic, :) for
                         ic in 1:num_spatial_interpolation_points

@@ -74,7 +74,7 @@ mutable struct Level{NumState,NumDiagnostic}
         diag_state = fill(NaN, num_total_points, NumDiagnostic)
         for j in 1:4
             k[j] = fill(NaN, num_total_points, NumState)
-            Yn_buffer[j] = fill(NaN, num_buffer_points, 2, NumState)
+            Yn_buffer[j] = fill(NaN, num_buffer_points, NumState, 2)
         end
         buffer_indices = (
             num_buffer_points:-1:1,
