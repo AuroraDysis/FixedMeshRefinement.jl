@@ -34,8 +34,10 @@ mutable struct Level{NumState,NumDiagnostic}
     state::Vector{Matrix{Float64}}  # state vectors at different time levels
     rhs::Matrix{Float64}  # rhs of state vectors
     tmp::Matrix{Float64}  # intermediate state vectors
+
     # intermediate state vectors for new subcycling
-    runge_kutta_stages::Vector{Matrix{Float64}}
+    k::Vector{Matrix{Float64}}
+    Yn::Vector{Matrix{Float64}}
 
     # diagnostic variables
     diag_state::Matrix{Float64}  # state vectors for diagnostic variables
@@ -66,10 +68,12 @@ mutable struct Level{NumState,NumDiagnostic}
         state = [fill(NaN, num_total_points, NumState) for _ in 1:time_levels]
         rhs = fill(NaN, num_total_points, NumState)
         tmp = fill(NaN, num_total_points, NumState)
-        runge_kutta_stages = Vector{Matrix{Float64}}(undef, 4)
+        k = Vector{Matrix{Float64}}(undef, 4)
+        Yn_buffer = Vector{Matrix{Float64}}(undef, 4)
         diag_state = fill(NaN, num_total_points, NumDiagnostic)
         for j in 1:4
-            runge_kutta_stages[j] = fill(NaN, num_total_points, NumState)
+            k[j] = fill(NaN, num_total_points, NumState)
+            Yn_buffer[j] = fill(NaN, num_buffer_points, NumState)
         end
 
         return new(
@@ -92,7 +96,8 @@ mutable struct Level{NumState,NumDiagnostic}
             state,
             rhs,
             tmp,
-            runge_kutta_stages,
+            k,
+            Yn_buffer,
             diag_state,
         )
     end
