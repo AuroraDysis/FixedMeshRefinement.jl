@@ -113,12 +113,12 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
 
     # for transition zone
     domain_box = fine_level.domain_box
-    dxf = grid.levels[l].dx
-    @assert(isapprox(domain_box[1], grid.levels[l].x[1 + num_buffer_points]; rtol=1e-12))
+    dxf = fine_level.dx
+    @assert(isapprox(domain_box[1], fine_level.x[1 + num_buffer_points]; rtol=1e-12))
     @assert(
         isapprox(
             domain_box[2],
-            grid.levels[l].x[num_total_points - num_buffer_points];
+            fine_level.x[num_total_points - num_buffer_points];
             rtol=1e-12,
         )
     )
@@ -140,7 +140,7 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
                     num_total_points - i + 1 - num_buffer_points
                 end
                 cidx = parent_map[fidx]
-                w = transition_profile(a, b, grid.levels[l].x[fidx])
+                w = transition_profile(a, b, fine_level.x[fidx])
                 if is_aligned[fidx]
                     kcs = [coarse_level.k[m][v][cidx] for m in 1:4]
                     ys = interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
