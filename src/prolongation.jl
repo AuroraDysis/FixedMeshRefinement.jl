@@ -53,15 +53,19 @@ end
 #===============================================================================
 Functions needed by Mongwane's subcycling method
 ===============================================================================#
-function calc_kfs_from_kcs!(kfs, kcs, dtc, tmp, interp_in_time::Bool)
+function calc_Yn_from_kcs!(buffer, kcs, dtc, interp_in_time::Bool)
     theta = interp_in_time ? 0.5 : 0.0
     dtf = 0.5 * dtc
-    d1yc = tmp[1]
-    d2yc = tmp[2]
-    d3yc = tmp[3]
-    rk4_dense_output_dy!(d1yc, theta, dtc, kcs)
-    rk4_dense_output_d2y!(d2yc, theta, dtc, kcs)
-    rk4_dense_output_d3y!(d3yc, theta, dtc, kcs)
+
+    Y1 = buffer[1]
+    Y2 = buffer[2]
+    Y3 = buffer[3]
+    Y4 = buffer[4]
+
+    rk4_dense_output_y!(Y1, theta, dtc, kcs)
+    rk4_dense_output_dy!(Y2, theta, dtc, kcs)
+    rk4_dense_output_d2y!(Y3, theta, dtc, kcs)
+    rk4_dense_output_d3y!(Y4, theta, dtc, kcs)
 
     fyd2yc = 4 * (kcs[3] - kcs[2]) / dtc^3
 
@@ -187,11 +191,13 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     statef = fine_level.state
     statec = coarse_level.state
 
-    kf = fine_level.k
     kc = coarse_level.k
 
     uf = statef[end]
     uc_p = statec[end - 1]
+
+    # buffer points for Yn
+    Yn_buffer = fine_level.Yn_buffer
 
     # j: 1: left, 2: right
     for i in 1:num_buffer_points, j in 1:2
@@ -204,9 +210,9 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
 
         if is_aligned
             cidx = fidx2cidx(fine_level, fidx)
+            buffer = [view(Yn_buffer[rk_stage], i, j, :) for rk_stage in 1:3]
             kcs = [view(kc[m], cidx, :) for m in 1:4]
-            kfs = [view(kf[m], fidx, :) for m in 1:3]
-            calc_kfs_from_kcs!(kfs, kcs, dtc, interp_in_time)
+            calc_kfs_from_kcs!(buffer, kcs, dtc, interp_in_time)
             # setting u
             uf[fidx] = interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
         else
