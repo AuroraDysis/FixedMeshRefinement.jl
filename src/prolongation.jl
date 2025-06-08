@@ -104,7 +104,6 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
         num_buffer_points,
         num_transition_points,
         spatial_interpolation_order,
-        parent_indices,
     ) = fine_level
 
     # for transition zone
