@@ -31,7 +31,7 @@ mutable struct Level{NumState,NumDiagnostic}
     buffer_indices::NTuple{2,UnitRange{Int}}
 
     # data
-    coordinates::LinRange{Float64,Int}  # coordinates
+    x::LinRange{Float64,Int}  # x
     state::Vector{Matrix{Float64}}  # state vectors at different time levels
     rhs::Matrix{Float64}  # rhs of state vectors
     tmp::Matrix{Float64}  # intermediate state vectors
@@ -64,7 +64,7 @@ mutable struct Level{NumState,NumDiagnostic}
         noffset = (num_total_points - num_interior_points) / 2  # take account of buffer zone
         xmin = domain_box[1] - noffset * dx
         xmax = domain_box[2] + noffset * dx
-        coordinates = LinRange(xmin, xmax, num_total_points)
+        x = LinRange(xmin, xmax, num_total_points)
         time_levels = max(time_interpolation_order + 1, 2)
         state = [fill(NaN, num_total_points, NumState) for _ in 1:time_levels]
         rhs = fill(NaN, num_total_points, NumState)
@@ -98,7 +98,7 @@ mutable struct Level{NumState,NumDiagnostic}
             parent_indices,
             buffer_indices,
             # data
-            coordinates,
+            x,
             state,
             rhs,
             tmp,
@@ -213,22 +213,17 @@ mutable struct Grid{NumState,NumDiagnostic}
             parent_idx_right = parent_map(level_max_idx)
             parent_indices = parent_idx_left:parent_idx_right
 
-            # check coordinates are aligned
+            # check x are aligned
             (
-                isapprox(
-                    parent_level.coordinates[parent_indices[1]], level_domain[1]; rtol=1e-12
-                ) && isapprox(
-                    parent_level.coordinates[parent_indices[end]],
-                    level_domain[2];
-                    rtol=1e-12,
-                )
+                isapprox(parent_level.x[parent_indices[1]], level_domain[1]; rtol=1e-12) &&
+                isapprox(parent_level.x[parent_indices[end]], level_domain[2]; rtol=1e-12)
             ) || error(
                 "Level $i: Coordinates are not aligned: ",
-                parent_level.coordinates[parent_indices[1]],
+                parent_level.x[parent_indices[1]],
                 " != ",
                 level_domain[1],
                 " or ",
-                parent_level.coordinates[parent_indices[end]],
+                parent_level.x[parent_indices[end]],
                 " != ",
                 level_domain[2],
             )

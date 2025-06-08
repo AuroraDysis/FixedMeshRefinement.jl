@@ -114,14 +114,12 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
     # for transition zone
     domain_box = fine_level.domain_box
     dxf = fine_level.dx
-    @assert(isapprox(domain_box[1], fine_level.x[1 + num_buffer_points]; rtol=1e-12))
-    @assert(
-        isapprox(
-            domain_box[2],
-            fine_level.x[num_total_points - num_buffer_points];
-            rtol=1e-12,
-        )
-    )
+
+    isapprox(domain_box[1], fine_level.x[1 + num_buffer_points]; rtol=1e-12) ||
+        error("domain_box[1] != fine_level.x[1 + num_buffer_points]")
+    isapprox(
+        domain_box[2], fine_level.x[num_total_points - num_buffer_points]; rtol=1e-12
+    ) || error("domain_box[2] != fine_level.x[num_total_points - num_buffer_points]")
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
     soffset = if mod(num_spatial_interpolation_points, 2) == 0
@@ -137,7 +135,7 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
         else
             domain_box[2] - (num_transition_points - 1) * dxf
         end
-x
+        x
         uf = fine_level.u[v]
         uc_p = coarse_level.u_p[v]
         for i in 1:num_transition_points
@@ -180,11 +178,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
-    (;
-        num_buffer_points,
-        spatial_interpolation_order,
-        buffer_indices,
-    ) = fine_level
+    (; num_buffer_points, spatial_interpolation_order, buffer_indices) = fine_level
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
     soffset = if mod(num_spatial_interpolation_points, 2) == 0
@@ -248,6 +242,8 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
 
     # fill fine level buffer
     fill_buffer!(uf, fine_level, 1)
+
+    return nothing
 end
 
 #===============================================================================
