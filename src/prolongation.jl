@@ -205,9 +205,9 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
 
         if is_aligned
             cidx = fidx2cidx(fine_level, fidx)
-            buffer = [view(Yn_buffer[rk_stage], i, dir, :) for rk_stage in 1:3]
+            buffer = [view(Yn_buffer[rk_stage], i, dir, :) for rk_stage in 1:4]
             kcs = [view(kc[m], cidx, :) for m in 1:4]
-            calc_kfs_from_kcs!(buffer, kcs, dtc, interp_in_time)
+            calc_Yn_from_kcs!(buffer, kcs, dtc, interp_in_time)
             # setting u
             uf[fidx] = interp_in_time ? DenseOutput.y(0.5, uc_p[cidx], kcs) : uc_p[cidx]
         else

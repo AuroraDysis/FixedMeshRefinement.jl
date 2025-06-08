@@ -40,7 +40,7 @@ function rk4_dense_output_y!(y, theta, h, yn, k)
     return nothing
 end
 
-function rk4_dense_output_dy!(dy, theta, h, k)
+function rk4_dense_output_dy!(dy, theta, h, yn, k)
     theta2 = theta * theta
     ck1 = 1 - 3 * theta + 2 * theta2
     ck23 = 2 * theta - 2 * theta2
@@ -49,7 +49,7 @@ function rk4_dense_output_dy!(dy, theta, h, k)
     return nothing
 end
 
-function rk4_dense_output_d2y!(d2y, theta, h, k)
+function rk4_dense_output_d2y!(d2y, theta, h, yn, k)
     ck1 = -3 + 4 * theta
     ck23 = 2 - 4 * theta
     ck4 = -1 + 4 * theta
@@ -58,7 +58,7 @@ function rk4_dense_output_d2y!(d2y, theta, h, k)
     return nothing
 end
 
-function rk4_dense_output_d3y!(d3y, theta, h, k)
+function rk4_dense_output_d3y!(d3y, theta, h, yn, k)
     coeff = 4 / (h * h)
     @. d3y = (k[1] - k[2] - k[3] + k[4]) * coeff
     return nothing
