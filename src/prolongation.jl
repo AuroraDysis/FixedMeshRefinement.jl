@@ -172,7 +172,6 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     coarse_level = grid.levels[l - 1]
 
     (;
-        num_total_points,
         num_buffer_points,
         spatial_interpolation_order,
         time_interpolation_order,
@@ -251,7 +250,6 @@ function prolongation!(
     coarse_level = grid.levels[l - 1]
 
     (;
-        num_total_points,
         num_buffer_points,
         spatial_interpolation_order,
         time_interpolation_order,
