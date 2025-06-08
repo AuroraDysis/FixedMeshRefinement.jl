@@ -51,9 +51,14 @@ end
 #===============================================================================
 Functions needed by Mongwane's subcycling method
 ===============================================================================#
-function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool)
+function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool, tmp)
     theta = interp_in_time ? 0.5 : 0.0
     dtf = 0.5 * dtc
+
+    fyd2y = tmp[1]
+    d1y = tmp[2]
+    d2y = tmp[3]
+    d3y = tmp[4]
 
     Y1 = Yn_buffer[1]
     Y2 = Yn_buffer[2]
@@ -66,15 +71,14 @@ function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool)
         Y1 .= yn
     end
 
-    rk4_dense_output_dy!(Y2, theta, dtc, yn, kcs)
-    rk4_dense_output_d2y!(Y3, theta, dtc, yn, kcs)
-    rk4_dense_output_d3y!(Y4, theta, dtc, yn, kcs)
+    rk4_dense_output_dy!(d1y, theta, dtc, yn, kcs)
+    rk4_dense_output_d2y!(d2y, theta, dtc, yn, kcs)
+    rk4_dense_output_d3y!(d3y, theta, dtc, yn, kcs)
 
-    fyd2yc = 4 * (kcs[3] - kcs[2]) / dtc^3
-
-    @. Y2[1] = yn + dtf * d1yc
-    @. Y3[2] = dtf * d1yc + 0.5 * dtf^2 * d2yc + 0.125 * dtf^3 * (d3yc - fyd2yc)
-    @. Y4[3] = dtf * d1yc + 0.5 * dtf^2 * d2yc + 0.125 * dtf^3 * (d3yc + fyd2yc)
+    @. fyd2y = 4 * (kcs[3] - kcs[2]) / dtc^3
+    @. Y2[1] = yn + dtf * d1y
+    @. Y3[2] = yn + dtf * d1y + 0.5 * dtf^2 * d2y + 0.125 * dtf^3 * (d3y - fyd2y)
+    @. Y4[3] = yn + dtf * d1y + 0.5 * dtf^2 * d2y + 0.125 * dtf^3 * (d3y + fyd2y)
 
     return nothing
 end
