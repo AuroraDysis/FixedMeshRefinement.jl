@@ -51,6 +51,16 @@ end
 #===============================================================================
 Functions needed by Mongwane's subcycling method
 ===============================================================================#
+function rk4_dense_output_y!(y, theta, h, yn, k)
+    theta2 = theta * theta
+    theta3 = theta2 * theta
+    ck1 = theta - 3 * theta2 / 2 + 2 * theta3 / 3
+    ck23 = theta2 - 2 * theta3 / 3
+    ck4 = -theta2 / 2 + 2 * theta3 / 3
+    @. y = yn + (ck1 * k[1] + ck23 * (k[2] + k[3]) + ck4 * k[4]) * h
+    return nothing
+end
+
 function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool, dytmp)
     theta = interp_in_time ? 0.5 : 0.0
 
@@ -69,9 +79,17 @@ function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool, dytmp)
         Y1 .= yn
     end
 
-    rk4_dense_output_dy!(d1y, theta, dtc, yn, kcs)
-    rk4_dense_output_d2y!(d2y, theta, dtc, yn, kcs)
-    rk4_dense_output_d3y!(d3y, theta, dtc, yn, kcs)
+    theta2 = theta * theta
+    let ck1 = 1 - 3 * theta + 2 * theta2,
+        ck23 = 2 * theta - 2 * theta2,
+        ck4 = -theta + 2 * theta2
+
+        @. d1y = ck1 * kcs[1] + ck23 * (kcs[2] + kcs[3]) + ck4 * kcs[4]
+    end
+    let ck1 = -3 + 4 * theta, ck23 = 2 - 4 * theta, ck4 = -1 + 4 * theta
+        @. d2y = (ck1 * kcs[1] + ck23 * (kcs[2] + kcs[3]) + ck4 * kcs[4]) * dtc
+    end
+    @. d3y = 4 * (kcs[1] - kcs[2] - kcs[3] + kcs[4])
 
     # ratio between coarse and fine cell size (2 to 1 MR case)
 
