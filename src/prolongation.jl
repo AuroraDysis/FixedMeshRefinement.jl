@@ -140,6 +140,7 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
     uc_p = statec[end - 1]
 
     aligned_buffer = zeros(Float64, NumState)
+    spatial_buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
 
     for dir in 1:2  # left or right
         a = dir == 1 ? domain_box[1] : domain_box[2]
@@ -166,23 +167,29 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
                 else
                     aligned_buffer .= yn
                 end
-                @. uf[fidx, :] = (1 - w) * aligned_buffer + w * @view(uf[fidx, :])
             else
                 cidx = fidx2cidx(fine_level, fidx - 1)
-                ys = zeros(Float64, num_spatial_interpolation_points)
                 for ic in 1:num_spatial_interpolation_points
                     ic_grid = cidx + ic - soffset
-                    kcs = [coarse_level.k[m][v][ic_grid] for m in 1:4]
-                    ys[ic] = if interp_in_time
-                        DenseOutput.y(0.5, uc_p[ic_grid], kcs)
+                    kcs = [view(kc[m], ic_grid, :) for m in 1:4]
+                    yn = @view(uc_p[ic_grid, :])
+                    if interp_in_time
+                        rk4_dense_output_y!(@view(spatial_buffer[ic, :]), 0.5, dtc, yn, kcs)
                     else
-                        uc_p[ic_grid]
+                        spatial_buffer[ic, :] .= yn
                     end
                 end
-                uf[fidx] =
-                    (1 - w) * interpolate(ys, soffset, spatial_interpolation_order) +
-                    w * uf[fidx]
+                prolongation_spatial_interpolate!(
+                    aligned_buffer,
+                    [
+                        @view(spatial_buffer[ic, :]) for
+                        ic in 1:num_spatial_interpolation_points
+                    ],
+                    soffset,
+                    spatial_interpolation_order,
+                )
             end
+            @. uf[fidx, :] = (1 - w) * aligned_buffer + w * @view(uf[fidx, :])
         end
     end
 end
