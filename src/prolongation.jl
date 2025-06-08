@@ -214,8 +214,6 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
             yn = @view(uc_p[cidx, :])
             kcs = [view(kc[m], cidx, :) for m in 1:4]
             calc_Yn_from_kcs!(buffer, yn, kcs, dtc, interp_in_time)
-            Y1 = buffer[1]
-
         else
             cidx = fidx2cidx(fine_level, fidx - 1)
 
