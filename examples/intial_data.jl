@@ -39,18 +39,18 @@ end
 Spectial Treatment for prolongation!
     * evolve backwards to file u_p
 ===============================================================================#
-function NegativeWaveRHS!(level, r, u)
-    Physical.rhs_wave!(level, r, u)
+function wave_rhs_backward!(level, r, u)
+    wave_rhs!(level, r, u)
     @. r = -r
 end
 
-function MarchBackwards!(grid)
+function march_backwards!(grid)
     (; levels, num_levels) = grid
     for l in 1:num_levels
         if l > 1
             prolongation!(grid, l, false)
         end
-        rk4!(levels[l], NegativeWaveRHS!)
+        rk4!(levels[l], wave_rhs_backward!)
         # save new u(-dt) -> u_p, u(0) -> u
         u = levels[l].u
         u_p = levels[l].u_p

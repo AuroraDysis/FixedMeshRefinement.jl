@@ -1,11 +1,11 @@
 
 #===============================================================================
-rhs_wave!:
+wave_rhs!:
     * rhs of wave equation
         dot(psi) = Pi
         dot(Pi)  = ddpsi
 ===============================================================================#
-function rhs_wave!(level, rhs, u, t)
+function wave_rhs!(level, rhs, u, t)
     psi = u[1]
     Pi = u[2]
     psi_rhs = rhs[1]

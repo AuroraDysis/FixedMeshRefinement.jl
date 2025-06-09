@@ -69,7 +69,7 @@ function main(params, out_dir)
 
     Infino.Boundary.ApplyPeriodicBoundaryCondition!(gfs)
     if !Mongwane
-        Infino.InitialData.MarchBackwards!(gfs)
+        Infino.InitialData.march_backwards!(gfs)
         Infino.Boundary.ApplyPeriodicBoundaryCondition!(gfs)
     end
 
