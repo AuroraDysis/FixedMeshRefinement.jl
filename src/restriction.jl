@@ -6,7 +6,7 @@ restriction:
     * we assume that we always march fine level first (for l in lmax-1:-1:1)
     * we assume all the levels are at the same time slice
 ===============================================================================#
-function restriction!(grid, l; apply_trans_zone=false)
+function restriction!(grid::Grid{NumState,NumDiagnostic}, l::Int; apply_trans_zone=false) where {NumState,NumDiagnostic}
     fine_level = grid.levels[l + 1]
     coarse_level = grid.levels[l]
 
