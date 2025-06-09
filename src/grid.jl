@@ -29,7 +29,7 @@ mutable struct Level{NumState,NumDiagnostic}
     dissipation::Float64
     is_base_level::Bool
     parent_indices::UnitRange{Int}
-    buffer_indices::NTuple{2,StepRange{Int,Int}}
+    ghost_indices::NTuple{2,StepRange{Int,Int}}
 
     # data
     x::LinRange{Float64,Int}  # x
@@ -83,9 +83,9 @@ mutable struct Level{NumState,NumDiagnostic}
             k[j] = fill(NaN, num_total_points, NumState)
             Yn_buffer[j] = fill(NaN, num_buffer_points, NumState, 2)
         end
-        buffer_indices = (
-            num_buffer_points:-1:1,
-            (num_total_points - num_buffer_points + 1):num_total_points,
+        ghost_indices = (
+            num_left_additional_points:-1:1,
+            (num_total_points - num_right_additional_points + 1):num_total_points,
         )
 
         return new{NumState,NumDiagnostic}(
@@ -105,7 +105,7 @@ mutable struct Level{NumState,NumDiagnostic}
             dissipation,
             is_base_level,
             parent_indices,
-            buffer_indices,
+            ghost_indices,
             # data
             x,
             state,

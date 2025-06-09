@@ -237,7 +237,7 @@ function prolongation_mongwane!(grid::Grid{NumState,NumDiagnostic}, l::Int, inte
     (;
         num_buffer_points,
         spatial_interpolation_order,
-        buffer_indices,
+        ghost_indices,
         x,
         physical_domain_box,
     ) = fine_level
@@ -272,7 +272,7 @@ function prolongation_mongwane!(grid::Grid{NumState,NumDiagnostic}, l::Int, inte
 
     # dir: 1: left, 2: right
     for dir in 1:2, i in 1:num_buffer_points
-        fidx = buffer_indices[dir][i]
+        fidx = ghost_indices[dir][i]
         is_aligned = mod(i + 1, 2) != 0
 
         x_pos = x[fidx]
@@ -333,7 +333,7 @@ function prolongation!(
         num_buffer_points,
         spatial_interpolation_order,
         time_interpolation_order,
-        buffer_indices,
+        ghost_indices,
         x,
         physical_domain_box,
     ) = fine_level
@@ -355,7 +355,7 @@ function prolongation!(
 
     # dir: 1: left, 2: right
     for dir in 1:2, i in 1:num_buffer_points
-        fidx = buffer_indices[dir][i]
+        fidx = ghost_indices[dir][i]
         is_aligned = mod(i + 1, 2) != 0
 
         x_pos = x[fidx]
