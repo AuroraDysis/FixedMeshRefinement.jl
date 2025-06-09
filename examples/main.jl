@@ -68,18 +68,13 @@ function main(params, out_dir)
     end
 
     apply_periodic_boundary_condition!(grid)
-    if !Mongwane
+    if !mongwane
         march_backwards!(grid)
         apply_periodic_boundary_condition!(grid)
     end
 
-    @printf(
-        "Simulation time: %.4f, iteration %d. E = %.4f\n",
-        grid.t,
-        0,
-        Infino.Physical.Energy(gfs)
-    )
-    Infino.WriteIO.dump(out_dir, gfs, 0)
+    @printf("Simulation time: %.4f, iteration %d. E = %.4f\n", grid.t, 0, wave_energy(grid))
+    write_output(out_dir, grid, 0)
 
     ##########
     # Evolve #
