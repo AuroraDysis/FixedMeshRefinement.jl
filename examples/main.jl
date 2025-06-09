@@ -2,7 +2,10 @@ using FixedMeshRefinement
 using Printf
 using TOML
 
-include("initial_data.jl")
+const NumState = 2
+const NumDiagnostic = 1
+
+include("initial.jl")
 
 function get(params, key, default)
     return haskey(params, key) ? params[key] : default
@@ -39,8 +42,6 @@ function main(params, out_dir)
     ########################
     # build grid structure #
     ########################
-    NumState = 2
-    NumDiagnostic = 1
     grid = Grid{NumState,NumDiagnostic}(
         num_interior_points,
         domain_boxes,
