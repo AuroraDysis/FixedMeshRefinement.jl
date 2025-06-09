@@ -13,7 +13,7 @@ function write_output(dir_path, grid, it)
                 g = create_group(file, "level$(lpad(l, 2, '0'))")
 
                 write(g, "t", level.t)
-                write(g, "x", x)
+                write(g, "x", collect(x))
                 write(g, "psi", @view(u[:, 1]))
                 write(g, "Pi", @view(u[:, 2]))
                 write(g, "E", @view(level.diag_state[:, 1]))

@@ -1,7 +1,7 @@
 export step!
 
 function step!(
-    grid::Grid{NumState,NumDiagnostic}; mongwane=false, apply_trans_zone=false
+    grid::Grid{NumState,NumDiagnostic}, f; mongwane=false, apply_trans_zone=false
 ) where {NumState,NumDiagnostic}
     max_level = length(grid.levels)
 
