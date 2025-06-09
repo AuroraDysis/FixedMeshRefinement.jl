@@ -131,7 +131,7 @@ end
 #===============================================================================
 apply_transition_zone!: apply transition zone
 ===============================================================================#
-function apply_transition_zone!(grid, l, interp_in_time::Bool)
+function apply_transition_zone!(grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool) where {NumState,NumDiagnostic}
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
@@ -161,6 +161,8 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
 
     statef = fine_level.state
     statec = coarse_level.state
+
+    dtc = coarse_level.dt
 
     kc = coarse_level.k
 
