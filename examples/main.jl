@@ -16,6 +16,23 @@ function get(params, key, default)
     return haskey(params, key) ? params[key] : default
 end
 
+function nan_check(grid)
+    has_nan = false
+    for l in 1:(grid.num_levels)
+        level = grid.levels[l]
+        u = level.state[end]
+        (; num_ghost_points, num_buffer_points, num_total_points) = level
+        interior_points =
+            (num_buffer_points + 1 - num_ghost_points):(num_total_points - num_buffer_points + num_ghost_points)
+        if any(isnan.(u[interior_points, :]))
+            has_nan = true
+            # print all the nan indexes
+            println("level $l has nan: ", interior_points[isnan.(u[interior_points, 1])])
+        end
+    end
+    return has_nan
+end
+
 function main(params, out_dir)
     ########################
     # Read Parameter Files #
@@ -92,10 +109,7 @@ function main(params, out_dir)
         step!(grid, wave_rhs!; mongwane=mongwane, apply_trans_zone=apply_trans_zone)
 
         @printf(
-            "Simulation time: %.4f, iteration %d. E = %.4f\n",
-            grid.t,
-            i,
-            wave_energy(grid)
+            "Simulation time: %.4f, iteration %d. E = %.4f\n", grid.t, i, wave_energy(grid)
         )
 
         if (mod(i, out_every) == 0)
@@ -104,6 +118,11 @@ function main(params, out_dir)
 
         if stop_time > 0.0 && grid.t >= stop_time
             break
+        end
+
+        # nan check
+        for l in 1:(grid.num_levels)
+            println("level $l: ", grid.levels[l].x)
         end
     end
 
