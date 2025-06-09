@@ -7,11 +7,11 @@ function gaussian!(grid; amp=1.0, sig=0.25, x0=0.0)
     for l in 1:num_levels
         level = levels[l]
         u = level.state[end]
-        psi = u[1]
-        psi_t = u[2]
+        psi = @view(u[:, 1])
+        Pi = @view(u[:, 2])
         x = level.x
         @. psi = amp * exp(-((x - x0) / sig)^2)
-        @. psi_t = 0.0
+        @. Pi = 0.0
     end
 
     # restriction for consistence
@@ -26,11 +26,11 @@ function sinusoidal!(grid)
     for l in 1:num_levels
         level = levels[l]
         u = level.state[end]
-        psi = u[1]
-        psi_t = u[2]
+        psi = @view(u[:, 1])
+        Pi = @view(u[:, 2])
         x = level.x
         @. psi = sin(2 * pi * (x - 0.0))
-        @. psi_t = -2 * pi * cos(2 * pi * (x - 0.0))
+        @. Pi = -2 * pi * cos(2 * pi * (x - 0.0))
     end
 
     # restriction for consistence
