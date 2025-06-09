@@ -22,7 +22,7 @@ function main(params, out_dir)
     subcycling = get(params, "subcycling", true)
     mongwane = get(params, "mongwane", false)
     num_transition_points = get(params, "num_transition_points", 3)
-    ord_s = get(params, "ord_s", 3)
+    spatial_interpolation_order = get(params, "spatial_interpolation_order", 5)
     apply_trans_zone = get(params, "apply_trans_zone", false)
     initial_data = get(params, "initial_data", "Gaussian")
     println("Parameters:")
@@ -43,7 +43,7 @@ function main(params, out_dir)
         num_ghost_points,
         num_buffer_points;
         num_transition_points=num_transition_points,
-        ord_s=ord_s,
+        spatial_interpolation_order=spatial_interpolation_order,
         cfl=cfl,
         diss=diss,
         subcycling=subcycling,
