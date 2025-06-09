@@ -82,7 +82,7 @@ mutable struct Level{NumState,NumDiagnostic}
         has_physical_boundary =
             x[1] < physical_domain_box[1] || x[end] > physical_domain_box[2]
 
-        return new(
+        return new{NumState,NumDiagnostic}(
             num_interior_points,
             num_ghost_points,
             num_buffer_points,
