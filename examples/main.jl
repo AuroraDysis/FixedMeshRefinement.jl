@@ -1,11 +1,15 @@
+include("../src/FixedMeshRefinement.jl")
+include("boundary.jl")
+include("initial_data.jl")
+include("output.jl")
+include("wave.jl")
+
 using FixedMeshRefinement
 using Printf
 using TOML
 
 const NumState = 2
 const NumDiagnostic = 1
-
-include("initial_data.jl")
 
 function get(params, key, default)
     return haskey(params, key) ? params[key] : default
