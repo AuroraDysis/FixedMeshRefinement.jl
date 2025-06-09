@@ -1,3 +1,5 @@
+export rk4!
+
 function fill_buffer!(u, level::Level, stage::Int)
     (; Yn_buffer, buffer_indices, num_buffer_points, x, physical_domain_box) = level
     Yn = Yn_buffer[stage]

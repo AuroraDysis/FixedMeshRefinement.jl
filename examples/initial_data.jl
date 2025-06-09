@@ -43,8 +43,8 @@ end
 Spectial Treatment for prolongation!
     * evolve backwards to file u_p
 ===============================================================================#
-function wave_rhs_backward!(level, r, u)
-    wave_rhs!(level, r, u)
+function wave_rhs_backward!(level, r, u, t)
+    wave_rhs!(level, r, u, t)
     @. r = -r
 end
 
