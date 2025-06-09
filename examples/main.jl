@@ -5,7 +5,7 @@ using TOML
 const NumState = 2
 const NumDiagnostic = 1
 
-include("initial.jl")
+include("initial_data.jl")
 
 function get(params, key, default)
     return haskey(params, key) ? params[key] : default
