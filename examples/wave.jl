@@ -42,7 +42,7 @@ function wave_rhs!(level, rhs, u, t)
     psi_rhs[(num_total_points - num_ghost_points + 1):num_total_points] .= NaN
 
     if is_base_level
-        apply_periodic_boundary_condition_rhs!(level, rhs)
+        apply_reflective_boundary_condition_rhs!(level, rhs)
     end
 end
 

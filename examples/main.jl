@@ -93,10 +93,10 @@ function main(params, out_dir)
         exit()
     end
 
-    apply_periodic_boundary_condition!(grid)
+    apply_reflective_boundary_condition!(grid)
     if !mongwane
         march_backwards!(grid)
-        apply_periodic_boundary_condition!(grid)
+        apply_reflective_boundary_condition!(grid)
     end
 
     @printf("Simulation time: %.4f, iteration %d. E = %.4f\n", grid.t, 0, wave_energy(grid))
