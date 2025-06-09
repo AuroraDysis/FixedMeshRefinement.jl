@@ -41,9 +41,7 @@ function wave_rhs!(level, rhs, u, t)
     psi_rhs[1:num_ghost_points] .= NaN
     psi_rhs[(num_total_points - num_ghost_points + 1):num_total_points] .= NaN
 
-    if is_base_level
-        apply_reflective_boundary_condition_rhs!(level, rhs)
-    end
+    apply_reflective_boundary_condition_rhs!(level, rhs)
 end
 
 #===============================================================================
@@ -66,5 +64,6 @@ function wave_energy(grid)
         dpsi = (-psi[i - 2] + 8 * psi[i - 1] - 8 * psi[i + 1] + psi[i + 2]) / (12 * dx)
         E += (0.5 * Pi[i] * Pi[i] + 0.5 * dpsi * dpsi)
     end
+
     return E * dx
 end
