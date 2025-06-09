@@ -22,6 +22,7 @@ mutable struct Level{NumState,NumDiagnostic}
     time_interpolation_order::Int  # interpolation order in time
     spatial_interpolation_order::Int  # interpolation order in space
     domain_box::Tuple{Float64,Float64}  # size computational domain (interior)
+    physical_domain_box::Tuple{Float64,Float64}  # size physical domain
     dx::Float64
     dt::Float64
     t::Float64
@@ -52,6 +53,7 @@ mutable struct Level{NumState,NumDiagnostic}
         time_interpolation_order,
         spatial_interpolation_order,
         domain_box,
+        physical_domain_box,
         dt,
         t,
         dissipation,
@@ -156,6 +158,7 @@ mutable struct Grid{NumState,NumDiagnostic}
         subcycling=true,
     )
         num_levels = length(domain_boxes)
+        physical_domain_box = domain_boxes[1]
 
         # build the coarsest level (base level)
         base_dx = (domain_boxes[1][2] - domain_boxes[1][1]) / (base_level_num_points - 1)
@@ -173,6 +176,7 @@ mutable struct Grid{NumState,NumDiagnostic}
             time_interpolation_order,
             spatial_interpolation_order,
             domain_boxes[1],
+            physical_domain_box,
             base_dt,
             initial_time,
             dissipation,
@@ -238,6 +242,7 @@ mutable struct Grid{NumState,NumDiagnostic}
                     time_interpolation_order,
                     spatial_interpolation_order,
                     level_domain,
+                    physical_domain_box,
                     level_dt,
                     initial_time,
                     dissipation,
