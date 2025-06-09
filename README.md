@@ -10,4 +10,4 @@
 
 # Acknowledgments
 
-This package is inspired by [JLRipley314/one-dim-amr: A simple one dimensional amr code](https://github.com/JLRipley314/one-dim-amr).
+This package was originally adapted from [lwJi/Infino.jl](https://github.com/lwJi/Infino.jl), created by [lwJi](https://github.com/lwJi). Another useful resource is [JLRipley314/one-dim-amr: A simple one-dimensional AMR code](https://github.com/JLRipley314/one-dim-amr).
