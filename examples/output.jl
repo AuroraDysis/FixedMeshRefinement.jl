@@ -1,32 +1,22 @@
+using HDF5
+
 function write_output(dir_path, grid, it)
     if isdir(dir_path)
-        fname = dir_path * "/u.it" * lpad(string(it), 6, '0') * ".tsv"
-        open(fname, "w") do file
-            println(file, "# 1:iteation 2:time 3:level 4:i 5:x 6:psi 7:Pi")
+        (; num_levels, levels) = grid
 
-            (; num_levels, levels) = grid
+        h5open(joinpath(dir_path, "data.it$(lpad(it, 6, '0')).h5"), "w") do file
             for l in 1:num_levels
                 level = levels[l]
                 u = level.state[end]
                 x = level.x
-                for i in eachindex(x)
-                    println(
-                        file,
-                        it,
-                        " ",
-                        level.t,
-                        " ",
-                        l,
-                        " ",
-                        i,
-                        " ",
-                        x[i],
-                        " ",
-                        u[i, 1],
-                        " ",
-                        u[i, 2],
-                    )
-                end
+
+                g = create_group(file, "level$(lpad(l, 2, '0'))")
+
+                write(g, "t", level.t)
+                write(g, "x", x)
+                write(g, "psi", @view(u[:, 1]))
+                write(g, "Pi", @view(u[:, 2]))
+                write(g, "E", @view(level.diag_state[:, 1]))
             end
         end
     else
