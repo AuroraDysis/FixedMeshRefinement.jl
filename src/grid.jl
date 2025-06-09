@@ -266,6 +266,19 @@ mutable struct Grid{NumState,NumDiagnostic}
                 false,
                 parent_indices,
             )
+            # ensure level is properly embedded in parent level
+            if level.is_physical_boundary[1] || level.x[1] > parent_level.domain_box[1]
+                error(
+                    "Level $(l) is not properly embedded in parent level $(l-1), ",
+                    "level.x[1] = $(level.x[1]), parent_level.domain_box[1] = $(parent_level.domain_box[1])",
+                )
+            end
+            if level.is_physical_boundary[2] || level.x[end] < parent_level.domain_box[2]
+                error(
+                    "Level $(l) is not properly embedded in parent level $(l-1), ",
+                    "level.x[end] = $(level.x[end]), parent_level.domain_box[2] = $(parent_level.domain_box[2])",
+                )
+            end
             push!(levels, level)
         end
 
