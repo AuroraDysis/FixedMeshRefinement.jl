@@ -1,4 +1,4 @@
-# FixedMeshRefinement.jl: Berger-Oliger style one-dimensional adaptive mesh refinement
+# FixedMeshRefinement.jl: one-dimensional fixed mesh refinement
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://AuroraDysis.github.io/FixedMeshRefinement.jl/stable/)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://AuroraDysis.github.io/FixedMeshRefinement.jl/dev/)
