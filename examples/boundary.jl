@@ -2,8 +2,7 @@ function apply_periodic_boundary_condition!(
     grid::Grid{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
     base_level = grid.levels[1]
-    num_total_points = base_level.num_total_points
-    num_buffer_points = base_level.num_buffer_points
+    (; num_total_points, num_buffer_points) = base_level
     for v in 1:NumState
         u = base_level.u[v]
         for i in 1:num_buffer_points
@@ -16,8 +15,7 @@ function apply_periodic_boundary_condition!(
 end
 
 function apply_periodic_boundary_condition_rhs!(level, r)
-    num_total_points = level.num_total_points
-    num_buffer_points = level.num_buffer_points
+    (; num_total_points, num_buffer_points) = level
     for v in 1:length(r)
         rhs = r[v]
         for i in 1:num_buffer_points
