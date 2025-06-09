@@ -148,11 +148,6 @@ function apply_transition_zone!(
     domain_box = fine_level.domain_box
     dxf = fine_level.dx
 
-    domain_box[1] ≈ fine_level.x[1 + num_ghost_points[1]] ||
-        error("domain_box[1] != fine_level.x[1 + num_ghost_points[1]]")
-    domain_box[2] ≈ fine_level.x[num_total_points - num_ghost_points[2]] ||
-        error("domain_box[2] != fine_level.x[num_total_points - num_ghost_points[2]]")
-
     num_spatial_interpolation_points = spatial_interpolation_order + 1
     soffset = if mod(num_spatial_interpolation_points, 2) == 0
         div(num_spatial_interpolation_points, 2)

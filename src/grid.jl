@@ -59,7 +59,8 @@ mutable struct Level{NumState,NumDiagnostic}
         parent_indices,
     ) where {NumState,NumDiagnostic}
         is_physical_boundary = (
-            domain_box[1] ≈ physical_domain_box[1], domain_box[2] ≈ physical_domain_box[2]
+            isapprox(domain_box[1], physical_domain_box[1]; rtol=typetol(Float64)),
+            isapprox(domain_box[2], physical_domain_box[2]; rtol=typetol(Float64)),
         )
         num_left_ghost_points =
             is_physical_boundary[1] ? num_ghost_points : num_buffer_points
