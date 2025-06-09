@@ -23,6 +23,7 @@ mutable struct Level{NumState,NumDiagnostic}
     spatial_interpolation_order::Int  # interpolation order in space
     domain_box::Tuple{Float64,Float64}  # size computational domain (interior)
     physical_domain_box::Tuple{Float64,Float64}  # size physical domain
+    has_physical_boundary::Bool  # whether the ghost points require physical boundary condition
     dx::Float64
     dt::Float64
     t::Float64
@@ -80,6 +81,8 @@ mutable struct Level{NumState,NumDiagnostic}
             num_buffer_points:-1:1,
             (num_total_points - num_buffer_points + 1):num_total_points,
         )
+        has_physical_boundary =
+            x[1] < physical_domain_box[1] || x[end] > physical_domain_box[2]
 
         return new(
             num_interior_points,
@@ -90,6 +93,8 @@ mutable struct Level{NumState,NumDiagnostic}
             finite_difference_order,
             spatial_interpolation_order,
             domain_box,
+            physical_domain_box,
+            has_physical_boundary,
             dx,
             dt,
             t,
