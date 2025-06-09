@@ -2,6 +2,10 @@ using Infino
 using Printf
 using TOML
 
+function get(params, key, default)
+    return haskey(params, key) ? params[key] : default
+end
+
 function main(params, out_dir)
     ########################
     # Read Parameter Files #
@@ -12,20 +16,14 @@ function main(params, out_dir)
     itlast = params["itlast"]
     out_every = params["out_every"]
     domain_boxes = params["domain_boxes"]
-    cfl = haskey(params, "cfl") ? params["cfl"] : 0.25
-    diss = haskey(params, "diss") ? params["diss"] : 0.0
-    subcycling =
-        haskey(params, "subcycling") ? params["subcycling"] : true
-    mongwane =
-        haskey(params, "mongwane") ? params["mongwane"] : false
-    ntrans = haskey(params, "ntrans") ? params["ntrans"] : 3
-    ord_s = haskey(params, "ord_s") ? params["ord_s"] : 3
-    apply_trans_zone =
-        haskey(params, "apply_trans_zone") ?
-        params["apply_trans_zone"] : false
-    initial_data =
-        haskey(params, "initial_data") ? params["initial_data"] :
-        "Gaussian"
+    cfl = get(params, "cfl", 0.25)
+    diss = get(params, "diss", 0.0)
+    subcycling = get(params, "subcycling", true)
+    mongwane = get(params, "mongwane", false)
+    ntrans = get(params, "ntrans", 3)
+    ord_s = get(params, "ord_s", 3)
+    apply_trans_zone = get(params, "apply_trans_zone", false)
+    initial_data = get(params, "initial_data", "Gaussian")
     println("Parameters:")
     println("  cfl        = ", cfl)
     println("  mongwane   = ", mongwane)
@@ -42,11 +40,11 @@ function main(params, out_dir)
         domain_boxes,
         num_ghost_points,
         num_buffer_points;
-        ntrans = ntrans,
-        ord_s = ord_s,
-        cfl = cfl,
-        diss = diss,
-        subcycling = subcycling,
+        ntrans=ntrans,
+        ord_s=ord_s,
+        cfl=cfl,
+        diss=diss,
+        subcycling=subcycling,
     )
     gfs = Infino.Basic.GridFunction(2, grid)
 
@@ -83,12 +81,12 @@ function main(params, out_dir)
     ##########
     println("Start evolution...")
 
-    for i = 1:itlast
+    for i in 1:itlast
         Infino.ODESolver.Evolve!(
             Infino.Physical.WaveRHS!,
             gfs;
-            mongwane = mongwane,
-            apply_trans_zone = apply_trans_zone,
+            mongwane=mongwane,
+            apply_trans_zone=apply_trans_zone,
         )
 
         @printf(
@@ -106,9 +104,11 @@ function main(params, out_dir)
     # Done #
     ########
     println(
-        "--------------------------------------------------------------------------------",
+        "--------------------------------------------------------------------------------"
     )
     println("Successfully Done.")
+
+    return nothing
 end
 
 function redirect_to_files(dofunc, outfile, errfile)
@@ -136,12 +136,11 @@ params = TOML.parsefile(pars_path)
 # create output directory
 out_dir = joinpath(
     dirname(pars_path),
-    haskey(params, "out_dir") ? params["out_dir"] :
-    splitext(basename(pars_path))[1],
+    haskey(params, "out_dir") ? params["out_dir"] : splitext(basename(pars_path))[1],
 )
 if isdir(out_dir)
     println("Removing old directory '$out_dir'...")
-    rm(out_dir, recursive = true)
+    rm(out_dir; recursive=true)
 end
 println("Creating new directory '$out_dir'...")
 mkdir(out_dir)
