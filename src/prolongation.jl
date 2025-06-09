@@ -176,11 +176,12 @@ function apply_transition_zone!(
             domain_box[2] - (num_transition_points - 1) * dxf
         end
 
+        # TODO: check if we need transition zone for physical boundary
         for i in 1:num_transition_points
             fidx = if dir == 1
-                num_buffer_points + i
+                num_ghost_points[1] + i
             else
-                num_total_points - num_buffer_points + 1 - i
+                num_total_points - num_ghost_points[2] + 1 - i
             end
             is_aligned = mod(i + 1, 2) != 0
 
