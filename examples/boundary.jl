@@ -1,5 +1,3 @@
-module Boundary
-
 function apply_periodic_boundary_condition!(
     grid::Grid{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
@@ -29,6 +27,4 @@ function apply_periodic_boundary_condition_rhs!(level, r)
             rhs[i] = rhs[2 * num_buffer_points - num_total_points + i]
         end
     end
-end
-
 end
