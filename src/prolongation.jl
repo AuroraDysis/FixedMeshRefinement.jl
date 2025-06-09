@@ -267,7 +267,7 @@ function prolongation_mongwane!(
 
     # dir: 1: left, 2: right
     for dir in 1:2
-        for i in ghost_indices[dir]
+        for i in num_ghost_points[dir]
             fidx = ghost_indices[dir][i]
             is_aligned = mod(i + 1, 2) != 0
 
