@@ -3,7 +3,6 @@ module FixedMeshRefinement
 using LinearAlgebra
 using StaticArrays
 
-include("utils.jl")
 include("grid.jl")
 include("prolongation.jl")
 include("restriction.jl")
