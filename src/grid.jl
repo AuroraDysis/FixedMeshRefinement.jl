@@ -127,14 +127,14 @@ function cycle_state!(level::Level)
 end
 
 function fidx2cidx(fine_level::Level, fidx::Int)
-    (; is_base_level, parent_indices, num_buffer_points) = fine_level
+    (; is_base_level, parent_indices, num_ghost_points) = fine_level
 
     if is_base_level
         error("fidx2cidx is not defined for base level")
     end
 
     parent_idx_left = parent_indices[1]
-    offset = fidx - (1 + num_buffer_points)
+    offset = fidx - (1 + num_ghost_points[1])
 
     if mod(offset, 2) != 0
         println("parent_indices = ", parent_indices)
