@@ -24,7 +24,7 @@ function main(params, out_dir)
     num_transition_points = get(params, "num_transition_points", 3)
     spatial_interpolation_order = get(params, "spatial_interpolation_order", 5)
     apply_trans_zone = get(params, "apply_trans_zone", false)
-    initial_data = get(params, "initial_data", "Gaussian")
+    initial_data = get(params, "initial_data", "gaussian")
     println("Parameters:")
     println("  cfl        = ", cfl)
     println("  mongwane   = ", mongwane)
@@ -55,8 +55,8 @@ function main(params, out_dir)
     ###############
     println("Setting up initial conditions...")
     println("  initial data type: $initial_data")
-    if initial_data == "Gaussian"
-        Infino.InitialData.Gaussian!(gfs)
+    if initial_data == "gaussian"
+        Infino.InitialData.gaussian!(gfs)
     elseif initial_data == "sinusoidal"
         Infino.InitialData.sinusoidal!(gfs)
     else
