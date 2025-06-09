@@ -230,7 +230,7 @@ prolongation_mongwane!: use Mongwane's method
     * from level l-1 to level l
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
-function prolongation_mongwane!(grid, l, interp_in_time::Bool)
+function prolongation_mongwane!(grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool) where {NumState,NumDiagnostic}
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
