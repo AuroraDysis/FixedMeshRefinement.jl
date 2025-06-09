@@ -1,11 +1,11 @@
 function fill_buffer!(u, level::Level, stage::Int)
-    (; Yn_buffer, buffer_indices, num_buffer_points, x) = level
+    (; Yn_buffer, buffer_indices, num_buffer_points, x, domain_box) = level
     Yn = Yn_buffer[stage]
     for dir in 1:2, i in 1:num_buffer_points
         idx = buffer_indices[dir][i]
         x_pos = x[idx]
         # don't change if the points are outside the physical boundary
-        if x_pos < x[1] || x_pos > x[end]
+        if x_pos < domain_box[1] || x_pos > domain_box[2]
             continue
         end
         u[idx, :] .= @view(Yn[idx, :, dir])

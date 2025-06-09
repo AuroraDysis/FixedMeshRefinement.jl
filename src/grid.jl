@@ -60,10 +60,8 @@ mutable struct Level{NumState,NumDiagnostic}
     )
         num_total_points = num_interior_points + 2 * num_buffer_points
         dx = (domain_box[2] - domain_box[1]) / (num_interior_points - 1)
-
-        noffset = (num_total_points - num_interior_points) / 2  # take account of buffer zone
-        xmin = domain_box[1] - noffset * dx
-        xmax = domain_box[2] + noffset * dx
+        xmin = domain_box[1] - num_ghost_points * dx
+        xmax = domain_box[2] + num_ghost_points * dx
         x = LinRange(xmin, xmax, num_total_points)
         time_levels = max(time_interpolation_order + 1, 2)
         state = [fill(NaN, num_total_points, NumState) for _ in 1:time_levels]
