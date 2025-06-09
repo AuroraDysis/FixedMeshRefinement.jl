@@ -233,9 +233,8 @@ function prolongation_mongwane!(
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
-    (;
-        num_ghost_points, spatial_interpolation_order, ghost_indices, x, physical_domain_box
-    ) = fine_level
+    (; num_ghost_points, spatial_interpolation_order, ghost_indices, is_physical_boundary) =
+        fine_level
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
     soffset = if mod(num_spatial_interpolation_points, 2) == 0
@@ -267,15 +266,13 @@ function prolongation_mongwane!(
 
     # dir: 1: left, 2: right
     for dir in 1:2
+        if is_physical_boundary[dir]
+            continue
+        end
+
         for i in num_ghost_points[dir]
             fidx = ghost_indices[dir][i]
             is_aligned = mod(i + 1, 2) != 0
-
-            x_pos = x[fidx]
-            # don't change if the points are outside the physical boundary
-            if x_pos < physical_domain_box[1] || x_pos > physical_domain_box[2]
-                continue
-            end
 
             if is_aligned
                 cidx = fidx2cidx(fine_level, fidx)
@@ -331,8 +328,7 @@ function prolongation!(
         spatial_interpolation_order,
         time_interpolation_order,
         ghost_indices,
-        x,
-        physical_domain_box,
+        is_physical_boundary,
     ) = fine_level
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
@@ -352,15 +348,13 @@ function prolongation!(
 
     # dir: 1: left, 2: right
     for dir in 1:2
+        if is_physical_boundary[dir]
+            continue
+        end
+
         for i in num_ghost_points[dir]
             fidx = ghost_indices[dir][i]
             is_aligned = mod(i + 1, 2) != 0
-
-            x_pos = x[fidx]
-            # don't change if the points are outside the physical boundary
-            if x_pos < physical_domain_box[1] || x_pos > physical_domain_box[2]
-                continue
-            end
 
             if interp_in_time
                 if is_aligned
