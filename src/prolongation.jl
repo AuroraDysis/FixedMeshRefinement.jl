@@ -131,13 +131,15 @@ end
 #===============================================================================
 apply_transition_zone!: apply transition zone
 ===============================================================================#
-function apply_transition_zone!(grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool) where {NumState,NumDiagnostic}
+function apply_transition_zone!(
+    grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool
+) where {NumState,NumDiagnostic}
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
     (;
         num_total_points,
-        num_buffer_points,
+        num_ghost_points,
         num_transition_points,
         spatial_interpolation_order,
     ) = fine_level
@@ -146,11 +148,10 @@ function apply_transition_zone!(grid::Grid{NumState,NumDiagnostic}, l::Int, inte
     domain_box = fine_level.domain_box
     dxf = fine_level.dx
 
-    isapprox(domain_box[1], fine_level.x[1 + num_buffer_points]; rtol=1e-12) ||
-        error("domain_box[1] != fine_level.x[1 + num_buffer_points]")
-    isapprox(
-        domain_box[2], fine_level.x[num_total_points - num_buffer_points]; rtol=1e-12
-    ) || error("domain_box[2] != fine_level.x[num_total_points - num_buffer_points]")
+    domain_box[1] ≈ fine_level.x[1 + num_ghost_points[1]] ||
+        error("domain_box[1] != fine_level.x[1 + num_ghost_points[1]]")
+    domain_box[2] ≈ fine_level.x[num_total_points - num_ghost_points[2]] ||
+        error("domain_box[2] != fine_level.x[num_total_points - num_ghost_points[2]]")
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
     soffset = if mod(num_spatial_interpolation_points, 2) == 0
@@ -230,7 +231,9 @@ prolongation_mongwane!: use Mongwane's method
     * from level l-1 to level l
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
-function prolongation_mongwane!(grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool) where {NumState,NumDiagnostic}
+function prolongation_mongwane!(
+    grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool
+) where {NumState,NumDiagnostic}
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
