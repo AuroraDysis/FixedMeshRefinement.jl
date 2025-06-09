@@ -45,19 +45,21 @@ function NegativeWaveRHS!(level, r, u)
 end
 
 function MarchBackwards!(grid)
-    for l in 1:length(grid.levels)
+    (; levels, num_levels) = grid
+    for l in 1:num_levels
         if l > 1
             prolongation!(grid, l, false)
         end
-        rk4!(grid.levels[l], NegativeWaveRHS!)
+        rk4!(levels[l], NegativeWaveRHS!)
         # save new u(-dt) -> u_p, u(0) -> u
-        u = grid.levels[l].u
-        u_p = grid.levels[l].u_p
-        u_pp = grid.levels[l].u_pp
+        u = levels[l].u
+        u_p = levels[l].u_p
+        u_pp = levels[l].u_pp
         @. u_pp = u_p
         @. u_p = u
         @. u = u_pp
-        grid.levels[l].t = 0.0
+        levels[l].t = 0.0
     end
-    return grid.t = 0.0
+    levels[1].t = 0.0
+    return nothing
 end
