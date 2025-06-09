@@ -3,10 +3,13 @@ function write_output(dir_path, grid, it)
         fname = dir_path * "/u.it" * lpad(string(it), 6, '0') * ".tsv"
         open(fname, "w") do file
             println(file, "# 1:iteation 2:time 3:level 4:i 5:x 6:psi 7:Pi")
-            for l in 1:length(grid.levels)
-                level = grid.levels[l]
-                levfs = grid.levels[l]
-                for i in 1:length(levfs.x)
+
+            (; num_levels, levels) = grid
+            for l in 1:num_levels
+                level = levels[l]
+                u = level.state[end]
+                x = level.x
+                for i in eachindex(x)
                     println(
                         file,
                         it,
@@ -17,11 +20,11 @@ function write_output(dir_path, grid, it)
                         " ",
                         i,
                         " ",
-                        levfs.x[i],
+                        x[i],
                         " ",
-                        levfs.u[1][i],
+                        u[i, 1],
                         " ",
-                        levfs.u[2][i],
+                        u[i, 2],
                     )
                 end
             end
