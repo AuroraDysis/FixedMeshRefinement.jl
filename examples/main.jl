@@ -1,10 +1,11 @@
 include("../src/FixedMeshRefinement.jl")
+using .FixedMeshRefinement
+
 include("boundary.jl")
 include("initial_data.jl")
 include("output.jl")
 include("wave.jl")
 
-using FixedMeshRefinement
 using Printf
 using TOML
 

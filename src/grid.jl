@@ -58,7 +58,7 @@ mutable struct Level{NumState,NumDiagnostic}
         dissipation,
         is_base_level,
         parent_indices,
-    )
+    ) where {NumState,NumDiagnostic}
         num_total_points = num_interior_points + 2 * num_buffer_points
         dx = (domain_box[2] - domain_box[1]) / (num_interior_points - 1)
         xmin = domain_box[1] - num_ghost_points * dx
@@ -158,7 +158,7 @@ mutable struct Grid{NumState,NumDiagnostic}
         initial_time=0.0,
         dissipation=0.0,
         subcycling=true,
-    )
+    ) where {NumState,NumDiagnostic}
         num_levels = length(domain_boxes)
         physical_domain_box = domain_boxes[1]
 

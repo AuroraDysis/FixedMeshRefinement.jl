@@ -1,4 +1,4 @@
-domain_box = [[-4.0, 4.0], [-1.0, 1.0], [-0.5, 0.5]] # computational domain
+domain_boxes = [[-4.0, 4.0], [-1.0, 1.0], [-0.5, 0.5]] # computational domain
 cfl = 0.25
 num_interior_points = 101
 num_ghost_points = 2
