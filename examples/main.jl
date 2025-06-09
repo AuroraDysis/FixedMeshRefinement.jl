@@ -21,8 +21,8 @@ function nan_check(grid)
     for l in 1:(grid.num_levels)
         level = grid.levels[l]
         u = level.state[end]
-        (; num_buffer_points, num_total_points) = level
-        interior_points = (num_buffer_points + 1):(num_total_points - num_buffer_points)
+        (; num_ghost_points, num_total_points) = level
+        interior_points = (num_ghost_points[1] + 1):(num_total_points - num_ghost_points[2])
         if any(isnan.(u[interior_points, :]))
             has_nan = true
             # print all the nan indexes
