@@ -1,6 +1,6 @@
 module Boundary
 
-function ApplyPeriodicBoundaryCondition!(
+function apply_periodic_boundary_condition!(
     grid::Grid{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
     base_level = grid.levels[1]
@@ -17,7 +17,7 @@ function ApplyPeriodicBoundaryCondition!(
     end
 end
 
-function ApplyPeriodicBoundaryConditionRHS!(level, r)
+function apply_periodic_boundary_condition_rhs!(level, r)
     num_total_points = level.num_total_points
     num_buffer_points = level.num_buffer_points
     for v in 1:length(r)

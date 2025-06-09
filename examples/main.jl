@@ -67,10 +67,10 @@ function main(params, out_dir)
         exit()
     end
 
-    Infino.Boundary.ApplyPeriodicBoundaryCondition!(gfs)
+    apply_periodic_boundary_condition!(grid)
     if !Mongwane
-        Infino.InitialData.march_backwards!(gfs)
-        Infino.Boundary.ApplyPeriodicBoundaryCondition!(gfs)
+        march_backwards!(grid)
+        apply_periodic_boundary_condition!(grid)
     end
 
     @printf(
