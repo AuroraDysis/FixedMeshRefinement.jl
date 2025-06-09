@@ -59,6 +59,9 @@ mutable struct Level{NumState,NumDiagnostic}
         is_base_level,
         parent_indices,
     ) where {NumState,NumDiagnostic}
+        is_physical_boundary = (
+            domain_box[1] ≈ physical_domain_box[1], domain_box[2] ≈ physical_domain_box[2]
+        )
         num_total_points = num_interior_points + 2 * num_buffer_points
         dx = (domain_box[2] - domain_box[1]) / (num_interior_points - 1)
         xmin = domain_box[1] - num_buffer_points * dx
@@ -78,9 +81,6 @@ mutable struct Level{NumState,NumDiagnostic}
         buffer_indices = (
             num_buffer_points:-1:1,
             (num_total_points - num_buffer_points + 1):num_total_points,
-        )
-        is_physical_boundary = (
-            domain_box[1] ≈ physical_domain_box[1], domain_box[2] ≈ physical_domain_box[2]
         )
 
         return new{NumState,NumDiagnostic}(
