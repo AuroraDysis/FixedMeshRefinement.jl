@@ -257,7 +257,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     ]
 
     # Yn buffer
-    dytmp = [zeros(Float64, NumState) for _ in 1:3]
+    dytmp = [MVector{NumState,Float64}(undef) for _ in 1:3]
 
     # dir: 1: left, 2: right
     for dir in 1:2, i in 1:num_buffer_points
