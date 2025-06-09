@@ -1,7 +1,7 @@
 export rk4!
 
 function fill_buffer!(u, level::Level, stage::Int)
-    (; Yn_buffer, additional_points_indices, num_ghost_points, is_physical_boundary) = level
+    (; Yn_buffer, additional_points_indices, num_additional_points, is_physical_boundary) = level
     Yn = Yn_buffer[stage]
     for dir in 1:2
         if is_physical_boundary[dir]
