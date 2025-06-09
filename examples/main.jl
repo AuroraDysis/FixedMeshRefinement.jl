@@ -28,6 +28,7 @@ function nan_check(grid)
             # print all the nan indexes
             println("level $l:")
             println("  x: ", level.x)
+            println("  num_ghost_points: ", num_ghost_points)
             println("  parent_indices: ", level.parent_indices)
             println("  nan_points: ", interior_points[isnan.(u[interior_points, 1])])
         end
