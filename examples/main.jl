@@ -92,7 +92,7 @@ function main(params, out_dir)
             Infino.Physical.Energy(gfs)
         )
         if (mod(i, out_every) == 0)
-            Infino.WriteIO.dump(out_dir, gfs, i)
+            write_output(out_dir, grid, i)
         end
 
         if stop_time > 0.0 && grid.t >= stop_time
