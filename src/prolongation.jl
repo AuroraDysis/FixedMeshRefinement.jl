@@ -264,6 +264,12 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
         fidx = buffer_indices[dir][i]
         is_aligned = mod(fidx, 2) == 0
 
+        x_pos = x[fidx]
+        # don't change if the points are outside the physical boundary
+        if x_pos < domain_box[1] || x_pos > domain_box[2]
+            continue
+        end
+
         if is_aligned
             cidx = fidx2cidx(fine_level, fidx)
             buffer = [view(Yn_buffer[rk_stage], i, :, dir) for rk_stage in 1:4]
