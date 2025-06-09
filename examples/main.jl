@@ -27,7 +27,10 @@ function nan_check(grid)
         if any(isnan.(u[interior_points, :]))
             has_nan = true
             # print all the nan indexes
-            println("level $l has nan: ", interior_points[isnan.(u[interior_points, 1])])
+            println("level $l:")
+            println("  x: ", level.x)
+            println("  parent_indices: ", level.parent_indices)
+            println("  nan_points: ", interior_points[isnan.(u[interior_points, 1])])
         end
     end
     return has_nan
