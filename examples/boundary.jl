@@ -6,18 +6,18 @@ function apply_reflective_boundary_condition!(
     for l in 1:num_levels
         level = levels[l]
         u = level.state[end]
-        (; num_total_points, num_ghost_points, ghost_indices, is_physical_boundary) = level
+        (; num_total_points, num_ghost_points, additional_points_indices, is_physical_boundary) = level
 
         # apply reflective boundary condition to state
         if is_physical_boundary[1]
             for i in 1:num_additional_points[1]
-                u[ghost_indices[1][i], :] .= @view(u[num_additional_points[1] + i, :])
+                u[additional_points_indices[1][i], :] .= @view(u[num_additional_points[1] + i, :])
             end
         end
 
         if is_physical_boundary[2]
             for i in 1:num_additional_points[2]
-                u[ghost_indices[2][i], :] .= @view(
+                u[additional_points_indices[2][i], :] .= @view(
                     u[num_total_points - num_additional_points[2] + 1 - i, :]
                 )
             end
@@ -30,18 +30,18 @@ end
 function apply_reflective_boundary_condition_rhs!(
     level::Level{NumState,NumDiagnostic}, rhs
 ) where {NumState,NumDiagnostic}
-    (; num_total_points, num_ghost_points, ghost_indices, is_physical_boundary) = level
+    (; num_total_points, num_ghost_points, additional_points_indices, is_physical_boundary) = level
 
     # apply reflective boundary condition to state
     if is_physical_boundary[1]
         for i in 1:num_additional_points[1]
-            rhs[ghost_indices[1][i], :] .= @view(rhs[num_additional_points[1] + i, :])
+            rhs[additional_points_indices[1][i], :] .= @view(rhs[num_additional_points[1] + i, :])
         end
     end
 
     if is_physical_boundary[2]
         for i in 1:num_additional_points[2]
-            rhs[ghost_indices[2][i], :] .= @view(
+            rhs[additional_points_indices[2][i], :] .= @view(
                 rhs[num_total_points - num_additional_points[2] + 1 - i, :]
             )
         end

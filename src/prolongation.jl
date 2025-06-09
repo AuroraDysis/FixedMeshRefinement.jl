@@ -233,7 +233,7 @@ function prolongation_mongwane!(
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
-    (; num_ghost_points, spatial_interpolation_order, ghost_indices, is_physical_boundary) =
+    (; num_ghost_points, spatial_interpolation_order, additional_points_indices, is_physical_boundary) =
         fine_level
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
@@ -271,7 +271,7 @@ function prolongation_mongwane!(
         end
 
         for i in 1:num_additional_points[dir]
-            fidx = ghost_indices[dir][i]
+            fidx = additional_points_indices[dir][i]
             is_aligned = mod(i + 1, 2) != 0
 
             if is_aligned
@@ -327,7 +327,7 @@ function prolongation!(
         num_ghost_points,
         spatial_interpolation_order,
         time_interpolation_order,
-        ghost_indices,
+        additional_points_indices,
         is_physical_boundary,
     ) = fine_level
 
@@ -353,7 +353,7 @@ function prolongation!(
         end
 
         for i in 1:num_additional_points[dir]
-            fidx = ghost_indices[dir][i]
+            fidx = additional_points_indices[dir][i]
             is_aligned = mod(i + 1, 2) != 0
 
             if interp_in_time
