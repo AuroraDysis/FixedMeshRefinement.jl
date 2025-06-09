@@ -6,23 +6,25 @@ restriction:
     * we assume that we always march fine level first (for l in lmax-1:-1:1)
     * we assume all the levels are at the same time slice
 ===============================================================================#
-function restriction!(grid::Grid{NumState,NumDiagnostic}, l::Int; apply_trans_zone=false) where {NumState,NumDiagnostic}
+function restriction!(
+    grid::Grid{NumState,NumDiagnostic}, l::Int; apply_trans_zone=false
+) where {NumState,NumDiagnostic}
     fine_level = grid.levels[l + 1]
     coarse_level = grid.levels[l]
 
-    (; num_total_points, num_left_ghost_points, num_right_ghost_points, num_transition_points, parent_indices) =
+    (; num_total_points, num_ghost_points, num_transition_points, parent_indices) =
         fine_level
 
     isrt = if apply_trans_zone
-        1 + num_buffer_points + num_transition_points
+        1 + num_ghost_points[1] + num_transition_points
     else
-        1 + num_buffer_points
+        1 + num_ghost_points[1]
     end
 
     iend = if apply_trans_zone
-        num_total_points - num_buffer_points - num_transition_points
+        num_total_points - num_ghost_points[2] - num_transition_points
     else
-        num_total_points - num_buffer_points
+        num_total_points - num_ghost_points[2]
     end
 
     uf = view(fine_level.state[end], isrt:2:iend, :)
