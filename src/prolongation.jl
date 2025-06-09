@@ -234,11 +234,7 @@ function prolongation_mongwane!(
     coarse_level = grid.levels[l - 1]
 
     (;
-        num_buffer_points,
-        spatial_interpolation_order,
-        ghost_indices,
-        x,
-        physical_domain_box,
+        num_ghost_points, spatial_interpolation_order, ghost_indices, x, physical_domain_box
     ) = fine_level
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
@@ -270,42 +266,44 @@ function prolongation_mongwane!(
     dytmp = [MVector{NumState,Float64}(undef) for _ in 1:3]
 
     # dir: 1: left, 2: right
-    for dir in 1:2, i in 1:num_buffer_points
-        fidx = ghost_indices[dir][i]
-        is_aligned = mod(i + 1, 2) != 0
+    for dir in 1:2
+        for i in ghost_indices[dir]
+            fidx = ghost_indices[dir][i]
+            is_aligned = mod(i + 1, 2) != 0
 
-        x_pos = x[fidx]
-        # don't change if the points are outside the physical boundary
-        if x_pos < physical_domain_box[1] || x_pos > physical_domain_box[2]
-            continue
-        end
-
-        if is_aligned
-            cidx = fidx2cidx(fine_level, fidx)
-            buffer = [view(Yn_buffer[rk_stage], i, :, dir) for rk_stage in 1:4]
-            yn = @view(uc_p[cidx, :])
-            kcs = [view(kc[m], cidx, :) for m in 1:4]
-            calc_Yn_from_kcs!(buffer, yn, kcs, dtc, interp_in_time, dytmp)
-        else
-            cidx = fidx2cidx(fine_level, fidx - 1)
-
-            for ic in 1:num_spatial_interpolation_points
-                ic_grid = cidx + ic - soffset
-                kcs = [view(kc[m], ic_grid, :) for m in 1:4]
-                yn = @view(uc_p[ic_grid, :])
-                sbuffer = [view(spatial_buffer[rk_stage], ic, :) for rk_stage in 1:4]
-                calc_Yn_from_kcs!(sbuffer, yn, kcs, dtc, interp_in_time, dytmp)
+            x_pos = x[fidx]
+            # don't change if the points are outside the physical boundary
+            if x_pos < physical_domain_box[1] || x_pos > physical_domain_box[2]
+                continue
             end
-            for rk_stage in 1:4
-                prolongation_spatial_interpolate!(
-                    view(Yn_buffer[rk_stage], i, :, dir),
-                    [
-                        view(spatial_buffer[rk_stage], ic, :) for
-                        ic in 1:num_spatial_interpolation_points
-                    ],
-                    soffset,
-                    spatial_interpolation_order,
-                )
+
+            if is_aligned
+                cidx = fidx2cidx(fine_level, fidx)
+                buffer = [view(Yn_buffer[rk_stage], i, :, dir) for rk_stage in 1:4]
+                yn = @view(uc_p[cidx, :])
+                kcs = [view(kc[m], cidx, :) for m in 1:4]
+                calc_Yn_from_kcs!(buffer, yn, kcs, dtc, interp_in_time, dytmp)
+            else
+                cidx = fidx2cidx(fine_level, fidx - 1)
+
+                for ic in 1:num_spatial_interpolation_points
+                    ic_grid = cidx + ic - soffset
+                    kcs = [view(kc[m], ic_grid, :) for m in 1:4]
+                    yn = @view(uc_p[ic_grid, :])
+                    sbuffer = [view(spatial_buffer[rk_stage], ic, :) for rk_stage in 1:4]
+                    calc_Yn_from_kcs!(sbuffer, yn, kcs, dtc, interp_in_time, dytmp)
+                end
+                for rk_stage in 1:4
+                    prolongation_spatial_interpolate!(
+                        view(Yn_buffer[rk_stage], i, :, dir),
+                        [
+                            view(spatial_buffer[rk_stage], ic, :) for
+                            ic in 1:num_spatial_interpolation_points
+                        ],
+                        soffset,
+                        spatial_interpolation_order,
+                    )
+                end
             end
         end
     end
