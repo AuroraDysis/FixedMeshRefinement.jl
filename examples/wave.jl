@@ -6,26 +6,34 @@ wave_rhs!:
         dot(Pi)  = ddpsi
 ===============================================================================#
 function wave_rhs!(level, rhs, u, t)
-    psi = u[1]
-    Pi = u[2]
-    psi_rhs = rhs[1]
-    Pi_rhs = rhs[2]
+    psi = @view(u[:, 1])
+    Pi = @view(u[:, 2])
+    psi_rhs = @view(rhs[:, 1])
+    Pi_rhs = @view(rhs[:, 2])
 
-    (; num_total_points, finite_difference_order, dissipation) = level
+    (; num_total_points, num_buffer_points, dissipation) = level
 
-    # TODO: improve performance by using pre-allocated arrays
-    ddpsi = zeros(Float64, num_total_points)
-    psi_diss = zeros(Float64, num_total_points)
-    Pi_diss = zeros(Float64, num_total_points)
-    derivs_2nd!(ddpsi, psi, dx, finite_difference_order)
-    derivs_diss!(psi_diss, psi, dx, finite_difference_order)
-    derivs_diss!(Pi_diss, Pi, dx, finite_difference_order)
-
-    @. psi_rhs = Pi + dissipation * psi_diss
-    @. Pi_rhs = ddpsi + dissipation * Pi_diss
+    @inbounds for i in (1 + num_buffer_points):(num_total_points - num_buffer_points)
+        # 4th order finite difference
+        ddpsi =
+            (-psi[i - 2] + 16 * psi[i - 1] - 30 * psi[i] + 16 * psi[i + 1] - psi[i + 2]) /
+            (12 * dx^2)
+        diss_psi =
+            (
+                (psi[i + 3] + psi[i - 3]) - 6 * (psi[i + 2] + psi[i - 2]) +
+                15 * (psi[i + 1] + psi[i - 1]) - 20 * psi[i]
+            ) / dx
+        diss_Pi =
+            (
+                (Pi[i + 3] + Pi[i - 3]) - 6 * (Pi[i + 2] + Pi[i - 2]) +
+                15 * (Pi[i + 1] + Pi[i - 1]) - 20 * Pi[i]
+            ) / dx
+        psi_rhs[i] = Pi[i] + dissipation * diss_psi
+        Pi_rhs[i] = ddpsi + dissipation * diss_Pi
+    end
 
     if level.is_base_level
-        Boundary.ApplyPeriodicBoundaryConditionRHS!(level, rhs)
+        apply_periodic_boundary_condition_rhs!(level, rhs)
     end
 end
 
