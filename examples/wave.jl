@@ -20,8 +20,7 @@ function wave_rhs!(level, rhs, u, t)
         dx,
     ) = level
 
-    noffset = is_base_level ? num_ghost_points : num_buffer_points
-    @inbounds for i in (1 + noffset):(num_total_points - noffset)
+    @inbounds for i in (1 + num_ghost_points):(num_total_points - num_ghost_points)
         # 4th order finite difference
         ddpsi =
             (-psi[i - 2] + 16 * psi[i - 1] - 30 * psi[i] + 16 * psi[i + 1] - psi[i + 2]) /
@@ -39,6 +38,9 @@ function wave_rhs!(level, rhs, u, t)
         psi_rhs[i] = Pi[i] + dissipation * diss_psi
         Pi_rhs[i] = ddpsi + dissipation * diss_Pi
     end
+
+    psi_rhs[1:num_ghost_points] .= NaN
+    psi_rhs[(num_total_points - num_ghost_points + 1):num_total_points] .= NaN
 
     if is_base_level
         apply_periodic_boundary_condition_rhs!(level, rhs)
