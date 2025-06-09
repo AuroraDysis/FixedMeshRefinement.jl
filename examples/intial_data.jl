@@ -19,16 +19,18 @@ function gaussian!(grid; amp=1.0, sig=0.25, x0=0.0)
 end
 
 function sinusoidal!(grid)
-    lmax = length(grid.levels)
-    for l in 1:lmax
-        psi = grid.levels[l].u[1]
-        Pi = grid.levels[l].u[2]
-        x = grid.levels[l].x
+    (; levels, num_levels) = grid
+
+    for l in 1:num_levels
+        psi = levels[l].u[1]
+        Pi = levels[l].u[2]
+        x = levels[l].x
         @. psi = sin(2 * pi * (x - 0.0))
         @. Pi = -2 * pi * cos(2 * pi * (x - 0.0))
     end
+
     # restriction for consistence
-    for l in (lmax - 1):-1:1
+    for l in (num_levels - 1):-1:1
         restriction!(grid, l)
     end
 end
