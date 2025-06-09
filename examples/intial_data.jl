@@ -1,16 +1,10 @@
-module InitialData
-
-include("Derivs.jl")
-include("ODESolver.jl")
-include("Physical.jl")
-
 #===============================================================================
 Initial Data Types:
     * Gaussian
 ===============================================================================#
-function Gaussian!(grid; amp = 1.0, sig = 0.25, x0 = 0.0)
+function gaussian!(grid; amp=1.0, sig=0.25, x0=0.0)
     lmax = length(grid.levels)
-    for l = 1:lmax
+    for l in 1:lmax
         psi = grid.levels[l].u[1]
         Pi = grid.levels[l].u[2]
         x = grid.levels[l].x
@@ -18,14 +12,14 @@ function Gaussian!(grid; amp = 1.0, sig = 0.25, x0 = 0.0)
         @. Pi = 0.0
     end
     # restriction for consistence
-    for l = lmax-1:-1:1
+    for l in (lmax - 1):-1:1
         restriction!(grid, l)
     end
 end
 
 function sinusoidal!(grid)
     lmax = length(grid.levels)
-    for l = 1:lmax
+    for l in 1:lmax
         psi = grid.levels[l].u[1]
         Pi = grid.levels[l].u[2]
         x = grid.levels[l].x
@@ -33,7 +27,7 @@ function sinusoidal!(grid)
         @. Pi = -2 * pi * cos(2 * pi * (x - 0.0))
     end
     # restriction for consistence
-    for l = lmax-1:-1:1
+    for l in (lmax - 1):-1:1
         restriction!(grid, l)
     end
 end
@@ -48,7 +42,7 @@ function NegativeWaveRHS!(level, r, u)
 end
 
 function MarchBackwards!(grid)
-    for l = 1:length(grid.levels)
+    for l in 1:length(grid.levels)
         if l > 1
             prolongation!(grid, l, false)
         end
@@ -62,7 +56,5 @@ function MarchBackwards!(grid)
         @. u = u_pp
         grid.levels[l].t = 0.0
     end
-    grid.t = 0.0
+    return grid.t = 0.0
 end
-
-end # module InitialData

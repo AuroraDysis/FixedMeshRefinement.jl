@@ -2,6 +2,8 @@ using FixedMeshRefinement
 using Printf
 using TOML
 
+include("initial_data.jl")
+
 function get(params, key, default)
     return haskey(params, key) ? params[key] : default
 end
