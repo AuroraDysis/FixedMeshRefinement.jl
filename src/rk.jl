@@ -10,7 +10,7 @@ function fill_buffer!(u, level::Level, stage::Int)
         if x_pos < physical_domain_box[1] || x_pos > physical_domain_box[2]
             continue
         end
-        u[idx, :] .= @view(Yn[idx, :, dir])
+        u[idx, :] .= @view(Yn[i, :, dir])
     end
     fill!(Yn, NaN)
     return nothing
