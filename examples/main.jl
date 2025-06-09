@@ -121,8 +121,9 @@ function main(params, out_dir)
         end
 
         # nan check
-        for l in 1:(grid.num_levels)
-            println("level $l: ", grid.levels[l].x)
+        if nan_check(grid)
+            println("Nan detected!")
+            exit()
         end
     end
 
