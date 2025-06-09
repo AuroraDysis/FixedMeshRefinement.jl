@@ -18,6 +18,8 @@ mutable struct Level{NumState,NumDiagnostic}
     num_buffer_points::Int  # num of buffer points
     num_transition_points::Int  # num of transition zone points
     num_total_points::Int  # num of all grid points
+    num_left_ghost_points::Int  # num of left ghost points
+    num_right_ghost_points::Int  # num of right ghost points
     time_interpolation_order::Int  # interpolation order in time
     spatial_interpolation_order::Int  # interpolation order in space
     domain_box::Tuple{Float64,Float64}  # size computational domain (interior)
@@ -62,15 +64,15 @@ mutable struct Level{NumState,NumDiagnostic}
         is_physical_boundary = (
             domain_box[1] ≈ physical_domain_box[1], domain_box[2] ≈ physical_domain_box[2]
         )
-        num_left_additional_points =
+        num_left_ghost_points =
             is_physical_boundary[1] ? num_ghost_points : num_buffer_points
-        num_right_additional_points =
+        num_right_ghost_points =
             is_physical_boundary[2] ? num_ghost_points : num_buffer_points
         num_total_points =
-            num_interior_points + num_left_additional_points + num_right_additional_points
+            num_interior_points + num_left_ghost_points + num_right_ghost_points
         dx = (domain_box[2] - domain_box[1]) / (num_interior_points - 1)
-        x_min = domain_box[1] - num_left_additional_points * dx
-        x_max = domain_box[2] + num_right_additional_points * dx
+        x_min = domain_box[1] - num_left_ghost_points * dx
+        x_max = domain_box[2] + num_right_ghost_points * dx
         x = LinRange(x_min, x_max, num_total_points)
         time_levels = max(time_interpolation_order + 1, 2)
         state = [fill(NaN, num_total_points, NumState) for _ in 1:time_levels]
@@ -84,8 +86,8 @@ mutable struct Level{NumState,NumDiagnostic}
             Yn_buffer[j] = fill(NaN, num_buffer_points, NumState, 2)
         end
         ghost_indices = (
-            num_left_additional_points:-1:1,
-            (num_total_points - num_right_additional_points + 1):num_total_points,
+            num_left_ghost_points:-1:1,
+            (num_total_points - num_right_ghost_points + 1):num_total_points,
         )
 
         return new{NumState,NumDiagnostic}(
@@ -94,6 +96,8 @@ mutable struct Level{NumState,NumDiagnostic}
             num_buffer_points,
             num_transition_points,
             num_total_points,
+            num_left_ghost_points,
+            num_right_ghost_points,
             time_interpolation_order,
             spatial_interpolation_order,
             domain_box,
