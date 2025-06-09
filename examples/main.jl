@@ -97,6 +97,7 @@ function main(params, out_dir)
             i,
             wave_energy(grid)
         )
+
         if (mod(i, out_every) == 0)
             write_output(out_dir, grid, i)
         end
