@@ -6,7 +6,7 @@ function apply_reflective_boundary_condition!(
     for l in 1:num_levels
         level = levels[l]
         u = level.state[end]
-        (; num_ghost_points, ghost_indices, is_physical_boundary) = level
+        (; num_total_points, num_ghost_points, ghost_indices, is_physical_boundary) = level
 
         # apply reflective boundary condition to state
         if is_physical_boundary[1]
