@@ -223,7 +223,7 @@ mutable struct Grid{NumState,NumDiagnostic}
             parent_idx_left =
                 div(level_min_idx + 1, 2) + parent_level.num_additional_points[1]
             parent_idx_right =
-                div(level_max_idx + 1, 2) + parent_level.num_additional_points[2]
+                div(level_max_idx + 1, 2) + parent_level.num_additional_points[1]
             parent_indices = parent_idx_left:parent_idx_right
 
             # check x are aligned
