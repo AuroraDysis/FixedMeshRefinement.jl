@@ -1,3 +1,5 @@
+export step!
+
 function step!(
     grid::Grid{NumState,NumDiagnostic}; mongwane=false, apply_trans_zone=false
 ) where {NumState,NumDiagnostic}
