@@ -130,13 +130,13 @@ if length(ARGS) < 1
     println("Usage: julia Subcycling.jl parfile.toml")
     exit(1)
 end
-pars_path = ARGS[1]
-params = TOML.parsefile(pars_path)
+
+params_path = ARGS[1]
+params = TOML.parsefile(params_path)
 
 # create output directory
 out_dir = joinpath(
-    dirname(pars_path),
-    haskey(params, "out_dir") ? params["out_dir"] : splitext(basename(pars_path))[1],
+    dirname(params_path), get(params, "out_dir", splitext(basename(params_path))[1])
 )
 if isdir(out_dir)
     println("Removing old directory '$out_dir'...")
@@ -146,11 +146,10 @@ println("Creating new directory '$out_dir'...")
 mkdir(out_dir)
 
 # copy parfile into out_dir
-cp(pars_path, out_dir * "/" * basename(pars_path))
+cp(params_path, out_dir * "/" * basename(params_path))
 
 # config
-redirect_std =
-    haskey(params["configs"], "redirect_std") ? params["configs"]["redirect_std"] : true
+redirect_std = get(params, "redirect_std", true)
 
 if redirect_std
     # redirect output and error
