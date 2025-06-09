@@ -165,7 +165,7 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
     uf = statef[end]
     uc_p = statec[end - 1]
 
-    aligned_buffer = zeros(Float64, NumState)
+    aligned_buffer = MVector{NumState,Float64}(undef)
     spatial_buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
 
     for dir in 1:2  # left or right
