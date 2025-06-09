@@ -23,10 +23,10 @@ function restriction!(grid, l; apply_trans_zone=false)
         num_total_points - num_buffer_points
     end
 
-    # TODO: implement fourth-order interpolation
-    uf = @view(fine_level.u[isrt:2:iend, :])
-    uc = coarse_level.u
+    uf = view(fine_level.state[end], isrt:2:iend, :)
+    uc = coarse_level.state[end]
 
+    # TODO: implement fourth-order interpolation
     if apply_trans_zone
         noffset = div(num_transition_points + 1, 2)
         uc[parent_indices[(1 + noffset):(end - noffset)], :] .= uf
