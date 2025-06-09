@@ -229,7 +229,9 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
-    (; num_buffer_points, spatial_interpolation_order, buffer_indices) = fine_level
+    (; num_buffer_points, spatial_interpolation_order, buffer_indices, x) = fine_level
+
+    physical_domain_box = grid.levels[1].domain_box
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
     soffset = if mod(num_spatial_interpolation_points, 2) == 0
@@ -266,7 +268,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
 
         x_pos = x[fidx]
         # don't change if the points are outside the physical boundary
-        if x_pos < domain_box[1] || x_pos > domain_box[2]
+        if x_pos < physical_domain_box[1] || x_pos > physical_domain_box[2]
             continue
         end
 
@@ -324,8 +326,9 @@ function prolongation!(
         time_interpolation_order,
         buffer_indices,
         x,
-        domain_box,
     ) = fine_level
+
+    physical_domain_box = grid.levels[1].domain_box
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
     soffset = if mod(num_spatial_interpolation_points, 2) == 0
@@ -349,7 +352,7 @@ function prolongation!(
 
         x_pos = x[fidx]
         # don't change if the points are outside the physical boundary
-        if x_pos < domain_box[1] || x_pos > domain_box[2]
+        if x_pos < physical_domain_box[1] || x_pos > physical_domain_box[2]
             continue
         end
 
