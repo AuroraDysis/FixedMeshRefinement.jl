@@ -87,12 +87,7 @@ function main(params, out_dir)
     println("Start evolution...")
 
     for i in 1:max_step
-        Infino.ODESolver.Evolve!(
-            Infino.Physical.WaveRHS!,
-            gfs;
-            mongwane=mongwane,
-            apply_trans_zone=apply_trans_zone,
-        )
+        step!(grid, wave_rhs!; mongwane=mongwane, apply_trans_zone=apply_trans_zone)
 
         @printf(
             "Simulation time: %.4f, iteration %d. E = %.4f\n",

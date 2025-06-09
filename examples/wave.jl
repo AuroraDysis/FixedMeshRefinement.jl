@@ -32,19 +32,21 @@ Energy:
     * int_xmin^xmax (Pi^2/2 + dpsi^2/2)
     * calculate on base level (interior) only
 ===============================================================================#
-function Energy(grid)
-    num_total_points = grid.levels[1].num_total_points
-    num_buffer_points = grid.levels[1].num_buffer_points
-    dx = grid.levels[1].dx
-    psi = grid.levels[1].u[1]
-    Pi = grid.levels[1].u[2]
+function wave_energy(grid)
+    level = grid.levels[1]
+    num_total_points = level.num_total_points
+    num_buffer_points = level.num_buffer_points
+    dx = level.dx
+    u = level.state[end]
+    psi = u[1]
+    psi_t = u[2]
 
     dpsi = zeros(Float64, num_total_points)
-    Derivs.derivs_1st!(dpsi, psi, dx, grid.levels[1].finite_difference_order)
+    derivs_1st!(dpsi, psi, dx, level.finite_difference_order)
 
     E::Float64 = 0.0
     for i in (1 + num_buffer_points):(num_total_points - num_buffer_points)
-        E += (0.5 * Pi[i] * Pi[i] + 0.5 * dpsi[i] * dpsi[i])
+        E += (0.5 * psi_t[i] * psi_t[i] + 0.5 * dpsi[i] * dpsi[i])
     end
     return E * dx
 end

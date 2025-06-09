@@ -1,5 +1,3 @@
-module Derivs
-
 #===============================================================================
 Derivatives:
     * single point
@@ -85,5 +83,3 @@ function calc_ddu!(ddu::Array{Array{Float64,1},1}, u::Array{Array{Float64,1},1},
         derivs_2nd!(ddu[i], u[i], dx, ord)
     end
 end
-
-end # module Derivs
