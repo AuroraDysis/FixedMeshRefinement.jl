@@ -14,15 +14,13 @@ function apply_periodic_boundary_condition!(
     end
 end
 
-function apply_periodic_boundary_condition_rhs!(level, r)
+function apply_periodic_boundary_condition_rhs!(level, rhs)
     (; num_total_points, num_buffer_points) = level
-    for v in 1:length(r)
-        rhs = r[v]
-        for i in 1:num_buffer_points
-            rhs[i] = rhs[num_total_points - 2 * num_buffer_points + i]
-        end
-        for i in num_total_points:-1:(num_total_points - num_buffer_points + 1)
-            rhs[i] = rhs[2 * num_buffer_points - num_total_points + i]
-        end
+
+    for i in 1:num_buffer_points
+        rhs[i, :] = rhs[num_total_points - 2 * num_buffer_points + i, :]
+    end
+    for i in num_total_points:-1:(num_total_points - num_buffer_points + 1)
+        rhs[i, :] = rhs[2 * num_buffer_points - num_total_points + i, :]
     end
 end
