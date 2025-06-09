@@ -13,7 +13,8 @@ function main(params, out_dir)
     num_interior_points = params["num_interior_points"]
     num_ghost_points = params["num_ghost_points"]
     num_buffer_points = params["num_buffer_points"]
-    itlast = params["itlast"]
+    stop_time = get(params, "stop_time", -1.0)
+    max_step = get(params, "max_step", -1)
     out_every = params["out_every"]
     domain_boxes = params["domain_boxes"]
     cfl = get(params, "cfl", 0.25)
@@ -28,7 +29,7 @@ function main(params, out_dir)
     println("  cfl        = ", cfl)
     println("  mongwane   = ", mongwane)
     println("  trans_zone = ", apply_trans_zone)
-    println("  itlast     = ", itlast)
+    println("  max_step     = ", max_step)
     println("  out_every  = ", out_every)
     println("  out_dir    = ", out_dir)
 
@@ -70,7 +71,7 @@ function main(params, out_dir)
 
     @printf(
         "Simulation time: %.4f, iteration %d. E = %.4f\n",
-        gfs.grid.time,
+        grid.t,
         0,
         Infino.Physical.Energy(gfs)
     )
@@ -81,7 +82,7 @@ function main(params, out_dir)
     ##########
     println("Start evolution...")
 
-    for i in 1:itlast
+    for i in 1:max_step
         Infino.ODESolver.Evolve!(
             Infino.Physical.WaveRHS!,
             gfs;
@@ -91,12 +92,16 @@ function main(params, out_dir)
 
         @printf(
             "Simulation time: %.4f, iteration %d. E = %.4f\n",
-            gfs.grid.time,
+            grid.t,
             i,
             Infino.Physical.Energy(gfs)
         )
         if (mod(i, out_every) == 0)
             Infino.WriteIO.dump(out_dir, gfs, i)
+        end
+
+        if stop_time > 0.0 && grid.t >= stop_time
+            break
         end
     end
 
