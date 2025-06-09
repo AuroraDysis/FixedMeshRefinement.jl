@@ -21,8 +21,10 @@ function nan_check(grid)
     for l in 1:(grid.num_levels)
         level = grid.levels[l]
         u = level.state[end]
-        (; num_total_points, num_additional_points, parent_indices, is_physical_boundary) = level
-        interior_points = (num_additional_points[1] + 1):(num_total_points - num_additional_points[2])
+        (; num_total_points, num_additional_points, parent_indices, is_physical_boundary) =
+            level
+        interior_points =
+            (num_additional_points[1] + 1):(num_total_points - num_additional_points[2])
         if any(isnan.(u[interior_points, :]))
             has_nan = true
             # print all the nan indexes
@@ -43,7 +45,7 @@ function main(params, out_dir)
     ########################
     num_interior_points = params["num_interior_points"]
     num_ghost_points = params["num_ghost_points"]
-    num_buffer_points = params["num_buffer_points"]
+    num_buffer_points = get(params, "num_buffer_points", 4 * num_ghost_points)
     stop_time = get(params, "stop_time", -1.0)
     max_step = get(params, "max_step", -1)
     out_every = params["out_every"]
@@ -109,26 +111,28 @@ function main(params, out_dir)
     ##########
     println("Start evolution...")
 
-    for i in 1:max_step
+    step = 1
+    while (max_step > 0 && step <= max_step) || (stop_time > 0.0 && grid.t < stop_time)
         step!(grid, wave_rhs!; mongwane=mongwane, apply_trans_zone=apply_trans_zone)
 
         @printf(
-            "Simulation time: %.4f, iteration %d. E = %.4f\n", grid.t, i, wave_energy(grid)
+            "Simulation time: %.4f, iteration %d. E = %.4f\n",
+            grid.t,
+            step,
+            wave_energy(grid)
         )
 
-        if mod(i, out_every) == 0
-            write_output(out_dir, grid, i)
-        end
-
-        if stop_time > 0.0 && grid.t >= stop_time
-            break
+        if mod(step, out_every) == 0
+            write_output(out_dir, grid, step)
         end
 
         # nan check
         if nan_check(grid)
-            println("Nan detected!")
+            println("Nan detected at t = $(grid.t), step = $(step)!")
             exit()
         end
+
+        step += 1
     end
 
     ########
