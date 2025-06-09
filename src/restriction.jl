@@ -16,15 +16,15 @@ function restriction!(
         fine_level
 
     isrt = if apply_trans_zone
-        1 + num_ghost_points[1] + num_transition_points
+        1 + num_additional_points[1] + num_transition_points
     else
-        1 + num_ghost_points[1]
+        1 + num_additional_points[1]
     end
 
     iend = if apply_trans_zone
-        num_total_points - num_ghost_points[2] - num_transition_points
+        num_total_points - num_additional_points[2] - num_transition_points
     else
-        num_total_points - num_ghost_points[2]
+        num_total_points - num_additional_points[2]
     end
 
     uf = view(fine_level.state[end], isrt:2:iend, :)

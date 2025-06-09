@@ -7,7 +7,7 @@ function fill_buffer!(u, level::Level, stage::Int)
         if is_physical_boundary[dir]
             continue
         end
-        for i in num_ghost_points[dir]
+        for i in num_additional_points[dir]
             idx = ghost_indices[dir][i]
             u[idx, :] .= @view(Yn[i, :, dir])
         end

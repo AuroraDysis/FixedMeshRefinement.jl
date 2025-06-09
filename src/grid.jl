@@ -14,9 +14,10 @@ end
 
 mutable struct Level{NumState,NumDiagnostic}
     num_interior_points::Int  # num of interior grid points
-    num_ghost_points::NTuple{2,Int}
+    num_ghost_points::Int  # num of ghost points on each side
     num_transition_points::Int  # num of transition zone points
     num_total_points::Int  # num of all grid points
+    num_additional_points::NTuple{2,Int} # num of additional points on each side
     time_interpolation_order::Int  # interpolation order in time
     spatial_interpolation_order::Int  # interpolation order in space
     domain_box::Tuple{Float64,Float64}  # size computational domain (interior)
@@ -62,15 +63,15 @@ mutable struct Level{NumState,NumDiagnostic}
             isapprox(domain_box[1], physical_domain_box[1]; rtol=typetol(Float64)),
             isapprox(domain_box[2], physical_domain_box[2]; rtol=typetol(Float64)),
         )
-        num_left_ghost_points =
+        num_left_additional_points =
             is_physical_boundary[1] ? num_ghost_points : num_buffer_points
-        num_right_ghost_points =
+        num_right_additional_points =
             is_physical_boundary[2] ? num_ghost_points : num_buffer_points
         num_total_points =
-            num_interior_points + num_left_ghost_points + num_right_ghost_points
+            num_interior_points + num_left_additional_points + num_right_additional_points
         dx = (domain_box[2] - domain_box[1]) / (num_interior_points - 1)
-        x_min = domain_box[1] - num_left_ghost_points * dx
-        x_max = domain_box[2] + num_right_ghost_points * dx
+        x_min = domain_box[1] - num_left_additional_points * dx
+        x_max = domain_box[2] + num_right_additional_points * dx
         x = LinRange(x_min, x_max, num_total_points)
         time_levels = max(time_interpolation_order + 1, 2)
         state = [fill(NaN, num_total_points, NumState) for _ in 1:time_levels]
@@ -90,9 +91,10 @@ mutable struct Level{NumState,NumDiagnostic}
 
         return new{NumState,NumDiagnostic}(
             num_interior_points,
-            (num_left_ghost_points, num_right_ghost_points),
+            num_ghost_points,
             num_transition_points,
             num_total_points,
+            num_additional_points,
             time_interpolation_order,
             spatial_interpolation_order,
             domain_box,
@@ -127,14 +129,14 @@ function cycle_state!(level::Level)
 end
 
 function fidx2cidx(fine_level::Level, fidx::Int)
-    (; is_base_level, parent_indices, num_ghost_points) = fine_level
+    (; is_base_level, parent_indices, num_additional_points) = fine_level
 
     if is_base_level
         error("fidx2cidx is not defined for base level")
     end
 
     parent_idx_left = parent_indices[1]
-    offset = fidx - (1 + num_ghost_points[1])
+    offset = fidx - (1 + num_additional_points[1])
 
     if mod(offset, 2) != 0
         println("parent_indices = ", parent_indices)
@@ -218,8 +220,10 @@ mutable struct Grid{NumState,NumDiagnostic}
             )
             level_num_interior_points = (level_max_idx - level_min_idx) + 1
             # maps between two levels
-            parent_idx_left = div(level_min_idx + 1, 2) + parent_level.num_ghost_points[1]
-            parent_idx_right = div(level_max_idx + 1, 2) + parent_level.num_ghost_points[2]
+            parent_idx_left =
+                div(level_min_idx + 1, 2) + parent_level.num_additional_points[1]
+            parent_idx_right =
+                div(level_max_idx + 1, 2) + parent_level.num_additional_points[2]
             parent_indices = parent_idx_left:parent_idx_right
 
             # check x are aligned

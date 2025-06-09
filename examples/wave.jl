@@ -13,7 +13,7 @@ function wave_rhs!(level, rhs, u, t)
 
     (; num_total_points, num_ghost_points, dissipation, dx) = level
 
-    @inbounds for i in (1 + num_ghost_points[1]):(num_total_points - num_ghost_points[2])
+    @inbounds for i in (1 + num_ghost_points):(num_total_points - num_ghost_points)
         # 4th order finite difference
         ddpsi =
             (-psi[i - 2] + 16 * psi[i - 1] - 30 * psi[i] + 16 * psi[i + 1] - psi[i + 2]) /
@@ -32,8 +32,8 @@ function wave_rhs!(level, rhs, u, t)
         Pi_rhs[i] = ddpsi + dissipation * diss_Pi
     end
 
-    psi_rhs[1:num_ghost_points[1]] .= NaN
-    psi_rhs[(num_total_points - num_ghost_points[2] + 1):num_total_points] .= NaN
+    psi_rhs[1:num_ghost_points] .= NaN
+    psi_rhs[(num_total_points - num_ghost_points + 1):num_total_points] .= NaN
 
     return apply_reflective_boundary_condition_rhs!(level, rhs)
 end
@@ -51,7 +51,7 @@ function wave_energy(grid)
     Pi = @view(u[:, 2])
 
     E::Float64 = 0.0
-    for i in (1 + num_ghost_points[1]):(num_total_points - num_ghost_points[2])
+    for i in (1 + num_ghost_points):(num_total_points - num_ghost_points)
         # 4th order finite difference
         dpsi = (-psi[i - 2] + 8 * psi[i - 1] - 8 * psi[i + 1] + psi[i + 2]) / (12 * dx)
         E += (0.5 * Pi[i] * Pi[i] + 0.5 * dpsi * dpsi)

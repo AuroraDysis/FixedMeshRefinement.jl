@@ -179,9 +179,9 @@ function apply_transition_zone!(
         # TODO: check if we need transition zone for physical boundary
         for i in 1:num_transition_points
             fidx = if dir == 1
-                num_ghost_points[1] + i
+                num_additional_points[1] + i
             else
-                num_total_points - num_ghost_points[2] + 1 - i
+                num_total_points - num_additional_points[2] + 1 - i
             end
             is_aligned = mod(i + 1, 2) != 0
 
@@ -270,7 +270,7 @@ function prolongation_mongwane!(
             continue
         end
 
-        for i in 1:num_ghost_points[dir]
+        for i in 1:num_additional_points[dir]
             fidx = ghost_indices[dir][i]
             is_aligned = mod(i + 1, 2) != 0
 
@@ -352,7 +352,7 @@ function prolongation!(
             continue
         end
 
-        for i in 1:num_ghost_points[dir]
+        for i in 1:num_additional_points[dir]
             fidx = ghost_indices[dir][i]
             is_aligned = mod(i + 1, 2) != 0
 

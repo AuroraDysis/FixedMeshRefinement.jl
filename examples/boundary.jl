@@ -10,15 +10,15 @@ function apply_reflective_boundary_condition!(
 
         # apply reflective boundary condition to state
         if is_physical_boundary[1]
-            for i in 1:num_ghost_points[1]
-                u[ghost_indices[1][i], :] .= @view(u[num_ghost_points[1] + i, :])
+            for i in 1:num_additional_points[1]
+                u[ghost_indices[1][i], :] .= @view(u[num_additional_points[1] + i, :])
             end
         end
 
         if is_physical_boundary[2]
-            for i in 1:num_ghost_points[2]
+            for i in 1:num_additional_points[2]
                 u[ghost_indices[2][i], :] .= @view(
-                    u[num_total_points - num_ghost_points[2] + 1 - i, :]
+                    u[num_total_points - num_additional_points[2] + 1 - i, :]
                 )
             end
         end
@@ -34,15 +34,15 @@ function apply_reflective_boundary_condition_rhs!(
 
     # apply reflective boundary condition to state
     if is_physical_boundary[1]
-        for i in 1:num_ghost_points[1]
-            rhs[ghost_indices[1][i], :] .= @view(rhs[num_ghost_points[1] + i, :])
+        for i in 1:num_additional_points[1]
+            rhs[ghost_indices[1][i], :] .= @view(rhs[num_additional_points[1] + i, :])
         end
     end
 
     if is_physical_boundary[2]
-        for i in 1:num_ghost_points[2]
+        for i in 1:num_additional_points[2]
             rhs[ghost_indices[2][i], :] .= @view(
-                rhs[num_total_points - num_ghost_points[2] + 1 - i, :]
+                rhs[num_total_points - num_additional_points[2] + 1 - i, :]
             )
         end
     end

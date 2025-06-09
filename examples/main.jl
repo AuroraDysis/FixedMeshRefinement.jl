@@ -22,7 +22,7 @@ function nan_check(grid)
         level = grid.levels[l]
         u = level.state[end]
         (; num_ghost_points, num_total_points, parent_indices, is_physical_boundary) = level
-        interior_points = (num_ghost_points[1] + 1):(num_total_points - num_ghost_points[2])
+        interior_points = (num_additional_points[1] + 1):(num_total_points - num_additional_points[2])
         if any(isnan.(u[interior_points, :]))
             has_nan = true
             # print all the nan indexes
