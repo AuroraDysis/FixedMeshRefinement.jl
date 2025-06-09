@@ -21,7 +21,7 @@ function main(params, out_dir)
     diss = get(params, "diss", 0.0)
     subcycling = get(params, "subcycling", true)
     mongwane = get(params, "mongwane", false)
-    ntrans = get(params, "ntrans", 3)
+    num_transition_points = get(params, "num_transition_points", 3)
     ord_s = get(params, "ord_s", 3)
     apply_trans_zone = get(params, "apply_trans_zone", false)
     initial_data = get(params, "initial_data", "Gaussian")
@@ -42,7 +42,7 @@ function main(params, out_dir)
         domain_boxes,
         num_ghost_points,
         num_buffer_points;
-        ntrans=ntrans,
+        num_transition_points=num_transition_points,
         ord_s=ord_s,
         cfl=cfl,
         diss=diss,
