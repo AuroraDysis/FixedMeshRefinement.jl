@@ -61,8 +61,9 @@ function march_backwards!(grid)
         u = state[end]
         u_p = state[end - 1]
         u_pp = state[end - 2]
-        @. u_pp = u_p
-        @. u_p = u
+        u_pp .= u_p
+        u_p .= u
+        u .= u_pp
         level.t = 0.0
     end
     levels[1].t = 0.0
