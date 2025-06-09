@@ -184,7 +184,8 @@ function apply_transition_zone!(grid, l, interp_in_time::Bool)
             else
                 num_total_points - num_buffer_points + 1 - i
             end
-            is_aligned = mod(i + 1, 2) == 0
+            is_aligned = mod(i + 1, 2) != 0
+
             w = transition_profile(a, b, fine_level.x[fidx])
             if is_aligned
                 cidx = fidx2cidx(fine_level, fidx)
@@ -270,7 +271,7 @@ function prolongation_mongwane!(grid, l, interp_in_time::Bool)
     # dir: 1: left, 2: right
     for dir in 1:2, i in 1:num_buffer_points
         fidx = buffer_indices[dir][i]
-        is_aligned = mod(i + 1, 2) == 0
+        is_aligned = mod(i + 1, 2) != 0
 
         x_pos = x[fidx]
         # don't change if the points are outside the physical boundary
@@ -353,7 +354,7 @@ function prolongation!(
     # dir: 1: left, 2: right
     for dir in 1:2, i in 1:num_buffer_points
         fidx = buffer_indices[dir][i]
-        is_aligned = mod(i + 1, 2) == 0
+        is_aligned = mod(i + 1, 2) != 0
 
         x_pos = x[fidx]
         # don't change if the points are outside the physical boundary
