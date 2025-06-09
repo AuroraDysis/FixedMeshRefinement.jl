@@ -55,7 +55,7 @@ function wave_energy(grid)
     for i in (1 + num_buffer_points):(num_total_points - num_buffer_points)
         # 4th order finite difference
         dpsi = (-psi[i - 2] + 8 * psi[i - 1] - 8 * psi[i + 1] + psi[i + 2]) / (12 * dx)
-        E += (0.5 * Pi[i] * Pi[i] + 0.5 * dpsi[i] * dpsi[i])
+        E += (0.5 * Pi[i] * Pi[i] + 0.5 * dpsi * dpsi)
     end
     return E * dx
 end
