@@ -1,5 +1,3 @@
-module WriteIO
-
 function write_output(dir_path, grid, it)
     if isdir(dir_path)
         fname = dir_path * "/u.it" * lpad(string(it), 6, '0') * ".tsv"
@@ -32,6 +30,4 @@ function write_output(dir_path, grid, it)
         println("Error: directory '$dir_path' does not exist!")
         exit()
     end
-end
-
 end
