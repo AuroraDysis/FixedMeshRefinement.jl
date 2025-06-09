@@ -15,7 +15,6 @@ function wave_rhs!(level, rhs, u, t)
         is_base_level,
         num_total_points,
         num_ghost_points,
-        num_buffer_points,
         dissipation,
         dx,
     ) = level
