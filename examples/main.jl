@@ -89,7 +89,7 @@ function main(params, out_dir)
             "Simulation time: %.4f, iteration %d. E = %.4f\n",
             grid.t,
             i,
-            Infino.Physical.Energy(gfs)
+            wave_energy(grid)
         )
         if (mod(i, out_every) == 0)
             write_output(out_dir, grid, i)
