@@ -18,7 +18,6 @@ mutable struct Level{NumState,NumDiagnostic}
     num_buffer_points::Int  # num of buffer points
     num_transition_points::Int  # num of transition zone points
     num_total_points::Int  # num of all grid points
-    finite_difference_order::Int  # finite difference order
     time_interpolation_order::Int  # interpolation order in time
     spatial_interpolation_order::Int  # interpolation order in space
     domain_box::Tuple{Float64,Float64}  # size computational domain (interior)
@@ -50,7 +49,6 @@ mutable struct Level{NumState,NumDiagnostic}
         num_ghost_points,
         num_buffer_points,
         num_transition_points,
-        finite_difference_order,
         time_interpolation_order,
         spatial_interpolation_order,
         domain_box,
@@ -90,7 +88,6 @@ mutable struct Level{NumState,NumDiagnostic}
             num_buffer_points,
             num_transition_points,
             num_total_points,
-            finite_difference_order,
             spatial_interpolation_order,
             domain_box,
             physical_domain_box,
@@ -154,7 +151,6 @@ mutable struct Grid{NumState,NumDiagnostic}
         num_ghost_points,
         num_buffer_points;
         num_transition_points=3,
-        finite_difference_order=4,
         time_interpolation_order=2,
         spatial_interpolation_order=5,
         cfl=0.25,
@@ -177,7 +173,6 @@ mutable struct Grid{NumState,NumDiagnostic}
             num_ghost_points,
             num_buffer_points,
             num_transition_points,
-            finite_difference_order,
             time_interpolation_order,
             spatial_interpolation_order,
             domain_boxes[1],
@@ -243,7 +238,6 @@ mutable struct Grid{NumState,NumDiagnostic}
                     num_ghost_points,
                     num_buffer_points,
                     num_transition_points,
-                    finite_difference_order,
                     time_interpolation_order,
                     spatial_interpolation_order,
                     level_domain,
@@ -275,9 +269,6 @@ function Base.show(
         println(io, "  num_ghost_points          = ", grid.levels[i].num_ghost_points)
         println(io, "  num_buffer_points         = ", grid.levels[i].num_buffer_points)
         println(io, "  num_transition_points     = ", grid.levels[i].num_transition_points)
-        println(
-            io, "  finite_difference_order   = ", grid.levels[i].finite_difference_order
-        )
         println(
             io,
             "  spatial_interpolation_order = ",

@@ -40,14 +40,13 @@ function wave_energy(grid)
     num_buffer_points = level.num_buffer_points
     dx = level.dx
     u = level.state[end]
-    psi = u[1]
-    psi_t = u[2]
-
-    dpsi = zeros(Float64, num_total_points)
-    derivs_1st!(dpsi, psi, dx, level.finite_difference_order)
+    psi = @view(u[:, 1])
+    psi_t = @view(u[:, 2])
 
     E::Float64 = 0.0
     for i in (1 + num_buffer_points):(num_total_points - num_buffer_points)
+        # 4th order finite difference
+        dpsi = (-psi[i - 2] + 8 * psi[i - 1] - 8 * psi[i + 1] + psi[i + 2]) / (12 * dx)
         E += (0.5 * psi_t[i] * psi_t[i] + 0.5 * dpsi[i] * dpsi[i])
     end
     return E * dx
