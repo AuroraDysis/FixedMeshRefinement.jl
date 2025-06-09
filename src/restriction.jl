@@ -10,7 +10,7 @@ function restriction!(grid::Grid{NumState,NumDiagnostic}, l::Int; apply_trans_zo
     fine_level = grid.levels[l + 1]
     coarse_level = grid.levels[l]
 
-    (; num_total_points, num_buffer_points, num_transition_points, parent_indices) =
+    (; num_total_points, num_left_ghost_points, num_right_ghost_points, num_transition_points, parent_indices) =
         fine_level
 
     isrt = if apply_trans_zone

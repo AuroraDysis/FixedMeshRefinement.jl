@@ -14,12 +14,9 @@ end
 
 mutable struct Level{NumState,NumDiagnostic}
     num_interior_points::Int  # num of interior grid points
-    num_ghost_points::Int  # num of ghost points
-    num_buffer_points::Int  # num of buffer points
+    num_ghost_points::NTuple{2,Int}
     num_transition_points::Int  # num of transition zone points
     num_total_points::Int  # num of all grid points
-    num_left_ghost_points::Int  # num of left ghost points
-    num_right_ghost_points::Int  # num of right ghost points
     time_interpolation_order::Int  # interpolation order in time
     spatial_interpolation_order::Int  # interpolation order in space
     domain_box::Tuple{Float64,Float64}  # size computational domain (interior)
@@ -92,12 +89,9 @@ mutable struct Level{NumState,NumDiagnostic}
 
         return new{NumState,NumDiagnostic}(
             num_interior_points,
-            num_ghost_points,
-            num_buffer_points,
+            (num_left_ghost_points, num_right_ghost_points),
             num_transition_points,
             num_total_points,
-            num_left_ghost_points,
-            num_right_ghost_points,
             time_interpolation_order,
             spatial_interpolation_order,
             domain_box,
