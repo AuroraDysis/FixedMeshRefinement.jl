@@ -11,16 +11,18 @@ function wave_rhs!(level, rhs, u, t)
     psi_rhs = rhs[1]
     Pi_rhs = rhs[2]
 
-    # TODO: improve performance by using pre-allocated arrays
-    ddpsi = zeros(Float64, level.num_total_points)
-    psi_diss = zeros(Float64, level.num_total_points)
-    Pi_diss = zeros(Float64, level.num_total_points)
-    Derivs.derivs_2nd!(ddpsi, psi, level.dx, level.finite_difference_order)
-    Derivs.derivs_diss!(psi_diss, psi, level.dx, level.finite_difference_order)
-    Derivs.derivs_diss!(Pi_diss, Pi, level.dx, level.finite_difference_order)
+    (; num_total_points, finite_difference_order, dissipation) = level
 
-    @. psi_rhs = Pi + level.dissipation * psi_diss
-    @. Pi_rhs = ddpsi + level.dissipation * Pi_diss
+    # TODO: improve performance by using pre-allocated arrays
+    ddpsi = zeros(Float64, num_total_points)
+    psi_diss = zeros(Float64, num_total_points)
+    Pi_diss = zeros(Float64, num_total_points)
+    derivs_2nd!(ddpsi, psi, dx, finite_difference_order)
+    derivs_diss!(psi_diss, psi, dx, finite_difference_order)
+    derivs_diss!(Pi_diss, Pi, dx, finite_difference_order)
+
+    @. psi_rhs = Pi + dissipation * psi_diss
+    @. Pi_rhs = ddpsi + dissipation * Pi_diss
 
     if level.is_base_level
         Boundary.ApplyPeriodicBoundaryConditionRHS!(level, rhs)
