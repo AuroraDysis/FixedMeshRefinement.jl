@@ -317,6 +317,8 @@ function prolongation!(
         spatial_interpolation_order,
         time_interpolation_order,
         buffer_indices,
+        x,
+        domain_box,
     ) = fine_level
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
@@ -332,12 +334,20 @@ function prolongation!(
     uf = statef[end]
     uc_p = statec[end - 1]
 
-    if interp_in_time
-        buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
-        # dir: 1: left, 2: right
-        for dir in 1:2, i in 1:num_buffer_points
-            fidx = buffer_indices[dir][i]
-            is_aligned = mod(fidx, 2) == 0
+    buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
+
+    # dir: 1: left, 2: right
+    for dir in 1:2, i in 1:num_buffer_points
+        fidx = buffer_indices[dir][i]
+        is_aligned = mod(fidx, 2) == 0
+
+        x_pos = x[fidx]
+        # don't change if the points are outside the physical boundary
+        if x_pos < domain_box[1] || x_pos > domain_box[2]
+            continue
+        end
+
+        if interp_in_time
             if is_aligned
                 cidx = fidx2cidx(fine_level, fidx)
                 # time interpolation
@@ -368,12 +378,7 @@ function prolongation!(
                     spatial_interpolation_order,
                 )
             end
-        end
-    else
-        # dir: 1: left, 2: right
-        for dir in 1:2, i in 1:num_buffer_points
-            fidx = buffer_indices[dir][i]
-            is_aligned = mod(fidx, 2) == 0
+        else
             if is_aligned
                 cidx = fidx2cidx(fine_level, fidx)
                 uf[fidx] = uc_p[cidx]
