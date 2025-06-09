@@ -2,29 +2,29 @@ using Infino
 using Printf
 using TOML
 
-function main(pars, out_dir)
+function main(params, out_dir)
     ########################
     # Read Parameter Files #
     ########################
-    nx = pars["parameters"]["nx"]
-    ngh = pars["parameters"]["ngh"]
-    nbuf = pars["parameters"]["nbuf"]
-    itlast = pars["parameters"]["itlast"]
-    out_every = pars["parameters"]["out_every"]
-    bbox = pars["parameters"]["bbox"]
-    cfl = haskey(pars["parameters"], "cfl") ? pars["parameters"]["cfl"] : 0.25
-    diss = haskey(pars["parameters"], "diss") ? pars["parameters"]["diss"] : 0.0
+    num_interior_points = params["parameters"]["num_interior_points"]
+    num_ghost_points = params["parameters"]["num_ghost_points"]
+    num_buffer_points = params["parameters"]["num_buffer_points"]
+    itlast = params["parameters"]["itlast"]
+    out_every = params["parameters"]["out_every"]
+    domain_boxes = params["parameters"]["domain_boxes"]
+    cfl = haskey(params["parameters"], "cfl") ? params["parameters"]["cfl"] : 0.25
+    diss = haskey(params["parameters"], "diss") ? params["parameters"]["diss"] : 0.0
     subcycling =
-        haskey(pars["parameters"], "subcycling") ? pars["parameters"]["subcycling"] : true
+        haskey(params["parameters"], "subcycling") ? params["parameters"]["subcycling"] : true
     Mongwane =
-        haskey(pars["parameters"], "Mongwane") ? pars["parameters"]["Mongwane"] : false
-    ntrans = haskey(pars["parameters"], "ntrans") ? pars["parameters"]["ntrans"] : 3
-    ord_s = haskey(pars["parameters"], "ord_s") ? pars["parameters"]["ord_s"] : 3
+        haskey(params["parameters"], "Mongwane") ? params["parameters"]["Mongwane"] : false
+    ntrans = haskey(params["parameters"], "ntrans") ? params["parameters"]["ntrans"] : 3
+    ord_s = haskey(params["parameters"], "ord_s") ? params["parameters"]["ord_s"] : 3
     apply_trans_zone =
-        haskey(pars["parameters"], "apply_trans_zone") ?
-        pars["parameters"]["apply_trans_zone"] : false
+        haskey(params["parameters"], "apply_trans_zone") ?
+        params["parameters"]["apply_trans_zone"] : false
     initial_data =
-        haskey(pars["parameters"], "initial_data") ? pars["parameters"]["initial_data"] :
+        haskey(params["parameters"], "initial_data") ? params["parameters"]["initial_data"] :
         "Gaussian"
     println("Parameters:")
     println("  cfl        = ", cfl)
@@ -38,10 +38,10 @@ function main(pars, out_dir)
     # build grid structure #
     ########################
     grid = Infino.Basic.Grid(
-        nx,
-        bbox,
-        ngh,
-        nbuf;
+        num_interior_points,
+        domain_boxes,
+        num_ghost_points,
+        num_buffer_points;
         ntrans = ntrans,
         ord_s = ord_s,
         cfl = cfl,
@@ -131,12 +131,12 @@ if length(ARGS) < 1
     exit(1)
 end
 pars_path = ARGS[1]
-pars = TOML.parsefile(pars_path)
+params = TOML.parsefile(pars_path)
 
 # create output directory
 out_dir = joinpath(
     dirname(pars_path),
-    haskey(pars["parameters"], "out_dir") ? pars["parameters"]["out_dir"] :
+    haskey(params["parameters"], "out_dir") ? params["parameters"]["out_dir"] :
     splitext(basename(pars_path))[1],
 )
 if isdir(out_dir)
@@ -151,17 +151,17 @@ cp(pars_path, out_dir * "/" * basename(pars_path))
 
 # config
 redirect_std =
-    haskey(pars["configs"], "redirect_std") ? pars["configs"]["redirect_std"] : true
+    haskey(params["configs"], "redirect_std") ? params["configs"]["redirect_std"] : true
 
 if redirect_std
     # redirect output and error
     redirect_to_files("./stdout.txt", "./stderr.txt") do
-        main(pars, out_dir)
+        main(params, out_dir)
     end
     mv("./stdout.txt", out_dir * "/stdout.txt")
     mv("./stderr.txt", out_dir * "/stderr.txt")
 else
-    main(pars, out_dir)
+    main(params, out_dir)
 end
 #===============================================================================
 End Execution
