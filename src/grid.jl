@@ -223,10 +223,10 @@ mutable struct Grid{NumState,NumDiagnostic}
             )
             level_num_interior_points = (level_max_idx - level_min_idx) + 1
             # maps between two levels
-            parent_idx_left = div(level_min_idx + 1, 2)
-            parent_idx_right = div(level_max_idx + 1, 2)
-            parent_indices =
-                (parent_idx_left + num_buffer_points):(parent_idx_right + num_buffer_points)
+            parent_idx_left = div(level_min_idx + 1, 2) + parent_level.num_left_ghost_points
+            parent_idx_right =
+                div(level_max_idx + 1, 2) + parent_level.num_left_ghost_points
+            parent_indices = parent_idx_left:parent_idx_right
 
             # check x are aligned
             if !(
@@ -251,24 +251,22 @@ mutable struct Grid{NumState,NumDiagnostic}
             end
 
             # build level
-            push!(
-                levels,
-                Level{NumState,NumDiagnostic}(
-                    level_num_interior_points,
-                    num_ghost_points,
-                    num_buffer_points,
-                    num_transition_points,
-                    time_interpolation_order,
-                    spatial_interpolation_order,
-                    level_domain,
-                    physical_domain_box,
-                    level_dt,
-                    initial_time,
-                    dissipation,
-                    false,
-                    parent_indices,
-                ),
+            level = Level{NumState,NumDiagnostic}(
+                level_num_interior_points,
+                num_ghost_points,
+                num_buffer_points,
+                num_transition_points,
+                time_interpolation_order,
+                spatial_interpolation_order,
+                level_domain,
+                physical_domain_box,
+                level_dt,
+                initial_time,
+                dissipation,
+                false,
+                parent_indices,
             )
+            push!(levels, level)
         end
 
         # construct
