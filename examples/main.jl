@@ -21,9 +21,8 @@ function nan_check(grid)
     for l in 1:(grid.num_levels)
         level = grid.levels[l]
         u = level.state[end]
-        (; num_ghost_points, num_buffer_points, num_total_points) = level
-        interior_points =
-            (num_buffer_points + 1 - num_ghost_points):(num_total_points - num_buffer_points + num_ghost_points)
+        (; num_buffer_points, num_total_points) = level
+        interior_points = (num_buffer_points + 1):(num_total_points - num_buffer_points)
         if any(isnan.(u[interior_points, :]))
             has_nan = true
             # print all the nan indexes
@@ -115,7 +114,7 @@ function main(params, out_dir)
             "Simulation time: %.4f, iteration %d. E = %.4f\n", grid.t, i, wave_energy(grid)
         )
 
-        if (mod(i, out_every) == 0)
+        if mod(i, out_every) == 0
             write_output(out_dir, grid, i)
         end
 

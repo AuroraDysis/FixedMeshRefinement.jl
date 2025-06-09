@@ -398,7 +398,7 @@ function prolongation!(
         else
             if is_aligned
                 cidx = fidx2cidx(fine_level, fidx)
-                uf[fidx] = uc_p[cidx]
+                uf[fidx, :] .= @view(uc_p[cidx, :])
             else
                 cidx = fidx2cidx(fine_level, fidx - 1)
                 # spatial interpolation
