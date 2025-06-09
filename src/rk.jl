@@ -1,16 +1,16 @@
 export rk4!
 
 function fill_buffer!(u, level::Level, stage::Int)
-    (; Yn_buffer, ghost_indices, num_buffer_points, x, physical_domain_box) = level
+    (; Yn_buffer, ghost_indices, num_ghost_points, is_physical_boundary) = level
     Yn = Yn_buffer[stage]
-    for dir in 1:2, i in 1:num_buffer_points
-        idx = ghost_indices[dir][i]
-        x_pos = x[idx]
-        # don't change if the points are outside the physical boundary
-        if x_pos < physical_domain_box[1] || x_pos > physical_domain_box[2]
+    for dir in 1:2
+        if is_physical_boundary[dir]
             continue
         end
-        u[idx, :] .= @view(Yn[i, :, dir])
+        for i in num_ghost_points[dir]
+            idx = ghost_indices[dir][i]
+            u[idx, :] .= @view(Yn[i, :, dir])
+        end
     end
     fill!(Yn, NaN)
     return nothing
