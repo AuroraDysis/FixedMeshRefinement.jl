@@ -6,34 +6,46 @@ function apply_reflective_boundary_condition!(
     for l in 1:num_levels
         level = levels[l]
         u = level.state[end]
+        (; num_ghost_points, ghost_indices, is_physical_boundary) = level
 
         # apply reflective boundary condition to state
-        if level.is_physical_boundary[1]
-            for i in 1:level.num_ghost_points[1]
-                u[level.ghost_indices[1][i], :] .= @view(
-                    u[level.num_ghost_points[1] + i, :]
-                )
+        if is_physical_boundary[1]
+            for i in 1:num_ghost_points[1]
+                u[ghost_indices[1][i], :] .= @view(u[num_ghost_points[1] + i, :])
             end
         end
 
-        if level.is_physical_boundary[2]
-            for i in 1:level.num_ghost_points[2]
-                u[level.ghost_indices[2][i], :] .= @view(
-                    u[level.num_total_points - level.num_ghost_points[2] + 1 - i, :]
+        if is_physical_boundary[2]
+            for i in 1:num_ghost_points[2]
+                u[ghost_indices[2][i], :] .= @view(
+                    u[num_total_points - num_ghost_points[2] + 1 - i, :]
                 )
             end
         end
     end
+
+    return nothing
 end
 
-function apply_reflective_boundary_condition_rhs!(level, rhs)
-    (; num_total_points, num_buffer_points) = level
+function apply_reflective_boundary_condition_rhs!(
+    level::Level{NumState,NumDiagnostic}, rhs
+) where {NumState,NumDiagnostic}
+    (; num_total_points, num_ghost_points, ghost_indices, is_physical_boundary) = level
 
-    for i in 1:num_buffer_points
-        rhs[i, :] .= @view(rhs[num_total_points - 2 * num_buffer_points + i, :])
+    # apply reflective boundary condition to state
+    if is_physical_boundary[1]
+        for i in 1:num_ghost_points[1]
+            u[ghost_indices[1][i], :] .= @view(u[num_ghost_points[1] + i, :])
+        end
     end
 
-    for i in (num_total_points - num_buffer_points + 1):num_total_points
-        rhs[i, :] .= @view(rhs[2 * num_buffer_points - num_total_points + i, :])
+    if is_physical_boundary[2]
+        for i in 1:num_ghost_points[2]
+            u[ghost_indices[2][i], :] .= @view(
+                u[num_total_points - num_ghost_points[2] + 1 - i, :]
+            )
+        end
     end
+
+    return nothing
 end
