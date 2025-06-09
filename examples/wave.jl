@@ -11,7 +11,7 @@ function wave_rhs!(level, rhs, u, t)
     psi_rhs = @view(rhs[:, 1])
     Pi_rhs = @view(rhs[:, 2])
 
-    (; num_total_points, num_buffer_points, dissipation) = level
+    (; num_total_points, num_buffer_points, dissipation, dx) = level
 
     @inbounds for i in (1 + num_buffer_points):(num_total_points - num_buffer_points)
         # 4th order finite difference

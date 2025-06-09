@@ -1,3 +1,5 @@
+export prolongation!, prolongation_mongwane!, apply_transition_zone!
+
 function prolongation_spatial_interpolate!(res, u, i, order)
     if order == 1
         # {0.5, 0.5}
