@@ -189,17 +189,17 @@ mutable struct Grid{NumState,NumDiagnostic}
         levels = [base_level]
 
         # build the finer levels
-        for i in 2:num_levels
-            level_dx = base_dx / 2^(i - 1)
+        for l in 2:num_levels
+            level_dx = base_dx / 2^(l - 1)
             level_dt = (subcycling ? cfl * level_dx : base_dt)
-            parent_level = levels[i - 1]  # level lower than the current level (parent level)
+            parent_level = levels[l - 1]  # level lower than the current level (parent level)
             # if we refine parent level everywhere
             parent_level_grid_points = LinRange(
                 parent_level.domain_box[1],
                 parent_level.domain_box[2],
                 (parent_level.num_interior_points - 1) * 2 + 1,
             )
-            level_domain_box = domain_boxes[i]
+            level_domain_box = domain_boxes[l]
             # find those two which are closest to current level boundaries using binary search
             level_min_idx = searchsortednearest(
                 parent_level_grid_points, level_domain_box[1]
@@ -213,9 +213,8 @@ mutable struct Grid{NumState,NumDiagnostic}
             )
             level_num_interior_points = (level_max_idx - level_min_idx) + 1
             # maps between two levels
-            parent_map(i) = div(i + 1, 2)
-            parent_idx_left = parent_map(level_min_idx)
-            parent_idx_right = parent_map(level_max_idx)
+            parent_idx_left = div(level_min_idx + 1, 2)
+            parent_idx_right = div(level_max_idx + 1, 2)
             parent_indices =
                 (parent_idx_left + num_buffer_points):(parent_idx_right + num_buffer_points)
 
@@ -230,7 +229,7 @@ mutable struct Grid{NumState,NumDiagnostic}
                 println("level_domain = ", level_domain)
 
                 error(
-                    "Level $i: Coordinates are not aligned: ",
+                    "Level $(l): Coordinates are not aligned: ",
                     parent_level.x[parent_indices[1]],
                     " != ",
                     level_domain[1],
