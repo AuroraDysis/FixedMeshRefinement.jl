@@ -62,11 +62,16 @@ mutable struct Level{NumState,NumDiagnostic}
         is_physical_boundary = (
             domain_box[1] ≈ physical_domain_box[1], domain_box[2] ≈ physical_domain_box[2]
         )
-        num_total_points = num_interior_points + 2 * num_buffer_points
+        num_left_additional_points =
+            is_physical_boundary[1] ? num_ghost_points : num_buffer_points
+        num_right_additional_points =
+            is_physical_boundary[2] ? num_ghost_points : num_buffer_points
+        num_total_points =
+            num_interior_points + num_left_additional_points + num_right_additional_points
         dx = (domain_box[2] - domain_box[1]) / (num_interior_points - 1)
-        xmin = domain_box[1] - num_buffer_points * dx
-        xmax = domain_box[2] + num_buffer_points * dx
-        x = LinRange(xmin, xmax, num_total_points)
+        x_min = domain_box[1] - num_left_additional_points * dx
+        x_max = domain_box[2] + num_right_additional_points * dx
+        x = LinRange(x_min, x_max, num_total_points)
         time_levels = max(time_interpolation_order + 1, 2)
         state = [fill(NaN, num_total_points, NumState) for _ in 1:time_levels]
         rhs = fill(NaN, num_total_points, NumState)
