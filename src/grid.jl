@@ -61,8 +61,8 @@ mutable struct Level{NumState,NumDiagnostic}
     ) where {NumState,NumDiagnostic}
         num_total_points = num_interior_points + 2 * num_buffer_points
         dx = (domain_box[2] - domain_box[1]) / (num_interior_points - 1)
-        xmin = domain_box[1] - num_ghost_points * dx
-        xmax = domain_box[2] + num_ghost_points * dx
+        xmin = domain_box[1] - num_buffer_points * dx
+        xmax = domain_box[2] + num_buffer_points * dx
         x = LinRange(xmin, xmax, num_total_points)
         time_levels = max(time_interpolation_order + 1, 2)
         state = [fill(NaN, num_total_points, NumState) for _ in 1:time_levels]
@@ -214,22 +214,30 @@ mutable struct Grid{NumState,NumDiagnostic}
             parent_map(i) = div(i + 1, 2)
             parent_idx_left = parent_map(level_min_idx)
             parent_idx_right = parent_map(level_max_idx)
-            parent_indices = parent_idx_left:parent_idx_right
+            parent_indices =
+                (parent_idx_left + num_buffer_points):(parent_idx_right + num_buffer_points)
 
             # check x are aligned
-            (
+            if !(
                 isapprox(parent_level.x[parent_indices[1]], level_domain[1]; rtol=1e-12) &&
                 isapprox(parent_level.x[parent_indices[end]], level_domain[2]; rtol=1e-12)
-            ) || error(
-                "Level $i: Coordinates are not aligned: ",
-                parent_level.x[parent_indices[1]],
-                " != ",
-                level_domain[1],
-                " or ",
-                parent_level.x[parent_indices[end]],
-                " != ",
-                level_domain[2],
             )
+                println("parent_indices = ", parent_indices)
+                println("parent_level.dx = ", parent_level.dx)
+                println("parent_level.x = ", parent_level.x)
+                println("level_domain = ", level_domain)
+
+                error(
+                    "Level $i: Coordinates are not aligned: ",
+                    parent_level.x[parent_indices[1]],
+                    " != ",
+                    level_domain[1],
+                    " or ",
+                    parent_level.x[parent_indices[end]],
+                    " != ",
+                    level_domain[2],
+                )
+            end
 
             # build level
             push!(

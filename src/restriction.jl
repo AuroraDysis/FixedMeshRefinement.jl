@@ -1,3 +1,5 @@
+export restriction!
+
 #===============================================================================
 restriction:
     * from level l+1 to level l
