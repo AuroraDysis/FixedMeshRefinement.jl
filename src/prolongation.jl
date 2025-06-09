@@ -327,7 +327,7 @@ function prolongation!(
     coarse_level = grid.levels[l - 1]
 
     (;
-        num_buffer_points,
+        num_ghost_points,
         spatial_interpolation_order,
         time_interpolation_order,
         ghost_indices,
@@ -351,63 +351,68 @@ function prolongation!(
     buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
 
     # dir: 1: left, 2: right
-    for dir in 1:2, i in 1:num_buffer_points
-        fidx = ghost_indices[dir][i]
-        is_aligned = mod(i + 1, 2) != 0
+    for dir in 1:2
+        for i in num_ghost_points[dir]
+            fidx = ghost_indices[dir][i]
+            is_aligned = mod(i + 1, 2) != 0
 
-        x_pos = x[fidx]
-        # don't change if the points are outside the physical boundary
-        if x_pos < physical_domain_box[1] || x_pos > physical_domain_box[2]
-            continue
-        end
+            x_pos = x[fidx]
+            # don't change if the points are outside the physical boundary
+            if x_pos < physical_domain_box[1] || x_pos > physical_domain_box[2]
+                continue
+            end
 
-        if interp_in_time
-            if is_aligned
-                cidx = fidx2cidx(fine_level, fidx)
-                # time interpolation
-                prolongation_time_interpolate!(
-                    @view(uf[fidx, :]),
-                    [@view(statec[m][cidx, :]) for m in 1:(time_interpolation_order + 1)],
-                    time_interpolation_order,
-                )
-            else
-                cidx = fidx2cidx(fine_level, fidx - 1)
-                for ic in 1:num_spatial_interpolation_points
-                    ic_grid = cidx + ic - soffset
+            if interp_in_time
+                if is_aligned
+                    cidx = fidx2cidx(fine_level, fidx)
                     # time interpolation
                     prolongation_time_interpolate!(
-                        @view(buffer[ic, :]),
+                        @view(uf[fidx, :]),
                         [
-                            @view(statec[m][ic_grid, :]) for
+                            @view(statec[m][cidx, :]) for
                             m in 1:(time_interpolation_order + 1)
                         ],
                         time_interpolation_order,
                     )
+                else
+                    cidx = fidx2cidx(fine_level, fidx - 1)
+                    for ic in 1:num_spatial_interpolation_points
+                        ic_grid = cidx + ic - soffset
+                        # time interpolation
+                        prolongation_time_interpolate!(
+                            @view(buffer[ic, :]),
+                            [
+                                @view(statec[m][ic_grid, :]) for
+                                m in 1:(time_interpolation_order + 1)
+                            ],
+                            time_interpolation_order,
+                        )
+                    end
+                    # spatial interpolation
+                    prolongation_spatial_interpolate!(
+                        @view(uf[fidx, :]),
+                        [@view(buffer[m, :]) for m in 1:num_spatial_interpolation_points],
+                        soffset,
+                        spatial_interpolation_order,
+                    )
                 end
-                # spatial interpolation
-                prolongation_spatial_interpolate!(
-                    @view(uf[fidx, :]),
-                    [@view(buffer[m, :]) for m in 1:num_spatial_interpolation_points],
-                    soffset,
-                    spatial_interpolation_order,
-                )
-            end
-        else
-            if is_aligned
-                cidx = fidx2cidx(fine_level, fidx)
-                uf[fidx, :] .= @view(uc_p[cidx, :])
             else
-                cidx = fidx2cidx(fine_level, fidx - 1)
-                # spatial interpolation
-                prolongation_spatial_interpolate!(
-                    @view(uf[fidx, :]),
-                    [
-                        @view(uc_p[cidx + ic - soffset, :]) for
-                        ic in 1:num_spatial_interpolation_points
-                    ],
-                    soffset,
-                    spatial_interpolation_order,
-                )
+                if is_aligned
+                    cidx = fidx2cidx(fine_level, fidx)
+                    uf[fidx, :] .= @view(uc_p[cidx, :])
+                else
+                    cidx = fidx2cidx(fine_level, fidx - 1)
+                    # spatial interpolation
+                    prolongation_spatial_interpolate!(
+                        @view(uf[fidx, :]),
+                        [
+                            @view(uc_p[cidx + ic - soffset, :]) for
+                            ic in 1:num_spatial_interpolation_points
+                        ],
+                        soffset,
+                        spatial_interpolation_order,
+                    )
+                end
             end
         end
     end
