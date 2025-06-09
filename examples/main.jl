@@ -16,8 +16,8 @@ function main(params, out_dir)
     diss = haskey(params["parameters"], "diss") ? params["parameters"]["diss"] : 0.0
     subcycling =
         haskey(params["parameters"], "subcycling") ? params["parameters"]["subcycling"] : true
-    Mongwane =
-        haskey(params["parameters"], "Mongwane") ? params["parameters"]["Mongwane"] : false
+    mongwane =
+        haskey(params["parameters"], "mongwane") ? params["parameters"]["mongwane"] : false
     ntrans = haskey(params["parameters"], "ntrans") ? params["parameters"]["ntrans"] : 3
     ord_s = haskey(params["parameters"], "ord_s") ? params["parameters"]["ord_s"] : 3
     apply_trans_zone =
@@ -28,7 +28,7 @@ function main(params, out_dir)
         "Gaussian"
     println("Parameters:")
     println("  cfl        = ", cfl)
-    println("  Mongwane   = ", Mongwane)
+    println("  mongwane   = ", mongwane)
     println("  trans_zone = ", apply_trans_zone)
     println("  itlast     = ", itlast)
     println("  out_every  = ", out_every)
@@ -87,7 +87,7 @@ function main(params, out_dir)
         Infino.ODESolver.Evolve!(
             Infino.Physical.WaveRHS!,
             gfs;
-            Mongwane = Mongwane,
+            mongwane = mongwane,
             apply_trans_zone = apply_trans_zone,
         )
 
