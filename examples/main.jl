@@ -26,7 +26,8 @@ function main(params, out_dir)
     stop_time = get(params, "stop_time", -1.0)
     max_step = get(params, "max_step", -1)
     out_every = params["out_every"]
-    domain_boxes = params["domain_boxes"]
+    params_domain_boxes = params["domain_boxes"]
+    domain_boxes = [NTuple{2,Float64}(box) for box in params_domain_boxes]
     cfl = get(params, "cfl", 0.25)
     dissipation = get(params, "dissipation", 0.0)
     subcycling = get(params, "subcycling", true)

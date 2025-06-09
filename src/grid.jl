@@ -29,7 +29,7 @@ mutable struct Level{NumState,NumDiagnostic}
     dissipation::Float64
     is_base_level::Bool
     parent_indices::UnitRange{Int}
-    buffer_indices::NTuple{2,UnitRange{Int}}
+    buffer_indices::NTuple{2,StepRange{Int,Int}}
 
     # data
     x::LinRange{Float64,Int}  # x
