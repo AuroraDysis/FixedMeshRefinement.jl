@@ -85,8 +85,8 @@ mutable struct Level{NumState,NumDiagnostic}
             Yn_buffer[j] = fill(NaN, num_buffer_points, NumState, 2)
         end
         additional_points_indices = (
-            num_additional_points[1]:-1:1,
-            (num_total_points - num_additional_points[2] + 1):num_total_points,
+            num_left_additional_points:-1:1,
+            (num_total_points - num_right_additional_points + 1):num_total_points,
         )
 
         return new{NumState,NumDiagnostic}(
@@ -94,7 +94,7 @@ mutable struct Level{NumState,NumDiagnostic}
             num_ghost_points,
             num_transition_points,
             num_total_points,
-            num_additional_points,
+            (num_left_additional_points, num_right_additional_points),
             time_interpolation_order,
             spatial_interpolation_order,
             domain_box,

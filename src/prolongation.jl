@@ -233,8 +233,12 @@ function prolongation_mongwane!(
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
-    (; num_ghost_points, spatial_interpolation_order, additional_points_indices, is_physical_boundary) =
-        fine_level
+    (;
+        num_additional_points,
+        spatial_interpolation_order,
+        additional_points_indices,
+        is_physical_boundary,
+    ) = fine_level
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
     soffset = if mod(num_spatial_interpolation_points, 2) == 0
@@ -324,7 +328,7 @@ function prolongation!(
     coarse_level = grid.levels[l - 1]
 
     (;
-        num_ghost_points,
+        num_additional_points,
         spatial_interpolation_order,
         time_interpolation_order,
         additional_points_indices,
