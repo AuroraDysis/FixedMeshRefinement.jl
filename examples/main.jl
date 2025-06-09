@@ -1,4 +1,4 @@
-using Infino
+using FixedMeshRefinement
 using Printf
 using TOML
 
@@ -18,7 +18,7 @@ function main(params, out_dir)
     out_every = params["out_every"]
     domain_boxes = params["domain_boxes"]
     cfl = get(params, "cfl", 0.25)
-    diss = get(params, "diss", 0.0)
+    dissipation = get(params, "dissipation", 0.0)
     subcycling = get(params, "subcycling", true)
     mongwane = get(params, "mongwane", false)
     num_transition_points = get(params, "num_transition_points", 3)
@@ -37,7 +37,9 @@ function main(params, out_dir)
     ########################
     # build grid structure #
     ########################
-    grid = Infino.Basic.Grid(
+    NumState = 2
+    NumDiagnostic = 1
+    grid = Grid{NumState,NumDiagnostic}(
         num_interior_points,
         domain_boxes,
         num_ghost_points,
@@ -45,10 +47,9 @@ function main(params, out_dir)
         num_transition_points=num_transition_points,
         spatial_interpolation_order=spatial_interpolation_order,
         cfl=cfl,
-        diss=diss,
+        dissipation=dissipation,
         subcycling=subcycling,
     )
-    gfs = Infino.Basic.GridFunction(2, grid)
 
     ###############
     # Intial Data #
@@ -56,9 +57,9 @@ function main(params, out_dir)
     println("Setting up initial conditions...")
     println("  initial data type: $initial_data")
     if initial_data == "gaussian"
-        Infino.InitialData.gaussian!(gfs)
+        gaussian!(grid)
     elseif initial_data == "sinusoidal"
-        Infino.InitialData.sinusoidal!(gfs)
+        sinusoidal!(grid)
     else
         println("Initial data type '$initial_data' unsupported yet")
         exit()
