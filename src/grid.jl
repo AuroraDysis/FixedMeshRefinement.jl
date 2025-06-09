@@ -122,16 +122,18 @@ function cycle_state!(level::Level)
 end
 
 function fidx2cidx(fine_level::Level, fidx::Int)
-    (; is_base_level, parent_indices) = fine_level
+    (; is_base_level, parent_indices, num_buffer_points) = fine_level
 
     if is_base_level
         error("fidx2cidx is not defined for base level")
     end
 
     parent_idx_left = parent_indices[1]
-    offset = fidx - parent_idx_left
+    offset = fidx - (1 + num_buffer_points)
 
     if mod(offset, 2) != 0
+        println("parent_indices = ", parent_indices)
+        println("fidx = $fidx, offset = $offset")
         error("fidx = $fidx is not aligned with any point in parent level")
     end
 
