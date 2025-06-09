@@ -1,8 +1,14 @@
 function fill_buffer!(u, level::Level, stage::Int)
-    (; Yn_buffer, buffer_indices) = level
+    (; Yn_buffer, buffer_indices, num_buffer_points, x) = level
     Yn = Yn_buffer[stage]
-    for dir in 1:2
-        u[buffer_indices[dir], :] .= @view(Yn[:, :, dir])
+    for dir in 1:2, i in 1:num_buffer_points
+        idx = buffer_indices[dir][i]
+        x_pos = x[idx]
+        # don't change if the points are outside the physical boundary
+        if x_pos < x[1] || x_pos > x[end]
+            continue
+        end
+        u[idx, :] .= @view(Yn[idx, :, dir])
     end
     fill!(Yn, NaN)
     return nothing
