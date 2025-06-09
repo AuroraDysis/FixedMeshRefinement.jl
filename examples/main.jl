@@ -6,25 +6,25 @@ function main(params, out_dir)
     ########################
     # Read Parameter Files #
     ########################
-    num_interior_points = params["parameters"]["num_interior_points"]
-    num_ghost_points = params["parameters"]["num_ghost_points"]
-    num_buffer_points = params["parameters"]["num_buffer_points"]
-    itlast = params["parameters"]["itlast"]
-    out_every = params["parameters"]["out_every"]
-    domain_boxes = params["parameters"]["domain_boxes"]
-    cfl = haskey(params["parameters"], "cfl") ? params["parameters"]["cfl"] : 0.25
-    diss = haskey(params["parameters"], "diss") ? params["parameters"]["diss"] : 0.0
+    num_interior_points = params["num_interior_points"]
+    num_ghost_points = params["num_ghost_points"]
+    num_buffer_points = params["num_buffer_points"]
+    itlast = params["itlast"]
+    out_every = params["out_every"]
+    domain_boxes = params["domain_boxes"]
+    cfl = haskey(params, "cfl") ? params["cfl"] : 0.25
+    diss = haskey(params, "diss") ? params["diss"] : 0.0
     subcycling =
-        haskey(params["parameters"], "subcycling") ? params["parameters"]["subcycling"] : true
+        haskey(params, "subcycling") ? params["subcycling"] : true
     mongwane =
-        haskey(params["parameters"], "mongwane") ? params["parameters"]["mongwane"] : false
-    ntrans = haskey(params["parameters"], "ntrans") ? params["parameters"]["ntrans"] : 3
-    ord_s = haskey(params["parameters"], "ord_s") ? params["parameters"]["ord_s"] : 3
+        haskey(params, "mongwane") ? params["mongwane"] : false
+    ntrans = haskey(params, "ntrans") ? params["ntrans"] : 3
+    ord_s = haskey(params, "ord_s") ? params["ord_s"] : 3
     apply_trans_zone =
-        haskey(params["parameters"], "apply_trans_zone") ?
-        params["parameters"]["apply_trans_zone"] : false
+        haskey(params, "apply_trans_zone") ?
+        params["apply_trans_zone"] : false
     initial_data =
-        haskey(params["parameters"], "initial_data") ? params["parameters"]["initial_data"] :
+        haskey(params, "initial_data") ? params["initial_data"] :
         "Gaussian"
     println("Parameters:")
     println("  cfl        = ", cfl)
@@ -136,7 +136,7 @@ params = TOML.parsefile(pars_path)
 # create output directory
 out_dir = joinpath(
     dirname(pars_path),
-    haskey(params["parameters"], "out_dir") ? params["parameters"]["out_dir"] :
+    haskey(params, "out_dir") ? params["out_dir"] :
     splitext(basename(pars_path))[1],
 )
 if isdir(out_dir)
