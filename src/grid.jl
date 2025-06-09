@@ -88,6 +88,7 @@ mutable struct Level{NumState,NumDiagnostic}
             num_buffer_points,
             num_transition_points,
             num_total_points,
+            time_interpolation_order,
             spatial_interpolation_order,
             domain_box,
             physical_domain_box,
