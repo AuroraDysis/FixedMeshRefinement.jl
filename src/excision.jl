@@ -70,7 +70,6 @@ function excise_level!(level::Level, num_excise_points::NTuple{2,Float64})
     new_k = [OffsetArray(ki, new_offset_indices, :) for ki in k]
     new_diag_state = OffsetArray(diag_state, new_offset_indices, :)
 
-    # TODO: assign new values to level
     level.num_interior_points = new_num_interior_points
     level.num_total_points = new_num_total_points
     level.domain_box = new_domain_box
