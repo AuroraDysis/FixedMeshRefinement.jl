@@ -10,7 +10,7 @@ using Printf
 using TOML
 
 const NumState = 2
-const NumDiagnostic = 0
+const NumDiagnostic = 1
 
 function get(params, key, default)
     return haskey(params, key) ? params[key] : default

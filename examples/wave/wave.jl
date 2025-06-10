@@ -44,19 +44,38 @@ Energy:
     * int_xmin^xmax (Pi^2/2 + dpsi^2/2)
     * calculate on base level (interior) only
 ===============================================================================#
+function integrate(y::AbstractVector{Float64}, dx::Float64)
+    @inbounds retval =
+        (
+            17 * (y[1] + y[end]) +
+            59 * (y[2] + y[end - 1]) +
+            43 * (y[3] + y[end - 2]) +
+            49 * (y[4] + y[end - 3])
+        ) / 48
+    @simd for i in 5:(length(y) - 4)
+        @inbounds retval += y[i]
+    end
+    return retval * dx
+end
+
 function wave_energy(grid)
     base_level = grid.levels[1]
-    (; num_total_points, num_ghost_points, dx, state) = base_level
+    (; num_total_points, num_ghost_points, dx, state, diag_state) = base_level
     u = state[end]
+    rho = @view(diag_state[:, 1])
     psi = @view(u[:, 1])
     Pi = @view(u[:, 2])
 
-    E::Float64 = 0.0
     for i in (1 + num_ghost_points):(num_total_points - num_ghost_points)
         # 4th order finite difference
-        dpsi = (-psi[i - 2] + 8 * psi[i - 1] - 8 * psi[i + 1] + psi[i + 2]) / (12 * dx)
-        E += (0.5 * Pi[i] * Pi[i] + 0.5 * dpsi * dpsi)
+        dpsi = (psi[i - 2] - 8 * psi[i - 1] + 8 * psi[i + 1] - psi[i + 2]) / (12 * dx)
+        rho[i] = (0.5 * Pi[i] * Pi[i] + 0.5 * dpsi * dpsi)
     end
 
-    return E * dx
+    # integrate over the domain
+    E = integrate(
+        @view(rho[(1 + num_ghost_points):(num_total_points - num_ghost_points)]), dx
+    )
+
+    return E
 end

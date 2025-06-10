@@ -5,4 +5,4 @@ num_ghost_points = 3
 stop_time = 10.0
 out_every = 10
 out_dir = "data"
-redirect_std = false
+redirect_std = true
