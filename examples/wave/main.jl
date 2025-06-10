@@ -1,5 +1,6 @@
 include("../../src/FixedMeshRefinement.jl")
 using .FixedMeshRefinement
+using FastBroadcast
 
 include("boundary.jl")
 include("initial_data.jl")

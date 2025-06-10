@@ -10,8 +10,8 @@ function gaussian!(grid; amp=1.0, sig=0.25, x0=0.0)
         psi = @view(u[:, 1])
         Pi = @view(u[:, 2])
         x = level_x(level)
-        @. psi = amp * exp(-((x - x0) / sig)^2)
-        @. Pi = 0.0
+        @.. psi = amp * exp(-((x - x0) / sig)^2)
+        @.. Pi = 0.0
     end
 
     # restriction for consistence
@@ -31,8 +31,8 @@ function sinusoidal!(grid)
         Pi = @view(u[:, 2])
 
         x = level_x(level)
-        @. psi = sin(2 * pi * (x - 0.0))
-        @. Pi = -2 * pi * cos(2 * pi * (x - 0.0))
+        @.. psi = sin(2 * pi * (x - 0.0))
+        @.. Pi = -2 * pi * cos(2 * pi * (x - 0.0))
     end
 
     # restriction for consistence
@@ -47,7 +47,7 @@ Spectial Treatment for prolongate!
 ===============================================================================#
 function wave_rhs_backward!(level, r, u, p, t)
     wave_rhs!(level, r, u, p, t)
-    @. r = -r
+    @.. r = -r
 end
 
 function march_backwards!(grid, p)

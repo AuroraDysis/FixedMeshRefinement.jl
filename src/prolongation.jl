@@ -15,22 +15,22 @@ The result is stored in `res`. The interpolation uses values from `u` around ind
 function prolongation_spatial_interpolate!(res, u, i, order)
     if order == 1
         # {0.5, 0.5}
-        @. res = (u[i] + u[i + 1]) * 0.5
+        @.. res = (u[i] + u[i + 1]) * 0.5
     elseif order == 2
         # {-0.125, 0.75, 0.375}
-        @. res = -0.125 * u[i - 1] + 0.75 * u[i] + 0.375 * u[i + 1]
+        @.. res = -0.125 * u[i - 1] + 0.75 * u[i] + 0.375 * u[i + 1]
     elseif order == 3
         # {-0.0625, 0.5625, 0.5625, -0.0625}
-        @. res = -0.0625 * (u[i - 1] + u[i + 2]) + 0.5625 * (u[i] + u[i + 1])
+        @.. res = -0.0625 * (u[i - 1] + u[i + 2]) + 0.5625 * (u[i] + u[i + 1])
     elseif order == 4
         # {0.0234375, -0.15625, 0.703125, 0.46875, -0.0390625}
-        @. res =
+        @.. res =
             0.0234375 * u[i - 2] - 0.15625 * u[i - 1] +
             0.703125 * u[i] +
             0.46875 * u[i + 1] - 0.0390625 * u[i + 2]
     elseif order == 5
         # {0.0117188, -0.0976563, 0.585938, 0.585938, -0.0976563, 0.0117188}
-        @. res =
+        @.. res =
             0.0117188 * (u[i - 2] + u[i + 3]) - 0.0976563 * (u[i - 1] + u[i + 2]) +
             0.585938 * (u[i] + u[i + 1])
     else
@@ -55,16 +55,16 @@ function prolongation_time_interpolate!(res, u, order)
 
     if order == 1
         # {0.5, 0.5}
-        @. res = (u[1] + u[2]) * 0.5
+        @.. res = (u[1] + u[2]) * 0.5
     elseif order == 2
         # {-0.125, 0.75, 0.375}
-        @. res = -0.125 * u[1] + 0.75 * u[2] + 0.375 * u[3]
+        @.. res = -0.125 * u[1] + 0.75 * u[2] + 0.375 * u[3]
     elseif order == 3
         # {0.0625, -0.3125, 0.9375, 0.3125}
-        @. res = 0.0625 * u[1] - 0.3125 * u[2] + 0.9375 * u[3] + 0.3125 * u[4]
+        @.. res = 0.0625 * u[1] - 0.3125 * u[2] + 0.9375 * u[3] + 0.3125 * u[4]
     elseif order == 4
         # {-0.0390625, 0.21875, -0.546875, 1.09375, 0.2734375}
-        @. res =
+        @.. res =
             -0.0390625 * u[1] + 0.21875 * u[2] - 0.546875 * u[3] +
             1.09375 * u[4] +
             0.2734375 * u[5]
@@ -96,7 +96,7 @@ function rk4_dense_output_y!(y, theta, h, yn, k)
     ck1 = theta - 3 * theta2 / 2 + 2 * theta3 / 3
     ck23 = theta2 - 2 * theta3 / 3
     ck4 = -theta2 / 2 + 2 * theta3 / 3
-    @. y = yn + (ck1 * k[1] + ck23 * (k[2] + k[3]) + ck4 * k[4]) * h
+    @.. y = yn + (ck1 * k[1] + ck23 * (k[2] + k[3]) + ck4 * k[4]) * h
     return nothing
 end
 
@@ -130,7 +130,7 @@ function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool, dytmp)
     if interp_in_time
         rk4_dense_output_y!(Y1, theta, dtc, yn, kcs)
     else
-        Y1 .= yn
+        @.. Y1 = yn
     end
 
     theta2 = theta * theta
@@ -138,12 +138,12 @@ function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool, dytmp)
         ck23 = 2 * theta - 2 * theta2,
         ck4 = -theta + 2 * theta2
 
-        @. d1y = ck1 * kcs[1] + ck23 * (kcs[2] + kcs[3]) + ck4 * kcs[4]
+        @.. d1y = ck1 * kcs[1] + ck23 * (kcs[2] + kcs[3]) + ck4 * kcs[4]
     end
     let ck1 = -3 + 4 * theta, ck23 = 2 - 4 * theta, ck4 = -1 + 4 * theta
-        @. d2y = (ck1 * kcs[1] + ck23 * (kcs[2] + kcs[3]) + ck4 * kcs[4]) * dtc
+        @.. d2y = (ck1 * kcs[1] + ck23 * (kcs[2] + kcs[3]) + ck4 * kcs[4]) * dtc
     end
-    @. d3y = 4 * (kcs[1] - kcs[2] - kcs[3] + kcs[4])
+    @.. d3y = 4 * (kcs[1] - kcs[2] - kcs[3] + kcs[4])
 
     # ratio between coarse and fine cell size (2 to 1 MR case)
 
@@ -152,9 +152,9 @@ function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool, dytmp)
     k2 = kcs[2]
     k3 = kcs[3]
     dtf = r * dtc
-    @. Y2 = Y1 + 0.5 * dtf * d1y
-    @. Y3 = Y1 + dtf * (0.5 * d1y + 0.25 * r * d2y + 0.0625 * r2 * (d3y + 4.0 * (k3 - k2)))
-    @. Y4 = Y1 + dtf * (d1y + 0.5 * r * d2y + 0.125 * r2 * (d3y - 4.0 * (k3 - k2)))
+    @.. Y2 = Y1 + 0.5 * dtf * d1y
+    @.. Y3 = Y1 + dtf * (0.5 * d1y + 0.25 * r * d2y + 0.0625 * r2 * (d3y + 4.0 * (k3 - k2)))
+    @.. Y4 = Y1 + dtf * (d1y + 0.5 * r * d2y + 0.125 * r2 * (d3y - 4.0 * (k3 - k2)))
 
     return nothing
 end
@@ -288,7 +288,7 @@ function apply_transition_zone!(
                     spatial_interpolation_order,
                 )
             end
-            @. uf[fidx, :] = (1 - w) * aligned_buffer + w * @view(uf[fidx, :])
+            @.. uf[fidx, :] = (1 - w) * aligned_buffer + w * @view(uf[fidx, :])
         end
     end
 end
