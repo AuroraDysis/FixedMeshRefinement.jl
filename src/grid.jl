@@ -30,7 +30,6 @@ A struct representing a single refinement level in the mesh.
 - `num_interior_points::Int`: Number of interior grid points.
 - `num_ghost_points::Int`: Number of ghost points on each side.
 - `num_transition_points::NTuple{2,Int}`: Number of points in the transition zone for mesh refinement.
-- `num_total_points::Int`: Total number of grid points (interior + ghost + buffer).
 - `num_additional_points::NTuple{2,Int}`: Number of additional points on each side (ghost or buffer).
 - `time_interpolation_order::Int`: Order of time interpolation.
 - `spatial_interpolation_order::Int`: Order of spatial interpolation.
@@ -55,7 +54,6 @@ mutable struct Level{NumState,NumDiagnostic}
     num_interior_points::Int  # num of interior grid points
     const num_ghost_points::Int  # num of ghost points on each side
     const num_transition_points::NTuple{2,Int}  # num of transition zone points
-    num_total_points::Int  # num of all grid points
     const num_additional_points::NTuple{2,Int} # num of additional points on each side
     const time_interpolation_order::Int  # interpolation order in time
     const spatial_interpolation_order::Int  # interpolation order in space
@@ -180,6 +178,11 @@ Return the indices of the interior grid points.
 function level_interior_indices(level::Level)
     (; num_interior_points) = level
     return 1:num_interior_points
+end
+
+function level_total_points(level::Level)
+    (; num_interior_points, num_additional_points) = level
+    return num_interior_points + num_additional_points[1] + num_additional_points[2]
 end
 
 """
@@ -395,21 +398,6 @@ function Base.show(
             "  spatial_interpolation_order = ",
             grid.levels[i].spatial_interpolation_order,
         )
-        if length(grid.levels[i].parent_map) == grid.levels[i].num_total_points
-            println(
-                io,
-                "  ibox   = ",
-                [
-                    grid.levels[i].parent_map[1 + grid.levels[i].num_buffer_points],
-                    grid.levels[i].parent_map[grid.levels[i].num_total_points - grid.levels[i].num_buffer_points],
-                ],
-                ", ",
-                [
-                    grid.levels[i].is_aligned[1 + grid.levels[i].num_buffer_points],
-                    grid.levels[i].is_aligned[grid.levels[i].num_total_points - grid.levels[i].num_buffer_points],
-                ],
-            )
-        end
         println(io, "  domain_box  = ", grid.levels[i].domain_box)
         println(io, "  dx          = ", grid.levels[i].dx)
         println(io, "  dt          = ", grid.levels[i].dt)
