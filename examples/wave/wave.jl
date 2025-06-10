@@ -61,10 +61,12 @@ end
 function wave_energy(grid)
     base_level = grid.levels[1]
     (; num_interior_points, dx, state, diag_state) = base_level
+
     u = state[end]
-    rho = @view(diag_state[:, 1])
     psi = @view(u[:, 1])
     Pi = @view(u[:, 2])
+
+    rho = @view(diag_state[:, 1])
 
     for i in 1:num_interior_points
         # 4th order finite difference

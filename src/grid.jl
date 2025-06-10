@@ -123,6 +123,7 @@ mutable struct Level{NumState,NumDiagnostic}
             [OffsetArray(k[i], offset_indices, :) for i in 1:4],
             Yn_buffer,
             diag_state,
+            OffsetArray(diag_state, offset_indices, :),
         )
     end
 end
