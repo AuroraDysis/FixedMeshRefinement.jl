@@ -37,9 +37,9 @@ function step!(
     for l in 1:max_level  # notice that we march coarse level first
         if l > 1
             if mongwane
-                prolongation_mongwane!(grid, l, false)
+                prolongate_mongwane!(grid, l, false)
             else
-                prolongation!(grid, l, false)
+                prolongate!(grid, l, false)
             end
             if apply_trans_zone
                 apply_transition_zone!(grid, l, false)
@@ -65,14 +65,14 @@ function step!(
                     interp_in_time = mod(substeps[l], 2) == 0
 
                     if l < max_level
-                        restriction!(grid, l; apply_trans_zone=apply_trans_zone)  # from l+1 to l
+                        restrict_injection!(grid, l; apply_trans_zone=apply_trans_zone)  # from l+1 to l
                     end
 
                     # from l-1 to l
                     if mongwane
-                        prolongation_mongwane!(grid, l, interp_in_time)
+                        prolongate_mongwane!(grid, l, interp_in_time)
                     else
-                        prolongation!(grid, l, interp_in_time)
+                        prolongate!(grid, l, interp_in_time)
                     end
 
                     if apply_trans_zone
@@ -89,7 +89,7 @@ function step!(
     # restriction all levels #
     #------------------------#
     for l in (max_level - 1):-1:1  # notice that we restrict fine level first
-        restriction!(grid, l; apply_trans_zone=apply_trans_zone)
+        restrict_injection!(grid, l; apply_trans_zone=apply_trans_zone)
     end
 
     #------------------#

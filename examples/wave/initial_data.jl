@@ -16,7 +16,7 @@ function gaussian!(grid; amp=1.0, sig=0.25, x0=0.0)
 
     # restriction for consistence
     for l in (num_levels - 1):-1:1
-        restriction!(grid, l)
+        restrict_injection!(grid, l)
     end
 end
 
@@ -35,12 +35,12 @@ function sinusoidal!(grid)
 
     # restriction for consistence
     for l in (num_levels - 1):-1:1
-        restriction!(grid, l)
+        restrict_injection!(grid, l)
     end
 end
 
 #===============================================================================
-Spectial Treatment for prolongation!
+Spectial Treatment for prolongate!
     * evolve backwards to file u_p
 ===============================================================================#
 function wave_rhs_backward!(level, r, u, p, t)
@@ -52,7 +52,7 @@ function march_backwards!(grid, p)
     (; levels, num_levels) = grid
     for l in 1:num_levels
         if l > 1
-            prolongation!(grid, l, false)
+            prolongate!(grid, l, false)
         end
         level = levels[l]
         rk4!(level, wave_rhs_backward!, p)

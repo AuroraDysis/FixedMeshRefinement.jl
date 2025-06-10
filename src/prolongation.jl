@@ -1,4 +1,4 @@
-export prolongation!, prolongation_mongwane!, apply_transition_zone!
+export prolongate!, prolongate_mongwane!, apply_transition_zone!
 
 """
     prolongation_spatial_interpolate!(res, u, i, order)
@@ -295,12 +295,12 @@ function apply_transition_zone!(
 end
 
 #===============================================================================
-prolongation_mongwane!: use Mongwane's method
+prolongate_mongwane!: use Mongwane's method
     * from level l-1 to level l
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
 """
-    prolongation_mongwane!(grid::Grid, l::Int, interp_in_time::Bool)
+    prolongate_mongwane!(grid::Grid, l::Int, interp_in_time::Bool)
 
 Perform prolongation from a coarse grid (`l-1`) to a fine grid (`l`) using Mongwane's
 subcycling-in-time method. This is used to set the ghost cell data for the fine grid
@@ -311,7 +311,7 @@ when subcycling is enabled.
 - `l::Int`: The fine level index.
 - `interp_in_time::Bool`: Whether to use time interpolation for the coarse grid state.
 """
-function prolongation_mongwane!(
+function prolongate_mongwane!(
     grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool
 ) where {NumState,NumDiagnostic}
     fine_level = grid.levels[l]
@@ -400,13 +400,13 @@ function prolongation_mongwane!(
 end
 
 #===============================================================================
-prolongation!:
+prolongate!:
     * from level l-1 to level l
     * we assume that we always march coarse level first (for l in 2:lmax)
     * time interpolation is used when time_interpolation_order > 0
 ===============================================================================#
 """
-    prolongation!(grid::Grid, l::Int, interp_in_time::Bool)
+    prolongate!(grid::Grid, l::Int, interp_in_time::Bool)
 
 Perform prolongation from a coarse grid (`l-1`) to a fine grid (`l`). This function
 fills the ghost cells of the fine grid by interpolating the data from the coarse grid
@@ -417,7 +417,7 @@ in space and, optionally, in time.
 - `l::Int`: The fine level index.
 - `interp_in_time::Bool`: Whether to use time interpolation.
 """
-function prolongation!(
+function prolongate!(
     grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool
 ) where {NumState,NumDiagnostic}
     fine_level = grid.levels[l]

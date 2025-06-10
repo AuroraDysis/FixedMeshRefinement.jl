@@ -1,7 +1,7 @@
-export restriction!
+export restrict_injection!
 
 """
-    restriction!(grid::Grid, l::Int; apply_trans_zone=false)
+    restrict_injection!(grid::Grid, l::Int; apply_trans_zone=false)
 
 Perform restriction from a fine grid (`l+1`) to a coarse grid (`l`). This operation
 transfers data from a finer grid to a coarser grid. Currently, it uses injection
@@ -14,7 +14,7 @@ coarse grid points.
 - `apply_trans_zone::Bool`: If `true`, the restriction is only applied outside of the
   transition zones. Defaults to `false`.
 """
-function restriction!(
+function restrict_injection!(
     grid::Grid{NumState,NumDiagnostic}, l::Int; apply_trans_zone=false
 ) where {NumState,NumDiagnostic}
     fine_level = grid.levels[l + 1]
