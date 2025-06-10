@@ -405,17 +405,23 @@ mutable struct Grid{NumState,NumDiagnostic}
                 parent_indices,
             )
             # ensure level is properly embedded in parent level
-            level_x = level_x(level)
-            if !(level.is_physical_boundary[1] || level_x[1] > parent_level.domain_box[1])
+            current_level_x = level_x(level)
+            if !(
+                level.is_physical_boundary[1] ||
+                current_level_x[1] > parent_level.domain_box[1]
+            )
                 error(
                     "Level $(l) is not properly embedded in parent level $(l-1), ",
-                    "level.x[1] = $(level.x[1]), parent_level.domain_box[1] = $(parent_level.domain_box[1])",
+                    "level.x[1] = $(current_level_x[1]), parent_level.domain_box[1] = $(parent_level.domain_box[1])",
                 )
             end
-            if !(level.is_physical_boundary[2] || level_x[end] < parent_level.domain_box[2])
+            if !(
+                level.is_physical_boundary[2] ||
+                current_level_x[end] < parent_level.domain_box[2]
+            )
                 error(
                     "Level $(l) is not properly embedded in parent level $(l-1), ",
-                    "level.x[end] = $(level_x[end]), parent_level.domain_box[2] = $(parent_level.domain_box[2])",
+                    "level.x[end] = $(current_level_x[end]), parent_level.domain_box[2] = $(parent_level.domain_box[2])",
                 )
             end
             push!(levels, level)
