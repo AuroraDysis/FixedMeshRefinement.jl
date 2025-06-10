@@ -70,7 +70,6 @@ function excise_level!(level::Level, num_excise_points::NTuple{2,Int})
     new_diag_state = OffsetArray(diag_state, new_offset_indices, :)
 
     level.num_interior_points = new_num_interior_points
-    level.num_total_points = new_num_total_points
     level.domain_box = new_domain_box
     level.physical_domain_box = new_physical_domain_box
     level.parent_indices = new_parent_indices
