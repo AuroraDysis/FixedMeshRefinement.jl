@@ -9,13 +9,14 @@ function write_output(dir_path, grid, it)
                 level = levels[l]
                 u = level.state[end]
                 x = level.x
+                num_interior_points = level.num_interior_points
 
                 g = create_group(file, "level$(lpad(l, 2, '0'))")
 
                 write(g, "t", level.t)
-                write(g, "x", collect(x))
-                write(g, "psi", @view(u[:, 1]))
-                write(g, "Pi", @view(u[:, 2]))
+                write(g, "x", collect(x[1:num_interior_points]))
+                write(g, "psi", @view(u[1:num_interior_points, 1]))
+                write(g, "Pi", @view(u[1:num_interior_points, 2]))
             end
         end
     else
