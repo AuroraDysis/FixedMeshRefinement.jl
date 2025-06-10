@@ -17,7 +17,6 @@ function excise_level!(level::Level, num_excise_points::NTuple{2,Int})
 
     (;
         num_interior_points,
-        num_additional_points,
         domain_box,
         dx,
         physical_domain_box,
@@ -34,8 +33,6 @@ function excise_level!(level::Level, num_excise_points::NTuple{2,Int})
 
     new_num_interior_points =
         num_interior_points - num_excise_points[1] - num_excise_points[2]
-    new_num_total_points =
-        new_num_interior_points + num_additional_points[1] + num_additional_points[2]
     new_domain_box = (
         domain_box[1] + num_excise_points[1] * dx, domain_box[2] - num_excise_points[2] * dx
     )
