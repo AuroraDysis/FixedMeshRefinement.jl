@@ -16,7 +16,6 @@ function write_output(dir_path, grid, it)
                 write(g, "x", collect(x))
                 write(g, "psi", @view(u[:, 1]))
                 write(g, "Pi", @view(u[:, 2]))
-                write(g, "E", @view(level.diag_state[:, 1]))
             end
         end
     else
