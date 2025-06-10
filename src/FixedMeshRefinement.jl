@@ -3,6 +3,7 @@ module FixedMeshRefinement
 using LinearAlgebra
 using StaticArrays
 using OffsetArrays
+using FastBroadcast
 
 include("utils.jl")
 include("grid.jl")
