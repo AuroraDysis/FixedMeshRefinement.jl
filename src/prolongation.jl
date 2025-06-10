@@ -213,6 +213,7 @@ function apply_transition_zone!(
     (;
         num_interior_points,
         num_transition_points,
+        is_physical_boundary,
         spatial_interpolation_order,
     ) = fine_level
 
@@ -240,16 +241,17 @@ function apply_transition_zone!(
     aligned_buffer = MVector{NumState,Float64}(undef)
     spatial_buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
 
-    for dir in 1:2  # left or right
-        a = dir == 1 ? domain_box[1] : domain_box[2]
-        b = if dir == 1
-            domain_box[1] + (num_transition_points - 1) * dxf
-        else
-            domain_box[2] - (num_transition_points - 1) * dxf
+    # left or right
+    for dir in 1:2
+        # skip physical boundary
+        if is_physical_boundary[dir]
+            continue
         end
 
-        # TODO: check if we need transition zone for physical boundary
-        for i in 1:num_transition_points
+        a = domain_box[dir]
+        b = domain_box[dir] + (num_transition_points[dir] - 1) * dxf
+
+        for i in 1:num_transition_points[dir]
             fidx = if dir == 1
                 i
             else

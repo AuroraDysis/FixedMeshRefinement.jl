@@ -23,9 +23,11 @@ function restrict_injection!(
     (; num_interior_points, num_transition_points, parent_indices) = fine_level
 
     if apply_trans_zone
-        fidx_transition_offset = mod(num_transition_points, 2) == 0 ? 0 : 1
-        fidx_start = 1 + num_transition_points + fidx_transition_offset
-        fidx_end = num_interior_points - num_transition_points - fidx_transition_offset
+        fidx_transition_left_offset = mod(num_transition_points[1], 2) == 0 ? 0 : 1
+        fidx_transition_right_offset = mod(num_transition_points[2], 2) == 0 ? 0 : 1
+        fidx_start = 1 + num_transition_points[1] + fidx_transition_left_offset
+        fidx_end =
+            num_interior_points - num_transition_points[2] - fidx_transition_right_offset
     else
         fidx_start = 1
         fidx_end = num_interior_points
@@ -35,8 +37,9 @@ function restrict_injection!(
     uc = coarse_level.state[end]
 
     if apply_trans_zone
-        noffset = div(num_transition_points + 1, 2)
-        uc[parent_indices[(1 + noffset):(end - noffset)], :] .= uf
+        noffset_left = div(num_transition_points[1] + 1, 2)
+        noffset_right = div(num_transition_points[2] + 1, 2)
+        uc[parent_indices[(1 + noffset_left):(end - noffset_right)], :] .= uf
     else
         uc[parent_indices, :] .= uf
     end

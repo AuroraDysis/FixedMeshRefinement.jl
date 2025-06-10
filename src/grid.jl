@@ -29,7 +29,7 @@ A struct representing a single refinement level in the mesh.
 # Fields
 - `num_interior_points::Int`: Number of interior grid points.
 - `num_ghost_points::Int`: Number of ghost points on each side.
-- `num_transition_points::Int`: Number of points in the transition zone for mesh refinement.
+- `num_transition_points::NTuple{2,Int}`: Number of points in the transition zone for mesh refinement.
 - `num_total_points::Int`: Total number of grid points (interior + ghost + buffer).
 - `num_additional_points::NTuple{2,Int}`: Number of additional points on each side (ghost or buffer).
 - `time_interpolation_order::Int`: Order of time interpolation.
@@ -54,7 +54,7 @@ A struct representing a single refinement level in the mesh.
 mutable struct Level{NumState,NumDiagnostic}
     num_interior_points::Int  # num of interior grid points
     const num_ghost_points::Int  # num of ghost points on each side
-    const num_transition_points::Int  # num of transition zone points
+    const num_transition_points::NTuple{2,Int}  # num of transition zone points
     num_total_points::Int  # num of all grid points
     const num_additional_points::NTuple{2,Int} # num of additional points on each side
     const time_interpolation_order::Int  # interpolation order in time
@@ -127,11 +127,12 @@ mutable struct Level{NumState,NumDiagnostic}
         )
         offset_indices =
             (-num_left_additional_points + 1):(num_interior_points + num_right_additional_points)
-
+        num_left_transition_points = is_physical_boundary[1] ? num_transition_points : 0
+        num_right_transition_points = is_physical_boundary[2] ? num_transition_points : 0
         return new{NumState,NumDiagnostic}(
             num_interior_points,
             num_ghost_points,
-            num_transition_points,
+            (num_left_transition_points, num_right_transition_points),
             num_total_points,
             (num_left_additional_points, num_right_additional_points),
             time_interpolation_order,
