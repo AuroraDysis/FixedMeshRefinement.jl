@@ -97,8 +97,8 @@ mutable struct Level{NumState,NumDiagnostic}
         parent_indices,
     ) where {NumState,NumDiagnostic}
         is_physical_boundary = (
-            isapprox(domain_box[1], physical_domain_box[1]; rtol=typetol(Float64)),
-            isapprox(domain_box[2], physical_domain_box[2]; rtol=typetol(Float64)),
+            isapprox_tol(domain_box[1], physical_domain_box[1]),
+            isapprox_tol(domain_box[2], physical_domain_box[2]),
         )
         num_left_additional_points =
             is_physical_boundary[1] ? num_ghost_points : num_buffer_points
@@ -292,8 +292,8 @@ mutable struct Grid{NumState,NumDiagnostic}
 
             # check x are aligned
             if !(
-                isapprox(parent_level.x[parent_indices[1]], level_domain[1]; rtol=1e-12) &&
-                isapprox(parent_level.x[parent_indices[end]], level_domain[2]; rtol=1e-12)
+                isapprox_tol(parent_level.x[parent_indices[1]], level_domain[1]) &&
+                isapprox_tol(parent_level.x[parent_indices[end]], level_domain[2])
             )
                 println("parent_indices = ", parent_indices)
                 println("parent_level.dx = ", parent_level.dx)
@@ -394,11 +394,45 @@ function Base.show(
 end
 
 """
-    shift_physical_boundary!(grid::Grid, num_shift_points::NTuple{2,Int})
+    move_level_boundary!(level::Level, num_shift_points::NTuple{2,Float64})
 
-Shift the physical boundary of the grid.
-
-!!! warning
-    This function is currently a placeholder and is not implemented.
+Move the boundary of a `Level` by a given number of points.
 """
-function shift_physical_boundary!(grid::Grid, num_shift_points::NTuple{2,Int}) end
+function move_level_boundary!(level::Level, num_shift_points::NTuple{2,Float64})
+    # TODO: implement
+end
+"""
+    move_physical_boundary!(grid::Grid, num_shift_points::NTuple{2,Float64})
+
+Move the physical boundary of the grid by a given number of points.
+"""
+function move_grid_boundary!(grid::Grid, num_shift_points::NTuple{2,Float64})
+    (; num_levels, levels) = grid
+
+    # make sure all levels are at same time
+    t = levels[1].t
+    for l in 2:num_levels
+        isapprox_tol(levels[l].t, t) ||
+            error("Level $(l) is not at same time, t = $(t), levels[l].t = $(levels[l].t)")
+    end
+
+    for l in 1:num_levels
+        level = levels[l]
+
+        left_shift_points = if level.is_physical_boundary[1]
+            num_shift_points[1] * 2^(l - 1)
+        else
+            0
+        end
+
+        right_shift_points = if level.is_physical_boundary[2]
+            num_shift_points[2] * 2^(l - 1)
+        else
+            0
+        end
+
+        move_level_boundary!(level, (left_shift_points, right_shift_points))
+    end
+
+    # TODO:check if levels are properly embedded in parent levels
+end

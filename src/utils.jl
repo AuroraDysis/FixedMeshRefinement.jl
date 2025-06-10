@@ -25,3 +25,8 @@ julia> typetol(Float32)
 function typetol(TF::Type{<:AbstractFloat})
     return eps(TF)^(4//5)
 end
+
+function isapprox_tol(a::T, b::T) where {T<:AbstractFloat}
+    tol = typetol(T)
+    return isapprox(a, b; atol=tol, rtol=tol)
+end
