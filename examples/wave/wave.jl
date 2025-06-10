@@ -11,7 +11,7 @@ function wave_rhs!(level, rhs, u, p, t)
     psi_rhs = @view(rhs[:, 1])
     Pi_rhs = @view(rhs[:, 2])
 
-    (; num_ghost_points, x, dx) = level
+    (; num_ghost_points, num_interior_points, x, dx) = level
     (; dissipation) = p
 
     @inbounds for i in (firstindex(x) + num_ghost_points):(lastindex(x) - num_ghost_points)
