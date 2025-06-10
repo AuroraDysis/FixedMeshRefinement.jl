@@ -20,10 +20,11 @@ function excise_level!(level::Level, num_excise_points::NTuple{2,Float64})
         num_additional_points,
         num_ghost_points,
         domain_box,
-        offset_indices,
+        additional_points_indices,
         dx,
         physical_domain_box,
         parent_indices,
+        offset_indices,
         is_base_level,
         state,
         rhs,
@@ -55,8 +56,8 @@ function excise_level!(level::Level, num_excise_points::NTuple{2,Float64})
         parent_indices[(1 + div(num_excise_points[1], 2)):(end - div(num_excise_points[2], 2))]
     end
     new_additional_points_indices = (
-        num_additional_points[1], # don't change the left indices since we use offset array
-        num_additional_points[2] .- num_excise_points[2],
+        additional_points_indices[1], # don't change the left indices since we use offset array
+        additional_points_indices[2] .- num_excise_points[2],
     )
     x_min = new_domain_box[1] - num_additional_points[1] * dx
     x_max = new_domain_box[2] + num_additional_points[2] * dx

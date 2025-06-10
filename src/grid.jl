@@ -68,6 +68,7 @@ mutable struct Level{NumState,NumDiagnostic}
     const is_base_level::Bool
     parent_indices::UnitRange{Int}
     additional_points_indices::NTuple{2,StepRange{Int,Int}}
+    offset_indices::UnitRange{Int}
     rhs_indices::UnitRange{Int}
 
     # data
@@ -150,6 +151,7 @@ mutable struct Level{NumState,NumDiagnostic}
             is_base_level,
             parent_indices,
             additional_points_indices,
+            offset_indices,
             rhs_indices,
             # data
             OffsetArray(x, offset_indices),
