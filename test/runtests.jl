@@ -1,3 +1,6 @@
+using TestItems
+using TestItemRunner
+
 @testitem "Code quality (Aqua.jl)" begin
     using Aqua
 
