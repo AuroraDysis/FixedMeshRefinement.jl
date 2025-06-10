@@ -1,4 +1,4 @@
-export Level, Grid
+export Level, Grid, shift_physical_boundary!
 
 # Find the index of the nearest value in a sorted array
 function searchsortednearest(a::AbstractVector, x)
@@ -10,6 +10,9 @@ function searchsortednearest(a::AbstractVector, x)
     else
         return abs(a[idx] - x) < abs(a[idx - 1] - x) ? idx : idx - 1
     end
+end
+
+function shift_physical_boundary!(level::Level, num_shift_points::NTuple{2,Int})
 end
 
 mutable struct Level{NumState,NumDiagnostic}
