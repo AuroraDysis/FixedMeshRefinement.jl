@@ -12,19 +12,18 @@ function restriction!(
     fine_level = grid.levels[l + 1]
     coarse_level = grid.levels[l]
 
-    (; num_total_points, num_additional_points, num_transition_points, parent_indices) =
-        fine_level
+    (; num_interior_points, num_transition_points, parent_indices) = fine_level
 
     isrt = if apply_trans_zone
-        1 + num_additional_points[1] + num_transition_points
+        1 + num_transition_points
     else
-        1 + num_additional_points[1]
+        1
     end
 
     iend = if apply_trans_zone
-        num_total_points - num_additional_points[2] - num_transition_points
+        num_interior_points - num_transition_points
     else
-        num_total_points - num_additional_points[2]
+        num_interior_points
     end
 
     uf = view(fine_level.state[end], isrt:2:iend, :)
