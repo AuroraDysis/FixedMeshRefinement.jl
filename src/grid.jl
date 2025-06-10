@@ -43,7 +43,7 @@ A struct representing a single refinement level in the mesh.
 - `num_ghost_points::Int`: Number of ghost points on each side.
 - `num_buffer_points::Int`: Number of buffer points on each side for inter-level communication.
 - `num_transition_points::NTuple{2,Int}`: Number of points in the transition zone for mesh refinement.
-- `num_boundary_points::NTuple{2,Int}`: Number of additional points on each side (ghost or buffer).
+- `num_boundary_points::NTuple{2,Int}`: Number of boundary points on each side (ghost or buffer).
 - `time_interpolation_order::Int`: Order of time interpolation.
 - `spatial_interpolation_order::Int`: Order of spatial interpolation.
 - `domain_box::Tuple{Float64,Float64}`: The computational domain (interior) of this level.
@@ -61,7 +61,7 @@ mutable struct Level{NumState,NumDiagnostic}
     const num_ghost_points::Int  # num of ghost points on each side
     const num_buffer_points::Int # num of buffer points on each side
     const num_transition_points::NTuple{2,Int}  # num of transition zone points
-    const num_boundary_points::NTuple{2,Int} # num of additional points on each side
+    const num_boundary_points::NTuple{2,Int} # num of boundary points on each side
     const time_interpolation_order::Int  # interpolation order in time
     const spatial_interpolation_order::Int  # interpolation order in space
     domain_box::Tuple{Float64,Float64}  # computational domain (interior)
@@ -104,15 +104,15 @@ mutable struct Level{NumState,NumDiagnostic}
             isapprox_tol(domain_box[1], physical_domain_box[1]),
             isapprox_tol(domain_box[2], physical_domain_box[2]),
         )
-        num_left_additional_points =
+        num_left_boundary_points =
             is_physical_boundary[1] ? num_ghost_points : num_buffer_points
-        num_right_additional_points =
+        num_right_boundary_points =
             is_physical_boundary[2] ? num_ghost_points : num_buffer_points
         num_total_points =
-            num_interior_points + num_left_additional_points + num_right_additional_points
+            num_interior_points + num_left_boundary_points + num_right_boundary_points
         dx = (domain_box[2] - domain_box[1]) / (num_interior_points - 1)
-        x_min = domain_box[1] - num_left_additional_points * dx
-        x_max = domain_box[2] + num_right_additional_points * dx
+        x_min = domain_box[1] - num_left_boundary_points * dx
+        x_max = domain_box[2] + num_right_boundary_points * dx
         x = LinRange(x_min, x_max, num_total_points)
         time_levels = max(time_interpolation_order + 1, 2)
         state = [fill(NaN, num_total_points, NumState) for _ in 1:time_levels]
@@ -126,7 +126,7 @@ mutable struct Level{NumState,NumDiagnostic}
             Yn_buffer[j] = fill(NaN, num_buffer_points, NumState, 2)
         end
         offset_indices =
-            (-num_left_additional_points + 1):(num_interior_points + num_right_additional_points)
+            (-num_left_boundary_points + 1):(num_interior_points + num_right_boundary_points)
         num_left_transition_points = is_physical_boundary[1] ? num_transition_points : 0
         num_right_transition_points = is_physical_boundary[2] ? num_transition_points : 0
 
@@ -135,7 +135,7 @@ mutable struct Level{NumState,NumDiagnostic}
             num_ghost_points,
             num_buffer_points,
             (num_left_transition_points, num_right_transition_points),
-            (num_left_additional_points, num_right_additional_points),
+            (num_left_boundary_points, num_right_boundary_points),
             time_interpolation_order,
             spatial_interpolation_order,
             domain_box,
@@ -182,7 +182,7 @@ end
 """
     get_boundary_indices(level::Level) -> NTuple{2,StepRange{Int,Int}}
 
-Return the indices of the additional points on each side.
+Return the indices of the boundary points on each side (ghost or buffer).
 """
 function get_boundary_indices(level::Level)
     (; num_boundary_points, num_interior_points) = level
@@ -552,7 +552,7 @@ function Base.show(
     println(io, "  Current time (t):      ", level.t)
     println(io, "  Ghost points:          ", level.num_ghost_points)
     println(io, "  Buffer points:         ", level.num_buffer_points)
-    println(io, "  Additional points:     ", level.num_boundary_points)
+    println(io, "  Boundary points:       ", level.num_boundary_points)
     println(io, "  Transition points:     ", level.num_transition_points)
     println(io, "  Interpolation (time):  ", level.time_interpolation_order)
     println(io, "  Interpolation (space): ", level.spatial_interpolation_order)
