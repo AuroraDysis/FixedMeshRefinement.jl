@@ -255,7 +255,7 @@ function apply_transition_zone!(
             else
                 num_interior_points + 1 - i
             end
-            is_aligned = mod(i + 1, 2) != 0
+            is_aligned = mod(i + 1, 2) == 0
 
             w = transition_profile(a, b, fine_level.x[fidx])
             if is_aligned
