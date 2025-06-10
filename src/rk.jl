@@ -44,16 +44,21 @@ Perform a single step of the classic 4th-order Runge-Kutta (RK4) method on a giv
   subcycling method. Defaults to `false`.
 """
 function rk4!(level::Level, f::Function, p; mongwane::Bool=false)
-    (; state, tmp, k, t, dt) = level
+    (; t, dt) = level
+
+    state = level_state(level)
+    tmp = level_tmp(level)
+    k1 = level_k(level, 1)
+    k2 = level_k(level, 2)
+    k3 = level_k(level, 3)
+    k4 = level_k(level, 4)
 
     cycle_state!(level)
 
-    u_p = state[end - 1]
+    u_p = level_state(level, -1)
 
     sixth_dt = dt / 6
     half_dt = dt / 2
-
-    k1, k2, k3, k4 = k
 
     f(level, k1, u_p, p, t)
 

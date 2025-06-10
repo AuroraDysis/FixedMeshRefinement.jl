@@ -33,8 +33,8 @@ function restrict_injection!(
         fidx_end = num_interior_points
     end
 
-    uf = view(fine_level.state[end], fidx_start:2:fidx_end, :)
-    uc = coarse_level.state[end]
+    uf = view(level_state(fine_level), fidx_start:2:fidx_end, :)
+    uc = level_state(coarse_level)
 
     if apply_trans_zone
         noffset_left = div(num_transition_points[1] + 1, 2)

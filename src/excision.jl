@@ -55,31 +55,17 @@ function excise_level!(level::Level, num_excise_points::NTuple{2,Int})
     else
         parent_indices[(1 + div(num_excise_points[1], 2)):(end - div(num_excise_points[2], 2))]
     end
-    new_additional_points_indices = (
-        additional_points_indices[1], # don't change the left indices since we use offset array
-        additional_points_indices[2] .- num_excise_points[2],
-    )
     x_min = new_domain_box[1] - num_additional_points[1] * dx
     x_max = new_domain_box[2] + num_additional_points[2] * dx
     new_offset_indices = offset_indices .- num_excise_points[1]
-    new_x = OffsetVector(LinRange(x_min, x_max, new_num_total_points), new_offset_indices)
-    new_state = [OffsetArray(s, new_offset_indices, :) for s in state]
-    new_rhs = OffsetArray(rhs, new_offset_indices, :)
-    new_tmp = OffsetArray(tmp, new_offset_indices, :)
-    new_k = [OffsetArray(ki, new_offset_indices, :) for ki in k]
-    new_diag_state = OffsetArray(diag_state, new_offset_indices, :)
+    new_x = LinRange(x_min, x_max, new_num_total_points)
 
     level.num_interior_points = new_num_interior_points
     level.domain_box = new_domain_box
     level.physical_domain_box = new_physical_domain_box
     level.parent_indices = new_parent_indices
-    level.additional_points_indices = new_additional_points_indices
-    level.x = new_x
-    level.state = new_state
-    level.rhs = new_rhs
-    level.tmp = new_tmp
-    level.k = new_k
-    level.diag_state = new_diag_state
+    level.offset_indices = new_offset_indices
+    level._x = new_x
 
     return nothing
 end

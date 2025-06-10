@@ -1,4 +1,13 @@
-export Level, Grid
+export Level,
+    Grid,
+    level_x,
+    level_state,
+    level_rhs,
+    level_tmp,
+    level_k,
+    level_diag_state,
+    cycle_state!,
+    fidx2cidx
 
 # Find the index of the nearest value in a sorted array
 """
@@ -65,21 +74,20 @@ mutable struct Level{NumState,NumDiagnostic}
     t::Float64
     const is_base_level::Bool
     parent_indices::UnitRange{Int}
-    additional_points_indices::NTuple{2,StepRange{Int,Int}}
     offset_indices::UnitRange{Int}
 
     # data
-    x::OffsetVector{Float64,LinRange{Float64,Int64}}
-    state::Vector{OffsetMatrix{Float64,Matrix{Float64}}} # state vectors at different time levels
-    rhs::OffsetMatrix{Float64,Matrix{Float64}} # rhs of state vectors
-    tmp::OffsetMatrix{Float64,Matrix{Float64}}
+    _x::LinRange{Float64,Int64}
+    _state::Vector{Matrix{Float64}} # state vectors at different time levels
+    _rhs::Matrix{Float64} # rhs of state vectors
+    _tmp::Matrix{Float64}
 
     # intermediate state vectors for new subcycling
-    k::Vector{OffsetMatrix{Float64,Matrix{Float64}}}
+    _k::Vector{Matrix{Float64}}
     Yn_buffer::Vector{Array{Float64,3}}
 
     # diagnostic variables
-    diag_state::OffsetMatrix{Float64,Matrix{Float64}} # state vectors for diagnostic variables
+    _diag_state::Matrix{Float64} # state vectors for diagnostic variables
 
     function Level{NumState,NumDiagnostic}(
         num_interior_points,
@@ -120,10 +128,6 @@ mutable struct Level{NumState,NumDiagnostic}
             k[j] = fill(NaN, num_total_points, NumState)
             Yn_buffer[j] = fill(NaN, num_buffer_points, NumState, 2)
         end
-        additional_points_indices = (
-            0:-1:(-num_left_additional_points + 1),
-            (num_interior_points + 1):(num_interior_points + num_right_additional_points),
-        )
         offset_indices =
             (-num_left_additional_points + 1):(num_interior_points + num_right_additional_points)
         num_left_transition_points = is_physical_boundary[1] ? num_transition_points : 0
@@ -133,7 +137,6 @@ mutable struct Level{NumState,NumDiagnostic}
             num_interior_points,
             num_ghost_points,
             (num_left_transition_points, num_right_transition_points),
-            num_total_points,
             (num_left_additional_points, num_right_additional_points),
             time_interpolation_order,
             spatial_interpolation_order,
@@ -145,17 +148,15 @@ mutable struct Level{NumState,NumDiagnostic}
             t,
             is_base_level,
             parent_indices,
-            additional_points_indices,
             offset_indices,
-            rhs_indices,
             # data
-            OffsetArray(x, offset_indices),
-            [OffsetArray(state[i], offset_indices, :) for i in 1:time_levels],
-            OffsetArray(rhs, offset_indices, :),
-            OffsetArray(tmp, offset_indices, :),
-            [OffsetArray(k[i], offset_indices, :) for i in 1:4],
+            x,
+            state,
+            rhs,
+            tmp,
+            k,
             Yn_buffer,
-            OffsetArray(diag_state, offset_indices, :),
+            diag_state,
         )
     end
 end
@@ -180,9 +181,57 @@ function level_interior_indices(level::Level)
     return 1:num_interior_points
 end
 
+"""
+    level_additional_points_indices(level::Level) -> NTuple{2,StepRange{Int,Int}}
+
+Return the indices of the additional points on each side.
+"""
+function level_additional_points_indices(level::Level)
+    (; num_additional_points, num_interior_points) = level
+    return (
+        0:-1:(-num_additional_points[1] + 1),
+        (num_interior_points + 1):(num_interior_points + num_additional_points[2]),
+    )
+end
+
+"""
+    level_total_points(level::Level) -> Int
+
+Return the total number of grid points at this level.
+"""
 function level_total_points(level::Level)
     (; num_interior_points, num_additional_points) = level
     return num_interior_points + num_additional_points[1] + num_additional_points[2]
+end
+
+function level_x(level::Level)
+    (; _x, offset_indices) = level
+    return OffsetArray(_x, offset_indices)
+end
+
+function level_state(level::Level, i::Int=0)
+    (; _state, offset_indices) = level
+    return OffsetArray(_state[end + i], offset_indices, :)
+end
+
+function level_rhs(level::Level)
+    (; _rhs, offset_indices) = level
+    return OffsetArray(_rhs, offset_indices, :)
+end
+
+function level_tmp(level::Level)
+    (; _tmp, offset_indices) = level
+    return OffsetArray(_tmp, offset_indices, :)
+end
+
+function level_k(level::Level, i::Int)
+    (; _k, offset_indices) = level
+    return OffsetArray(_k[i], offset_indices, :)
+end
+
+function level_diag_state(level::Level)
+    (; _diag_state, offset_indices) = level
+    return OffsetArray(_diag_state, offset_indices, :)
 end
 
 """
@@ -192,10 +241,10 @@ Shift the time levels of the state variables in a `Level`. `state[i]` becomes
 `state[i+1]`. This is used to advance the solution in time.
 """
 function cycle_state!(level::Level)
-    (; state, time_interpolation_order) = level
+    (; _state, time_interpolation_order) = level
     # shift state vectors
     for i in 1:time_interpolation_order
-        state[i] .= state[i + 1]
+        _state[i] .= _state[i + 1]
     end
     return nothing
 end
@@ -317,23 +366,24 @@ mutable struct Grid{NumState,NumDiagnostic}
             parent_idx_right = div(level_max_idx + 1, 2)
             parent_indices = parent_idx_left:parent_idx_right
 
+            parent_x = level_x(parent_level)
             # check x are aligned
             if !(
-                isapprox_tol(parent_level.x[parent_indices[1]], level_domain[1]) &&
-                isapprox_tol(parent_level.x[parent_indices[end]], level_domain[2])
+                isapprox_tol(parent_x[parent_indices[1]], level_domain[1]) &&
+                isapprox_tol(parent_x[parent_indices[end]], level_domain[2])
             )
                 println("parent_indices = ", parent_indices)
                 println("parent_level.dx = ", parent_level.dx)
-                println("parent_level.x = ", parent_level.x)
+                println("parent_level.x = ", parent_x)
                 println("level_domain = ", level_domain)
 
                 error(
                     "Level $(l): Coordinates are not aligned: ",
-                    parent_level.x[parent_indices[1]],
+                    parent_x[parent_indices[1]],
                     " != ",
                     level_domain[1],
                     " or ",
-                    parent_level.x[parent_indices[end]],
+                    parent_x[parent_indices[end]],
                     " != ",
                     level_domain[2],
                 )
@@ -355,16 +405,17 @@ mutable struct Grid{NumState,NumDiagnostic}
                 parent_indices,
             )
             # ensure level is properly embedded in parent level
-            if !(level.is_physical_boundary[1] || level.x[1] > parent_level.domain_box[1])
+            level_x = level_x(level)
+            if !(level.is_physical_boundary[1] || level_x[1] > parent_level.domain_box[1])
                 error(
                     "Level $(l) is not properly embedded in parent level $(l-1), ",
                     "level.x[1] = $(level.x[1]), parent_level.domain_box[1] = $(parent_level.domain_box[1])",
                 )
             end
-            if !(level.is_physical_boundary[2] || level.x[end] < parent_level.domain_box[2])
+            if !(level.is_physical_boundary[2] || level_x[end] < parent_level.domain_box[2])
                 error(
                     "Level $(l) is not properly embedded in parent level $(l-1), ",
-                    "level.x[end] = $(level.x[end]), parent_level.domain_box[2] = $(parent_level.domain_box[2])",
+                    "level.x[end] = $(level_x[end]), parent_level.domain_box[2] = $(parent_level.domain_box[2])",
                 )
             end
             push!(levels, level)

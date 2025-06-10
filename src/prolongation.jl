@@ -228,15 +228,12 @@ function apply_transition_zone!(
         div(num_spatial_interpolation_points, 2) + 1
     end
 
-    statef = fine_level.state
-    statec = coarse_level.state
+    uf = level_state(fine_level)
+    uc_p = level_state(coarse_level, -1)
 
     dtc = coarse_level.dt
 
-    kc = coarse_level.k
-
-    uf = statef[end]
-    uc_p = statec[end - 1]
+    kc = [level_k(coarse_level, i) for i in 1:4]
 
     aligned_buffer = MVector{NumState,Float64}(undef)
     spatial_buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
@@ -319,12 +316,8 @@ function prolongate_mongwane!(
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
-    (;
-        num_additional_points,
-        spatial_interpolation_order,
-        additional_points_indices,
-        is_physical_boundary,
-    ) = fine_level
+    (; num_additional_points, spatial_interpolation_order, is_physical_boundary) =
+        fine_level
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
     soffset = if mod(num_spatial_interpolation_points, 2) == 0
@@ -335,13 +328,12 @@ function prolongate_mongwane!(
 
     dtc = coarse_level.dt
 
-    statef = fine_level.state
-    statec = coarse_level.state
+    kc = [level_k(coarse_level, i) for i in 1:4]
 
-    kc = coarse_level.k
+    uf = level_state(fine_level)
+    uc_p = level_state(coarse_level, -1)
 
-    uf = statef[end]
-    uc_p = statec[end - 1]
+    additional_points_indices = level_additional_points_indices(fine_level)
 
     # buffer points for Yn
     Yn_buffer = fine_level.Yn_buffer
@@ -429,7 +421,6 @@ function prolongate!(
         num_additional_points,
         spatial_interpolation_order,
         time_interpolation_order,
-        additional_points_indices,
         is_physical_boundary,
     ) = fine_level
 
@@ -440,11 +431,9 @@ function prolongate!(
         div(num_spatial_interpolation_points, 2) + 1
     end
 
-    statef = fine_level.state
-    statec = coarse_level.state
-
-    uf = statef[end]
-    uc_p = statec[end - 1]
+    uf = level_state(fine_level)
+    uc_p = level_state(coarse_level, -1)
+    additional_points_indices = level_additional_points_indices(fine_level)
 
     buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
 
@@ -461,27 +450,25 @@ function prolongate!(
             if interp_in_time
                 if is_aligned
                     cidx = fidx2cidx(fine_level, fidx)
+                    time_data = [
+                        view(level_state(coarse_level, m), cidx, :) for
+                        m in 1:(time_interpolation_order + 1)
+                    ]
                     # time interpolation
                     prolongation_time_interpolate!(
-                        @view(uf[fidx, :]),
-                        [
-                            @view(statec[m][cidx, :]) for
-                            m in 1:(time_interpolation_order + 1)
-                        ],
-                        time_interpolation_order,
+                        @view(uf[fidx, :]), time_data, time_interpolation_order
                     )
                 else
                     cidx = fidx2cidx(fine_level, fidx - 1)
                     for ic in 1:num_spatial_interpolation_points
                         ic_grid = cidx + ic - soffset
+                        time_data = [
+                            view(level_state(coarse_level, m), ic_grid, :) for
+                            m in 1:(time_interpolation_order + 1)
+                        ]
                         # time interpolation
                         prolongation_time_interpolate!(
-                            @view(buffer[ic, :]),
-                            [
-                                @view(statec[m][ic_grid, :]) for
-                                m in 1:(time_interpolation_order + 1)
-                            ],
-                            time_interpolation_order,
+                            @view(buffer[ic, :]), time_data, time_interpolation_order
                         )
                     end
                     # spatial interpolation

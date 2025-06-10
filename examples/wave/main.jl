@@ -24,16 +24,17 @@ function nan_check(grid)
         (;
             num_interior_points, num_additional_points, parent_indices, is_physical_boundary
         ) = level
-        interior_points = 1:num_interior_points
-        if any(isnan.(u[interior_points, :]))
+        interior_indices = level_interior_indices(level)
+        if any(isnan.(u[interior_indices, :]))
             has_nan = true
             # print all the nan indexes
             println("level $l:")
-            println("  x: ", level.x)
+            println("  x: ", level_x(level))
             println("  num_additional_points: ", num_additional_points)
             println("  parent_indices: ", parent_indices)
             println("  is_physical_boundary: ", is_physical_boundary)
-            println("  nan_points: ", interior_points[isnan.(u[interior_points, 1])])
+            println("  nan_points psi: ", interior_indices[isnan.(u[interior_indices, 1])])
+            println("  nan_points Pi: ", interior_indices[isnan.(u[interior_indices, 2])])
         end
     end
     return has_nan
