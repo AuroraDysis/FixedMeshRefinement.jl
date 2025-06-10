@@ -6,7 +6,7 @@ function gaussian!(grid; amp=1.0, sig=0.25, x0=0.0)
     (; levels, num_levels) = grid
     for l in 1:num_levels
         level = levels[l]
-        u = level.state[end]
+        u = level_state(level)
         psi = @view(u[:, 1])
         Pi = @view(u[:, 2])
         x = level_x(level)
