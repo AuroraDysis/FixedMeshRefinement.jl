@@ -11,10 +11,10 @@ function wave_rhs!(level, rhs, u, p, t)
     psi_rhs = @view(rhs[:, 1])
     Pi_rhs = @view(rhs[:, 2])
 
-    (; num_interior_points, dx) = level
+    (; num_ghost_points, x, dx) = level
     (; dissipation) = p
 
-    @inbounds for i in 1:num_interior_points
+    @inbounds for i in (first(x) + num_ghost_points):(last(x) - num_ghost_points)
         # 4th order finite difference
         ddpsi =
             (-psi[i - 2] + 16 * psi[i - 1] - 30 * psi[i] + 16 * psi[i + 1] - psi[i + 2]) /
