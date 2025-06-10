@@ -88,8 +88,8 @@ mutable struct Level{NumState,NumDiagnostic}
             Yn_buffer[j] = fill(NaN, num_buffer_points, NumState, 2)
         end
         additional_points_indices = (
-            num_left_additional_points:-1:1,
-            (num_total_points - num_right_additional_points + 1):num_total_points,
+            -1:-1:(-num_left_additional_points),
+            (num_interior_points + 1):(num_interior_points + num_right_additional_points),
         )
         offset_indices =
             (-num_left_additional_points):(num_interior_points + num_right_additional_points)
