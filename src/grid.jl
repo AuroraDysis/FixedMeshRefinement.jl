@@ -14,19 +14,19 @@ end
 
 mutable struct Level{NumState,NumDiagnostic}
     num_interior_points::Int  # num of interior grid points
-    num_ghost_points::Int  # num of ghost points on each side
-    num_transition_points::Int  # num of transition zone points
+    const num_ghost_points::Int  # num of ghost points on each side
+    const num_transition_points::Int  # num of transition zone points
     num_total_points::Int  # num of all grid points
-    num_additional_points::NTuple{2,Int} # num of additional points on each side
-    time_interpolation_order::Int  # interpolation order in time
-    spatial_interpolation_order::Int  # interpolation order in space
-    domain_box::Tuple{Float64,Float64}  # size computational domain (interior)
-    physical_domain_box::Tuple{Float64,Float64}  # size physical domain
-    is_physical_boundary::NTuple{2,Bool}  # whether the ghost points require physical boundary condition
-    dx::Float64
+    const num_additional_points::NTuple{2,Int} # num of additional points on each side
+    const time_interpolation_order::Int  # interpolation order in time
+    const spatial_interpolation_order::Int  # interpolation order in space
+    domain_box::Tuple{Float64,Float64}  # computational domain (interior)
+    physical_domain_box::Tuple{Float64,Float64}  # physical domain
+    const is_physical_boundary::NTuple{2,Bool}  # whether the ghost points require physical boundary condition
+    const dx::Float64
     dt::Float64
     t::Float64
-    is_base_level::Bool
+    const is_base_level::Bool
     parent_indices::UnitRange{Int}
     additional_points_indices::NTuple{2,StepRange{Int,Int}}
 
