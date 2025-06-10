@@ -1,4 +1,4 @@
-export Level, Grid, shift_physical_boundary!
+export Level, Grid, move_level_boundary!, move_grid_boundary!
 
 # Find the index of the nearest value in a sorted array
 """
