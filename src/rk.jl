@@ -47,7 +47,7 @@ Perform a single step of the classic 4th-order Runge-Kutta (RK4) method on a giv
 function rk4!(level::Level, f::Function, p; mongwane::Bool=false)
     (; t, dt) = level
 
-    tmp = get_tmp_state(level)
+    tmp = get_rk4_tmp_state(level)
     k1 = get_rk_stage(level, 1)
     k2 = get_rk_stage(level, 2)
     k3 = get_rk_stage(level, 3)

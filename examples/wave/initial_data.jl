@@ -61,7 +61,7 @@ function march_backwards!(grid, p)
         rk4!(level, wave_rhs_backward!, p)
 
         # save new u(-dt) -> u_p, u(0) -> u
-        tmp = get_tmp_state(level)
+        tmp = get_rk4_tmp_state(level)
         u = get_state(level)
         u_p = get_state(level, -1)
         tmp .= u

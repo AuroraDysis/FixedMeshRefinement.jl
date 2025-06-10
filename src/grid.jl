@@ -2,7 +2,7 @@ export Level,
     Grid,
     get_x,
     get_state,
-    get_tmp_state,
+    get_rk4_tmp_state,
     get_rk_stage,
     get_diagnostic_state,
     get_boundary_indices,
@@ -77,7 +77,7 @@ mutable struct Level{NumState,NumDiagnostic}
     # data
     const x::LinRange{Float64,Int64}
     const state::Vector{Matrix{Float64}} # state vectors at different time levels
-    const tmp_state::Matrix{Float64}
+    const rk4_tmp_state::Matrix{Float64} # temporary state for RK4
 
     # intermediate state vectors for new subcycling
     const rk_stages::Vector{Matrix{Float64}}
@@ -225,14 +225,14 @@ function get_state(level::Level, i::Int = 0)
 end
 
 """
-    get_tmp_state(level::Level)
+    get_rk4_tmp_state(level::Level)
 
 Return a temporary array with the same size as the state variables of the `level`
 as an `OffsetArray`.
 """
-function get_tmp_state(level::Level)
-    (; tmp_state, offset_indices) = level
-    return OffsetArray(tmp_state, offset_indices, :)
+function get_rk4_tmp_state(level::Level)
+    (; rk4_tmp_state, offset_indices) = level
+    return OffsetArray(rk4_tmp_state, offset_indices, :)
 end
 
 """
