@@ -32,20 +32,20 @@ mutable struct Level{NumState,NumDiagnostic}
 
     # data
     x::LinRange{Float64,Int}
-    _state::Vector{Matrix{Float64}}  # state vectors at different time levels
+    const _state::Vector{Matrix{Float64}}  # state vectors at different time levels
     state::Vector{OffsetMatrix{Float64,Matrix{Float64}}}
-    _rhs::Matrix{Float64}  # rhs of state vectors
+    const _rhs::Matrix{Float64}  # rhs of state vectors
     rhs::OffsetMatrix{Float64,Matrix{Float64}}
-    _tmp::Matrix{Float64}
+    const _tmp::Matrix{Float64}
     tmp::OffsetMatrix{Float64,Matrix{Float64}}
 
     # intermediate state vectors for new subcycling
-    _k::Vector{Matrix{Float64}}
+    const _k::Vector{Matrix{Float64}}
     k::Vector{OffsetMatrix{Float64,Matrix{Float64}}}
     Yn_buffer::Vector{Array{Float64,3}}
 
     # diagnostic variables
-    _diag_state::Matrix{Float64}  # state vectors for diagnostic variables
+    const _diag_state::Matrix{Float64}  # state vectors for diagnostic variables
     diag_state::OffsetMatrix{Float64,Matrix{Float64}}
 
     function Level{NumState,NumDiagnostic}(
