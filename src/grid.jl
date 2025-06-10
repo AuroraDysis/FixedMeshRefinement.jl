@@ -497,27 +497,81 @@ end
 """
     Base.show(io::IO, grid::Grid)
 
-Display a summary of the `Grid` structure, printing details for each level.
+Display a compact summary of the `Grid`.
 """
 function Base.show(
-    io::IO, grid::Grid{NumState,NumDiagnostic}
+    io::IO,
+    grid::Grid{NumState,NumDiagnostic},
 ) where {NumState,NumDiagnostic}
-    println(io, "Grid Structure:")
-    println(io, "  subcycling = ", grid.subcycling)
+    print(io, "Grid{$NumState, $NumDiagnostic} with $(grid.num_levels) levels at t=$(grid.t)")
+end
+
+"""
+    Base.show(io::IO, ::MIME"text/plain", grid::Grid)
+
+Display a detailed summary of the `Grid` structure.
+"""
+function Base.show(
+    io::IO,
+    ::MIME"text/plain",
+    grid::Grid{NumState,NumDiagnostic},
+) where {NumState,NumDiagnostic}
+    println(
+        io,
+        "Grid{$NumState, $NumDiagnostic} with $(grid.num_levels) levels at t=$(grid.t):",
+    )
+    println(io, "  Subcycling: ", grid.subcycling)
+    println(io, "  Base dt:    ", grid.base_dt)
+    println(io, "Levels:")
     for i in 1:(grid.num_levels)
-        println(io, "level[", i, "],")
-        println(io, "  num_interior_points       = ", grid.levels[i].num_interior_points)
-        println(io, "  num_ghost_points          = ", grid.levels[i].num_ghost_points)
-        println(io, "  num_buffer_points         = ", grid.levels[i].num_buffer_points)
-        println(io, "  num_transition_points     = ", grid.levels[i].num_transition_points)
-        println(
-            io,
-            "  spatial_interpolation_order = ",
-            grid.levels[i].spatial_interpolation_order,
-        )
-        println(io, "  domain_box  = ", grid.levels[i].domain_box)
-        println(io, "  dx          = ", grid.levels[i].dx)
-        println(io, "  dt          = ", grid.levels[i].dt)
-        println(io, "  t           = ", grid.levels[i].t)
+        println(io, "  [$i]: ", grid.levels[i])
     end
+end
+
+"""
+    Base.show(io::IO, level::Level)
+
+Display a compact summary of the `Level`.
+"""
+function Base.show(io::IO, level::Level)
+    print(
+        io,
+        "Level(domain=",
+        level.domain_box,
+        ", N=",
+        level.num_interior_points,
+        ", dx=",
+        round(level.dx, sigdigits = 3),
+        ")",
+    )
+end
+
+"""
+    Base.show(io::IO, ::MIME"text/plain", level::Level)
+
+Display a detailed summary of the `Level`.
+"""
+function Base.show(
+    io::IO,
+    ::MIME"text/plain",
+    level::Level{NumState,NumDiagnostic},
+) where {NumState,NumDiagnostic}
+    println(io, "Level{$NumState, $NumDiagnostic}:")
+    println(io, "  Domain:                ", level.domain_box)
+    println(io, "  Interior points:       ", level.num_interior_points)
+    println(io, "  Grid spacing (dx):     ", level.dx)
+    println(io, "  Time step (dt):        ", level.dt)
+    println(io, "  Current time (t):      ", level.t)
+    println(io, "  Ghost points:          ", level.num_ghost_points)
+    println(io, "  Buffer points:         ", level.num_buffer_points)
+    println(io, "  Additional points:     ", level.num_additional_points)
+    println(io, "  Transition points:     ", level.num_transition_points)
+    println(io, "  Interpolation (time):  ", level.time_interpolation_order)
+    println(io, "  Interpolation (space): ", level.spatial_interpolation_order)
+    println(io, "  Physical boundary:     ", level.is_physical_boundary)
+    println(io, "  Base level:            ", level.is_base_level)
+    if !level.is_base_level
+        println(io, "  Parent indices:        ", level.parent_indices)
+    end
+    println(io, "  Indices:               ", level.offset_indices)
 end
