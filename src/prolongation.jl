@@ -138,8 +138,7 @@ function apply_transition_zone!(
     coarse_level = grid.levels[l - 1]
 
     (;
-        num_total_points,
-        num_additional_points,
+        num_interior_points,
         num_transition_points,
         spatial_interpolation_order,
     ) = fine_level
@@ -179,9 +178,9 @@ function apply_transition_zone!(
         # TODO: check if we need transition zone for physical boundary
         for i in 1:num_transition_points
             fidx = if dir == 1
-                num_additional_points[1] + i
+                i
             else
-                num_total_points - num_additional_points[2] + 1 - i
+                num_interior_points + 1 - i
             end
             is_aligned = mod(i + 1, 2) != 0
 

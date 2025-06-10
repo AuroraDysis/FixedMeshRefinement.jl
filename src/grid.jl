@@ -144,7 +144,7 @@ function fidx2cidx(fine_level::Level, fidx::Int)
     end
 
     parent_idx_left = parent_indices[1]
-    offset = fidx - (1 + num_additional_points[1])
+    offset = fidx - 1
 
     if mod(offset, 2) != 0
         println("parent_indices = ", parent_indices)
