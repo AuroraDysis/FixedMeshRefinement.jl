@@ -5,13 +5,14 @@ wave_rhs!:
         dot(psi) = Pi
         dot(Pi)  = ddpsi
 ===============================================================================#
-function wave_rhs!(level, rhs, u, t)
+function wave_rhs!(level, rhs, u, p, t)
     psi = @view(u[:, 1])
     Pi = @view(u[:, 2])
     psi_rhs = @view(rhs[:, 1])
     Pi_rhs = @view(rhs[:, 2])
 
-    (; num_total_points, num_ghost_points, dissipation, dx) = level
+    (; num_total_points, num_ghost_points, dx) = level
+    (; dissipation) = p
 
     @inbounds for i in (1 + num_ghost_points):(num_total_points - num_ghost_points)
         # 4th order finite difference

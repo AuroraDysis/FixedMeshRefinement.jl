@@ -1,7 +1,8 @@
 export rk4!
 
 function fill_buffer!(u, level::Level, stage::Int)
-    (; Yn_buffer, additional_points_indices, num_additional_points, is_physical_boundary) = level
+    (; Yn_buffer, additional_points_indices, num_additional_points, is_physical_boundary) =
+        level
     Yn = Yn_buffer[stage]
     for dir in 1:2
         if is_physical_boundary[dir]
@@ -16,7 +17,7 @@ function fill_buffer!(u, level::Level, stage::Int)
     return nothing
 end
 
-function rk4!(level::Level, f::Function; mongwane::Bool=false)
+function rk4!(level::Level, f::Function, p; mongwane::Bool=false)
     (; state, tmp, k, t, dt) = level
 
     cycle_state!(level)
@@ -28,25 +29,25 @@ function rk4!(level::Level, f::Function; mongwane::Bool=false)
 
     k1, k2, k3, k4 = k
 
-    f(level, k1, u_p, t)
+    f(level, k1, u_p, p, t)
 
     @. tmp = u_p + half_dt * k1
     if mongwane
         fill_buffer!(tmp, level, 2)
     end
-    f(level, k2, tmp, t + half_dt)
+    f(level, k2, tmp, p, t + half_dt)
 
     @. tmp = u_p + half_dt * k2
     if mongwane
         fill_buffer!(tmp, level, 3)
     end
-    f(level, k3, tmp, t + half_dt)
+    f(level, k3, tmp, p, t + half_dt)
 
     @. tmp = u_p + dt * k3
     if mongwane
         fill_buffer!(tmp, level, 4)
     end
-    f(level, k4, tmp, t + dt)
+    f(level, k4, tmp, p, t + dt)
 
     u = state[end]
     @. u = u_p + sixth_dt * (2 * (k2 + k3) + (k1 + k4))

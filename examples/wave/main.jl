@@ -79,9 +79,9 @@ function main(params, out_dir)
         num_transition_points=num_transition_points,
         spatial_interpolation_order=spatial_interpolation_order,
         cfl=cfl,
-        dissipation=dissipation,
         subcycling=subcycling,
     )
+    p = (; dissipation)
 
     ###############
     # Intial Data #
@@ -93,13 +93,12 @@ function main(params, out_dir)
     elseif initial_data == "sinusoidal"
         sinusoidal!(grid)
     else
-        println("Initial data type '$initial_data' unsupported yet")
-        exit()
+        error("Initial data type '$initial_data' unsupported yet")
     end
 
     apply_reflective_boundary_condition!(grid)
     if !mongwane
-        march_backwards!(grid)
+        march_backwards!(grid, p)
         apply_reflective_boundary_condition!(grid)
     end
 
@@ -113,7 +112,7 @@ function main(params, out_dir)
 
     step = 1
     while (max_step > 0 && step <= max_step) || (stop_time > 0.0 && grid.t < stop_time)
-        step!(grid, wave_rhs!; mongwane=mongwane, apply_trans_zone=apply_trans_zone)
+        step!(grid, wave_rhs!, p; mongwane=mongwane, apply_trans_zone=apply_trans_zone)
 
         @printf(
             "Simulation time: %.4f, iteration %d. E = %.4f\n",

@@ -1,7 +1,11 @@
 export step!
 
 function step!(
-    grid::Grid{NumState,NumDiagnostic}, f; mongwane=false, apply_trans_zone=false
+    grid::Grid{NumState,NumDiagnostic},
+    f::Function,
+    p;
+    mongwane::Bool=false,
+    apply_trans_zone::Bool=false,
 ) where {NumState,NumDiagnostic}
     max_level = length(grid.levels)
 
@@ -19,7 +23,7 @@ function step!(
                 apply_transition_zone!(grid, l, false)
             end
         end
-        rk4!(grid.levels[l], f; mongwane=mongwane)
+        rk4!(grid.levels[l], f, p; mongwane=mongwane)
     end
 
     #-------------------------------------------------#
@@ -53,7 +57,7 @@ function step!(
                         apply_transition_zone!(grid, l, interp_in_time)
                     end
 
-                    rk4!(grid.levels[l], f; mongwane=mongwane)
+                    rk4!(grid.levels[l], f, p; mongwane=mongwane)
                 end
             end
         end
