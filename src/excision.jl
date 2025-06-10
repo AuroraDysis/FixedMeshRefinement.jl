@@ -89,7 +89,7 @@ function excise_level!(level::Level, num_excise_points::NTuple{2,Float64})
 end
 
 """
-    move_physical_boundary!(grid::Grid, num_excise_points::NTuple{2,Float64})
+    excise_grid!(grid::Grid, num_excise_points::NTuple{2,Float64})
 
 Excise the grid by a given number of points; as a prerequisite, all levels must align with the physical boundary.
 """
