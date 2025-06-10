@@ -2,6 +2,7 @@ module FixedMeshRefinement
 
 using LinearAlgebra
 using StaticArrays
+using OffsetArrays
 
 include("utils.jl")
 include("grid.jl")
