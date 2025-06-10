@@ -187,11 +187,9 @@ redirect_std = get(params, "redirect_std", true)
 
 if redirect_std
     # redirect output and error
-    redirect_to_files("./stdout.txt", "./stderr.txt") do
+    redirect_to_files(out_dir * "/stdout.txt", out_dir * "/stderr.txt") do
         main(params, out_dir)
     end
-    mv("./stdout.txt", out_dir * "/stdout.txt")
-    mv("./stderr.txt", out_dir * "/stderr.txt")
 else
     main(params, out_dir)
 end
