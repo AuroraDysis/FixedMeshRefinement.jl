@@ -68,6 +68,7 @@ mutable struct Level{NumState,NumDiagnostic}
     const is_base_level::Bool
     parent_indices::UnitRange{Int}
     additional_points_indices::NTuple{2,StepRange{Int,Int}}
+    rhs_indices::UnitRange{Int}
 
     # data
     x::OffsetVector{Float64,LinRange{Float64,Int64}}
@@ -129,6 +130,9 @@ mutable struct Level{NumState,NumDiagnostic}
             (-num_left_additional_points + 1):(num_interior_points + num_right_additional_points)
         num_left_transition_points = is_physical_boundary[1] ? num_transition_points : 0
         num_right_transition_points = is_physical_boundary[2] ? num_transition_points : 0
+        rhs_indices =
+            (-num_left_additional_points + 1 + num_ghost_points):(num_interior_points + num_right_additional_points - num_ghost_points)
+
         return new{NumState,NumDiagnostic}(
             num_interior_points,
             num_ghost_points,
@@ -146,6 +150,7 @@ mutable struct Level{NumState,NumDiagnostic}
             is_base_level,
             parent_indices,
             additional_points_indices,
+            rhs_indices,
             # data
             OffsetArray(x, offset_indices),
             [OffsetArray(state[i], offset_indices, :) for i in 1:time_levels],

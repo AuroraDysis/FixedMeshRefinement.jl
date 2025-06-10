@@ -11,13 +11,10 @@ function wave_rhs!(level, rhs, u, p, t)
     psi_rhs = @view(rhs[:, 1])
     Pi_rhs = @view(rhs[:, 2])
 
-    (; num_ghost_points, num_interior_points, x, dx) = level
+    (; dx, rhs_indices) = level
     (; dissipation) = p
 
-    left_idx = firstindex(x) + num_ghost_points
-    right_idx = lastindex(x) - num_ghost_points
-
-    @inbounds for i in left_idx:right_idx
+    @inbounds for i in rhs_indices
         # 4th order finite difference
         ddpsi =
             (-psi[i - 2] + 16 * psi[i - 1] - 30 * psi[i] + 16 * psi[i + 1] - psi[i + 2]) /
@@ -36,8 +33,8 @@ function wave_rhs!(level, rhs, u, p, t)
         Pi_rhs[i] = ddpsi + dissipation * diss_Pi
     end
 
-    psi_rhs[begin:(left_idx - 1)] .= NaN
-    psi_rhs[(right_idx + 1):end] .= NaN
+    psi_rhs[begin:(first(rhs_indices) - 1)] .= NaN
+    psi_rhs[(last(rhs_indices) + 1):end] .= NaN
 
     return apply_reflective_boundary_condition_rhs!(level, rhs)
 end
