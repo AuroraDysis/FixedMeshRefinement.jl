@@ -1,6 +1,11 @@
 export Level, Grid, shift_physical_boundary!
 
 # Find the index of the nearest value in a sorted array
+"""
+    searchsortednearest(a::AbstractVector, x)
+
+Find the index of the element in a sorted array `a` that is nearest to `x`.
+"""
 function searchsortednearest(a::AbstractVector, x)
     idx = searchsortedfirst(a, x)
     if idx == 1
@@ -12,6 +17,40 @@ function searchsortednearest(a::AbstractVector, x)
     end
 end
 
+"""
+    Level{NumState, NumDiagnostic}
+
+A struct representing a single refinement level in the mesh.
+
+# Type Parameters
+- `NumState`: Number of state variables.
+- `NumDiagnostic`: Number of diagnostic variables.
+
+# Fields
+- `num_interior_points::Int`: Number of interior grid points.
+- `num_ghost_points::Int`: Number of ghost points on each side.
+- `num_transition_points::Int`: Number of points in the transition zone for mesh refinement.
+- `num_total_points::Int`: Total number of grid points (interior + ghost + buffer).
+- `num_additional_points::NTuple{2,Int}`: Number of additional points on each side (ghost or buffer).
+- `time_interpolation_order::Int`: Order of time interpolation.
+- `spatial_interpolation_order::Int`: Order of spatial interpolation.
+- `domain_box::Tuple{Float64,Float64}`: The computational domain (interior) of this level.
+- `physical_domain_box::Tuple{Float64,Float64}`: The physical domain of the entire grid.
+- `is_physical_boundary::NTuple{2,Bool}`: Indicates if the level boundaries are physical boundaries.
+- `dx::Float64`: Grid spacing.
+- `dt::Float64`: Time step.
+- `t::Float64`: Current time of this level.
+- `is_base_level::Bool`: True if this is the coarsest level.
+- `parent_indices::UnitRange{Int}`: Range of indices in the parent level that this level covers.
+- `additional_points_indices::NTuple{2,StepRange{Int,Int}}`: Indices for additional points on each side.
+- `x::OffsetVector{Float64,...}`: Grid point coordinates.
+- `state::Vector{OffsetMatrix{Float64,...}}`: State variables at different time levels.
+- `rhs::OffsetMatrix{Float64,...}`: Right-hand side of the evolution equations.
+- `tmp::OffsetMatrix{Float64,...}`: Temporary storage array.
+- `k::Vector{OffsetMatrix{Float64,...}}`: Intermediate states for Runge-Kutta time integration.
+- `Yn_buffer::Vector{Array{Float64,3}}`: Buffer for subcycling.
+- `diag_state::OffsetMatrix{Float64,...}`: Diagnostic variables.
+"""
 mutable struct Level{NumState,NumDiagnostic}
     num_interior_points::Int  # num of interior grid points
     const num_ghost_points::Int  # num of ghost points on each side
@@ -118,6 +157,12 @@ mutable struct Level{NumState,NumDiagnostic}
     end
 end
 
+"""
+    cycle_state!(level::Level)
+
+Shift the time levels of the state variables in a `Level`. `state[i]` becomes
+`state[i+1]`. This is used to advance the solution in time.
+"""
 function cycle_state!(level::Level)
     (; state, time_interpolation_order) = level
     # shift state vectors
@@ -127,6 +172,13 @@ function cycle_state!(level::Level)
     return nothing
 end
 
+"""
+    fidx2cidx(fine_level::Level, fidx::Int) -> Int
+
+Convert a fine grid index `fidx` to the corresponding coarse grid index.
+This function is not defined for the base level. An error is thrown if the fine
+grid point does not align with any coarse grid point.
+"""
 function fidx2cidx(fine_level::Level, fidx::Int)
     (; is_base_level, parent_indices) = fine_level
 
@@ -147,6 +199,22 @@ function fidx2cidx(fine_level::Level, fidx::Int)
     return parent_idx_left + half_offset
 end
 
+"""
+    Grid{NumState, NumDiagnostic}
+
+A struct representing the entire FMR grid, which consists of multiple `Level`s.
+
+# Type Parameters
+- `NumState`: Number of state variables.
+- `NumDiagnostic`: Number of diagnostic variables.
+
+# Fields
+- `num_levels::Int`: The total number of refinement levels.
+- `levels::Vector{Level{NumState,NumDiagnostic}}`: A vector of `Level` objects.
+- `base_dt::Float64`: The time step of the coarsest level.
+- `t::Float64`: The current time of the simulation.
+- `subcycling::Bool`: A boolean indicating whether subcycling in time is enabled.
+"""
 mutable struct Grid{NumState,NumDiagnostic}
     num_levels::Int
     levels::Vector{Level{NumState,NumDiagnostic}}
@@ -281,6 +349,11 @@ mutable struct Grid{NumState,NumDiagnostic}
     end
 end
 
+"""
+    Base.show(io::IO, grid::Grid)
+
+Display a summary of the `Grid` structure, printing details for each level.
+"""
 function Base.show(
     io::IO, grid::Grid{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
@@ -319,4 +392,12 @@ function Base.show(
     end
 end
 
+"""
+    shift_physical_boundary!(grid::Grid, num_shift_points::NTuple{2,Int})
+
+Shift the physical boundary of the grid.
+
+!!! warning
+    This function is currently a placeholder and is not implemented.
+"""
 function shift_physical_boundary!(grid::Grid, num_shift_points::NTuple{2,Int}) end

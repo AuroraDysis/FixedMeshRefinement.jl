@@ -1,11 +1,19 @@
 export restriction!
 
-#===============================================================================
-restriction:
-    * from level l+1 to level l
-    * we assume that we always march fine level first (for l in lmax-1:-1:1)
-    * we assume all the levels are at the same time slice
-===============================================================================#
+"""
+    restriction!(grid::Grid, l::Int; apply_trans_zone=false)
+
+Perform restriction from a fine grid (`l+1`) to a coarse grid (`l`). This operation
+transfers data from a finer grid to a coarser grid. Currently, it uses injection
+by taking the values from the fine grid at the locations corresponding to the
+coarse grid points.
+
+# Arguments
+- `grid::Grid`: The grid structure.
+- `l::Int`: The coarse level index.
+- `apply_trans_zone::Bool`: If `true`, the restriction is only applied outside of the
+  transition zones. Defaults to `false`.
+"""
 function restriction!(
     grid::Grid{NumState,NumDiagnostic}, l::Int; apply_trans_zone=false
 ) where {NumState,NumDiagnostic}

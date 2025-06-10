@@ -1,5 +1,27 @@
 export step!
 
+"""
+    step!(
+        grid::Grid,
+        f::Function,
+        p;
+        mongwane::Bool=false,
+        apply_trans_zone::Bool=false,
+    )
+
+Advance the solution on the entire `grid` by one time step of the coarsest level.
+This function orchestrates the time stepping across all refinement levels, handling
+subcycling, prolongation, restriction, and application of transition zones.
+
+# Arguments
+- `grid::Grid`: The FMR grid structure.
+- `f::Function`: The function that computes the right-hand side of the ODEs.
+  It should have the signature `f(level, k, u, p, t)`.
+- `p`: Parameters to be passed to the RHS function `f`.
+- `mongwane::Bool`: If `true`, enables Mongwane's subcycling method. Defaults to `false`.
+- `apply_trans_zone::Bool`: If `true`, applies transition zones to smooth inter-grid
+  boundaries. Defaults to `false`.
+"""
 function step!(
     grid::Grid{NumState,NumDiagnostic},
     f::Function,

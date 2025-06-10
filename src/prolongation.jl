@@ -1,5 +1,17 @@
 export prolongation!, prolongation_mongwane!, apply_transition_zone!
 
+"""
+    prolongation_spatial_interpolate!(res, u, i, order)
+
+Performs spatial interpolation for prolongation using a set of predefined stencils of a given `order`.
+The result is stored in `res`. The interpolation uses values from `u` around index `i`.
+
+# Arguments
+- `res`: The destination array for the interpolated values.
+- `u`: The source data array.
+- `i::Int`: The index in `u` to center the interpolation stencil.
+- `order::Int`: The order of spatial interpolation (1 through 5 are supported).
+"""
 function prolongation_spatial_interpolate!(res, u, i, order)
     if order == 1
         # {0.5, 0.5}
@@ -26,6 +38,17 @@ function prolongation_spatial_interpolate!(res, u, i, order)
     end
 end
 
+"""
+    prolongation_time_interpolate!(res, u, order)
+
+Performs time interpolation for prolongation. `u` should be ordered from oldest to newest.
+The result is stored in `res`.
+
+# Arguments
+- `res`: The destination array for the interpolated values.
+- `u`: A vector of states at different time levels, ordered from oldest to newest.
+- `order::Int`: The order of time interpolation (1 through 4 are supported).
+"""
 # u from oldest to newest
 function prolongation_time_interpolate!(res, u, order)
     length(u) == order + 1 || error("Length of u must be equal to order + 1")
@@ -53,6 +76,20 @@ end
 #===============================================================================
 Functions needed by Mongwane's subcycling method
 ===============================================================================#
+"""
+    rk4_dense_output_y!(y, theta, h, yn, k)
+
+Calculate the dense output for a 4th-order Runge-Kutta method at a fractional time
+`theta` within a time step `h`. This is used for interpolation in time within a single
+time step.
+
+# Arguments
+- `y`: The output array for the interpolated state.
+- `theta::Float64`: The fractional time within the interval `[0, 1]`.
+- `h::Float64`: The time step size.
+- `yn`: The state at the beginning of the time step.
+- `k`: A vector of RK4 stages `k1` through `k4`.
+"""
 function rk4_dense_output_y!(y, theta, h, yn, k)
     theta2 = theta * theta
     theta3 = theta2 * theta
@@ -63,6 +100,21 @@ function rk4_dense_output_y!(y, theta, h, yn, k)
     return nothing
 end
 
+"""
+    calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time, dytmp)
+
+Calculate the intermediate `Y` values needed for Mongwane's subcycling method. These
+values represent the state on the coarse grid at intermediate times required by the
+fine grid's time stepping.
+
+# Arguments
+- `Yn_buffer`: Buffer to store the calculated `Y` values.
+- `yn`: State on the coarse grid at the beginning of the step.
+- `kcs`: The RK4 stages from the coarse grid time step.
+- `dtc::Float64`: The coarse grid time step.
+- `interp_in_time::Bool`: Flag indicating if interpolation in time is needed.
+- `dytmp`: Temporary storage for derivatives.
+"""
 function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool, dytmp)
     theta = interp_in_time ? 0.5 : 0.0
 
@@ -107,6 +159,18 @@ function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool, dytmp)
     return nothing
 end
 
+"""
+    transition_profile(xl, xh, x; type=1)
+
+Compute a transition profile value at `x` between `xl` and `xh`. This is used to
+smoothly blend solutions in transition zones.
+
+# Arguments
+- `xl::Float64`: The lower bound of the transition interval.
+- `xh::Float64`: The upper bound of the transition interval.
+- `x::Float64`: The point at which to evaluate the profile.
+- `type::Int`: The type of transition profile (1: boxstep, 2: smoothstep, 3: smootherstep).
+"""
 function transition_profile(xl, xh, x; type=1)
     t0 = (x - xl) / (xh - xl)
     t = if t0 < 0.0
@@ -128,9 +192,18 @@ function transition_profile(xl, xh, x; type=1)
     end
 end
 
-#===============================================================================
-apply_transition_zone!: apply transition zone
-===============================================================================#
+"""
+    apply_transition_zone!(grid::Grid, l::Int, interp_in_time::Bool)
+
+Apply a transition zone to smoothly connect coarse and fine grid solutions at the
+boundaries of a refinement level. This function blends the fine grid solution with
+a prolonged solution from the coarse grid.
+
+# Arguments
+- `grid::Grid`: The grid structure.
+- `l::Int`: The fine level index.
+- `interp_in_time::Bool`: Whether to use time interpolation.
+"""
 function apply_transition_zone!(
     grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool
 ) where {NumState,NumDiagnostic}
@@ -226,6 +299,18 @@ prolongation_mongwane!: use Mongwane's method
     * from level l-1 to level l
     * we assume that we always march coarse level first (for l in 2:lmax)
 ===============================================================================#
+"""
+    prolongation_mongwane!(grid::Grid, l::Int, interp_in_time::Bool)
+
+Perform prolongation from a coarse grid (`l-1`) to a fine grid (`l`) using Mongwane's
+subcycling-in-time method. This is used to set the ghost cell data for the fine grid
+when subcycling is enabled.
+
+# Arguments
+- `grid::Grid`: The grid structure.
+- `l::Int`: The fine level index.
+- `interp_in_time::Bool`: Whether to use time interpolation for the coarse grid state.
+"""
 function prolongation_mongwane!(
     grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool
 ) where {NumState,NumDiagnostic}
@@ -320,6 +405,18 @@ prolongation!:
     * we assume that we always march coarse level first (for l in 2:lmax)
     * time interpolation is used when time_interpolation_order > 0
 ===============================================================================#
+"""
+    prolongation!(grid::Grid, l::Int, interp_in_time::Bool)
+
+Perform prolongation from a coarse grid (`l-1`) to a fine grid (`l`). This function
+fills the ghost cells of the fine grid by interpolating the data from the coarse grid
+in space and, optionally, in time.
+
+# Arguments
+- `grid::Grid`: The grid structure.
+- `l::Int`: The fine level index.
+- `interp_in_time::Bool`: Whether to use time interpolation.
+"""
 function prolongation!(
     grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool
 ) where {NumState,NumDiagnostic}

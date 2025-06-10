@@ -1,5 +1,17 @@
 export rk4!
 
+"""
+    fill_buffer!(u, level::Level, stage::Int)
+
+Fill the ghost cells of the solution array `u` from the `Yn_buffer` at a specific
+Runge-Kutta `stage`. This is part of the subcycling-in-time method. After copying,
+the buffer is filled with `NaN` to avoid accidental reuse.
+
+# Arguments
+- `u`: The solution array with ghost cells to be filled.
+- `level::Level`: The grid level.
+- `stage::Int`: The RK stage index.
+"""
 function fill_buffer!(u, level::Level, stage::Int)
     (; Yn_buffer, additional_points_indices, num_additional_points, is_physical_boundary) =
         level
@@ -17,6 +29,20 @@ function fill_buffer!(u, level::Level, stage::Int)
     return nothing
 end
 
+"""
+    rk4!(level::Level, f::Function, p; mongwane::Bool=false)
+
+Perform a single step of the classic 4th-order Runge-Kutta (RK4) method on a given
+`level`. It advances the solution by one time step `dt`.
+
+# Arguments
+- `level::Level`: The grid level to be updated.
+- `f::Function`: The function that computes the right-hand side of the ODEs.
+  It should have the signature `f(level, k, u, p, t)`.
+- `p`: Parameters to be passed to the RHS function `f`.
+- `mongwane::Bool`: If `true`, enables special buffer filling for Mongwane's
+  subcycling method. Defaults to `false`.
+"""
 function rk4!(level::Level, f::Function, p; mongwane::Bool=false)
     (; state, tmp, k, t, dt) = level
 
