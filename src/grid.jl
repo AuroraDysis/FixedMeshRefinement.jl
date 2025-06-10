@@ -88,11 +88,11 @@ mutable struct Level{NumState,NumDiagnostic}
             Yn_buffer[j] = fill(NaN, num_buffer_points, NumState, 2)
         end
         additional_points_indices = (
-            -1:-1:(-num_left_additional_points),
+            0:-1:(-num_left_additional_points + 1),
             (num_interior_points + 1):(num_interior_points + num_right_additional_points),
         )
         offset_indices =
-            (-num_left_additional_points):(num_interior_points + num_right_additional_points)
+            (-num_left_additional_points + 1):(num_interior_points + num_right_additional_points)
 
         return new{NumState,NumDiagnostic}(
             num_interior_points,
@@ -137,7 +137,7 @@ function cycle_state!(level::Level)
 end
 
 function fidx2cidx(fine_level::Level, fidx::Int)
-    (; is_base_level, parent_indices, num_additional_points) = fine_level
+    (; is_base_level, parent_indices) = fine_level
 
     if is_base_level
         error("fidx2cidx is not defined for base level")
