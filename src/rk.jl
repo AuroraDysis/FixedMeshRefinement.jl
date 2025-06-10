@@ -13,9 +13,10 @@ the buffer is filled with `NaN` to avoid accidental reuse.
 - `stage::Int`: The RK stage index.
 """
 function fill_buffer!(u, level::Level, stage::Int)
-    (; Yn_buffer, additional_points_indices, num_additional_points, is_physical_boundary) =
+    (; Yn_buffer, num_additional_points, is_physical_boundary) =
         level
     Yn = Yn_buffer[stage]
+    additional_points_indices = level_additional_points_indices(level)
     for dir in 1:2
         if is_physical_boundary[dir]
             continue

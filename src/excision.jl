@@ -18,19 +18,12 @@ function excise_level!(level::Level, num_excise_points::NTuple{2,Int})
     (;
         num_interior_points,
         num_additional_points,
-        num_ghost_points,
         domain_box,
-        additional_points_indices,
         dx,
         physical_domain_box,
         parent_indices,
         offset_indices,
         is_base_level,
-        state,
-        rhs,
-        tmp,
-        k,
-        diag_state,
     ) = level
 
     # if base level then num_excise_points can be odd, otherwise it must be even

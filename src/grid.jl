@@ -6,6 +6,10 @@ export Level,
     level_tmp,
     level_k,
     level_diag_state,
+    level_additional_points_indices,
+    level_interior_indices,
+    level_rhs_indices,
+    level_total_points,
     cycle_state!,
     fidx2cidx
 
@@ -50,14 +54,6 @@ A struct representing a single refinement level in the mesh.
 - `t::Float64`: Current time of this level.
 - `is_base_level::Bool`: True if this is the coarsest level.
 - `parent_indices::UnitRange{Int}`: Range of indices in the parent level that this level covers.
-- `additional_points_indices::NTuple{2,StepRange{Int,Int}}`: Indices for additional points on each side.
-- `x::OffsetVector{Float64,...}`: Grid point coordinates.
-- `state::Vector{OffsetMatrix{Float64,...}}`: State variables at different time levels.
-- `rhs::OffsetMatrix{Float64,...}`: Right-hand side of the evolution equations.
-- `tmp::OffsetMatrix{Float64,...}`: Temporary storage array.
-- `k::Vector{OffsetMatrix{Float64,...}}`: Intermediate states for Runge-Kutta time integration.
-- `Yn_buffer::Vector{Array{Float64,3}}`: Buffer for subcycling.
-- `diag_state::OffsetMatrix{Float64,...}`: Diagnostic variables.
 """
 mutable struct Level{NumState,NumDiagnostic}
     num_interior_points::Int  # num of interior grid points
