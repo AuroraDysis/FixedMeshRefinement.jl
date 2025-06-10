@@ -22,22 +22,18 @@ function restrict_injection!(
 
     (; num_interior_points, num_transition_points, parent_indices) = fine_level
 
-    isrt = if apply_trans_zone
-        1 + num_transition_points
+    if apply_trans_zone
+        fidx_transition_offset = mod(num_transition_points, 2) == 0 ? 0 : 1
+        fidx_start = 1 + num_transition_points + fidx_transition_offset
+        fidx_end = num_interior_points - num_transition_points - fidx_transition_offset
     else
-        1
+        fidx_start = 1
+        fidx_end = num_interior_points
     end
 
-    iend = if apply_trans_zone
-        num_interior_points - num_transition_points
-    else
-        num_interior_points
-    end
-
-    uf = view(fine_level.state[end], isrt:2:iend, :)
+    uf = view(fine_level.state[end], fidx_start:2:fidx_end, :)
     uc = coarse_level.state[end]
 
-    # TODO: implement fourth-order interpolation
     if apply_trans_zone
         noffset = div(num_transition_points + 1, 2)
         uc[parent_indices[(1 + noffset):(end - noffset)], :] .= uf
