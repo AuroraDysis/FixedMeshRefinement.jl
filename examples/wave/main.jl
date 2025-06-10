@@ -17,7 +17,7 @@ function get(params, key, default)
     return haskey(params, key) ? params[key] : default
 end
 
-function nan_check(grid)
+function nan_check(grid::Grid{NumState,NumDiagnostic}) where {NumState,NumDiagnostic}
     has_nan = false
     for l in 1:(grid.num_levels)
         level = grid.levels[l]
@@ -32,8 +32,11 @@ function nan_check(grid)
             println("  num_additional_points: ", num_additional_points)
             println("  parent_indices: ", parent_indices)
             println("  is_physical_boundary: ", is_physical_boundary)
-            println("  nan_points psi: ", interior_indices[isnan.(u[interior_indices, 1])])
-            println("  nan_points Pi: ", interior_indices[isnan.(u[interior_indices, 2])])
+            for i in 1:NumState
+                println(
+                    "  nan_points $(i): ", interior_indices[isnan.(u[interior_indices, i])]
+                )
+            end
         end
     end
     return has_nan
