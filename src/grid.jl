@@ -26,7 +26,6 @@ mutable struct Level{NumState,NumDiagnostic}
     dx::Float64
     dt::Float64
     t::Float64
-    dissipation::Float64
     is_base_level::Bool
     parent_indices::UnitRange{Int}
     additional_points_indices::NTuple{2,StepRange{Int,Int}}
@@ -55,7 +54,6 @@ mutable struct Level{NumState,NumDiagnostic}
         physical_domain_box,
         dt,
         t,
-        dissipation,
         is_base_level,
         parent_indices,
     ) where {NumState,NumDiagnostic}
@@ -103,7 +101,6 @@ mutable struct Level{NumState,NumDiagnostic}
             dx,
             dt,
             t,
-            dissipation,
             is_base_level,
             parent_indices,
             additional_points_indices,
@@ -165,7 +162,6 @@ mutable struct Grid{NumState,NumDiagnostic}
         spatial_interpolation_order=5,
         cfl=0.25,
         initial_time=0.0,
-        dissipation=0.0,
         subcycling=true,
     ) where {NumState,NumDiagnostic}
         num_levels = length(domain_boxes)
@@ -189,7 +185,6 @@ mutable struct Grid{NumState,NumDiagnostic}
             physical_domain_box,
             base_dt,
             initial_time,
-            dissipation,
             true,
             (0:0),
         )
@@ -260,7 +255,6 @@ mutable struct Grid{NumState,NumDiagnostic}
                 physical_domain_box,
                 level_dt,
                 initial_time,
-                dissipation,
                 false,
                 parent_indices,
             )
@@ -322,6 +316,5 @@ function Base.show(
         println(io, "  dx          = ", grid.levels[i].dx)
         println(io, "  dt          = ", grid.levels[i].dt)
         println(io, "  t           = ", grid.levels[i].t)
-        println(io, "  dissipation = ", grid.levels[i].dissipation)
     end
 end
