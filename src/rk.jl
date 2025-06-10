@@ -46,7 +46,6 @@ Perform a single step of the classic 4th-order Runge-Kutta (RK4) method on a giv
 function rk4!(level::Level, f::Function, p; mongwane::Bool=false)
     (; t, dt) = level
 
-    state = level_state(level)
     tmp = level_tmp(level)
     k1 = level_k(level, 1)
     k2 = level_k(level, 2)
@@ -80,7 +79,7 @@ function rk4!(level::Level, f::Function, p; mongwane::Bool=false)
     end
     f(level, k4, tmp, p, t + dt)
 
-    u = state[end]
+    u = level_state(level)
     @.. u = u_p + sixth_dt * (2 * (k2 + k3) + (k1 + k4))
 
     # update time

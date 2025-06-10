@@ -20,9 +20,9 @@ function nan_check(grid)
     has_nan = false
     for l in 1:(grid.num_levels)
         level = grid.levels[l]
-        u = level.state[end]
+        u = level_state(level)
         (;
-            num_interior_points, num_additional_points, parent_indices, is_physical_boundary
+            num_additional_points, parent_indices, is_physical_boundary
         ) = level
         interior_indices = level_interior_indices(level)
         if any(isnan.(u[interior_indices, :]))

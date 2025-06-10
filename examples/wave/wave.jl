@@ -62,12 +62,13 @@ end
 
 function wave_energy(grid)
     base_level = grid.levels[1]
-    (; dx, state, diag_state) = base_level
+    (; dx) = base_level
 
-    u = state[end]
+    u = level_state(base_level)
     psi = @view(u[:, 1])
     Pi = @view(u[:, 2])
 
+    diag_state = level_diag_state(base_level)
     rho = @view(diag_state[:, 1])
 
     interior_indices = level_interior_indices(base_level)

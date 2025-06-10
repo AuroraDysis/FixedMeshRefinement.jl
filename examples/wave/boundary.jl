@@ -5,7 +5,7 @@ function apply_reflective_boundary_condition!(
 
     for l in 1:num_levels
         level = levels[l]
-        u = level.state[end]
+        u = level_state(level)
         (;
             num_interior_points,
             num_additional_points,
