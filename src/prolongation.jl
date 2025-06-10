@@ -451,7 +451,7 @@ function prolongate!(
                 if is_aligned
                     cidx = fidx2cidx(fine_level, fidx)
                     time_data = [
-                        view(level_state(coarse_level, m), cidx, :) for
+                        view(coarse_level._state[m], cidx, :) for
                         m in 1:(time_interpolation_order + 1)
                     ]
                     # time interpolation
@@ -463,7 +463,7 @@ function prolongate!(
                     for ic in 1:num_spatial_interpolation_points
                         ic_grid = cidx + ic - soffset
                         time_data = [
-                            view(level_state(coarse_level, m), ic_grid, :) for
+                            view(coarse_level._state[m], ic_grid, :) for
                             m in 1:(time_interpolation_order + 1)
                         ]
                         # time interpolation
