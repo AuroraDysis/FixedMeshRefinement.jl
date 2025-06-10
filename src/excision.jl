@@ -14,6 +14,50 @@ function excise_level!(level::Level, num_excise_points::NTuple{2,Float64})
         println("level.is_physical_boundary = ", level.is_physical_boundary)
         error("Level is not aligned with the physical boundary")
     end
+
+    (;
+        num_interior_points,
+        num_additional_points,
+        domain_box,
+        x,
+        dx,
+        physical_domain_box,
+        parent_indices,
+        is_base_level,
+    ) = level
+
+    # if base level then num_excise_points can be odd, otherwise it must be even
+    if !is_base_level
+        num_excise_points[1] % 2 == 0 && num_excise_points[2] % 2 == 0 ||
+            error("num_excise_points must be even for non-base levels")
+    end
+
+    new_num_interior_points =
+        num_interior_points - num_excise_points[1] - num_excise_points[2]
+    new_num_total_points =
+        new_num_interior_points + num_additional_points[1] + num_additional_points[2]
+    new_domain_box = (
+        domain_box[1] + num_excise_points[1] * dx, domain_box[2] - num_excise_points[2] * dx
+    )
+    new_physical_domain_box = (
+        physical_domain_box[1] + num_excise_points[1] * dx,
+        physical_domain_box[2] - num_excise_points[2] * dx,
+    )
+    new_parent_indices = if is_base_level
+        (0, 0)
+    else
+        parent_indices[(1 + div(num_excise_points[1], 2)):(end - div(num_excise_points[2], 2))]
+    end
+    new_additional_points_indices = (
+        num_additional_points[1], # don't change the left indices since we use offset array
+        num_additional_points[2] .- num_excise_points[2],
+    )
+
+    # new_x = OffsetVector(
+    #     LinRange(x[1], x[end], new_num_total_points), 1:new_num_total_points
+    # )
+
+    # TODO: assign new values to level
 end
 
 """
