@@ -6,6 +6,6 @@
 /docs/build/
 one-dim-amr/
 .vscode/
-examples/wave/data/
+examples/wave/config/data/
 examples/stderr.txt
 examples/stdout.txt
