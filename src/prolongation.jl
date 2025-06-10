@@ -139,7 +139,7 @@ function apply_transition_zone!(
 
     (;
         num_total_points,
-        num_ghost_points,
+        num_additional_points,
         num_transition_points,
         spatial_interpolation_order,
     ) = fine_level
