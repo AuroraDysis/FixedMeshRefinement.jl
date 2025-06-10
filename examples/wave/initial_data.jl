@@ -52,23 +52,30 @@ end
 
 function march_backwards!(grid, p)
     (; levels, num_levels) = grid
+
     for l in 1:num_levels
         if l > 1
             prolongate!(grid, l, false)
         end
         level = levels[l]
         rk4!(level, wave_rhs_backward!, p)
-        # TODO: fix this
+
         # save new u(-dt) -> u_p, u(0) -> u
+        tmp .= level_tmp(level)
         u = level_state(level)
         u_p = level_state(level, -1)
-        u_pp = level_state(level, -2)
-        u_pp .= u_p
-        u_p .= u
-        u .= u_pp
+        tmp .= u
+        u .= u_p
+        u_p .= tmp
+
         level.t = 0.0
     end
-    levels[1].t = 0.0
+
+    # reset time
     grid.t = 0.0
+    for l in 1:num_levels
+        levels[l].t = 0.0
+    end
+
     return nothing
 end
