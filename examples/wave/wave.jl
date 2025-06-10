@@ -14,7 +14,7 @@ function wave_rhs!(level, rhs, u, p, t)
     (; num_ghost_points, x, dx) = level
     (; dissipation) = p
 
-    @inbounds for i in (first(x) + num_ghost_points):(last(x) - num_ghost_points)
+    @inbounds for i in (firstindex(x) + num_ghost_points):(lastindex(x) - num_ghost_points)
         # 4th order finite difference
         ddpsi =
             (-psi[i - 2] + 16 * psi[i - 1] - 30 * psi[i] + 16 * psi[i + 1] - psi[i + 2]) /
