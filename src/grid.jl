@@ -75,13 +75,12 @@ mutable struct Level{NumState,NumDiagnostic}
     offset_indices::UnitRange{Int}
 
     # data
-    const _x::LinRange{Float64,Int64}
-    const _state::Vector{Matrix{Float64}} # state vectors at different time levels
-    const _rhs::Matrix{Float64} # rhs of state vectors
-    const _tmp::Matrix{Float64}
+    const x::LinRange{Float64,Int64}
+    const state::Vector{Matrix{Float64}} # state vectors at different time levels
+    const tmp_state::Matrix{Float64}
 
     # intermediate state vectors for new subcycling
-    const _k::Vector{Matrix{Float64}}
+    const rk_stages::Vector{Matrix{Float64}}
     Yn_buffer::Vector{Array{Float64,3}}
 
     # diagnostic variables
@@ -209,8 +208,8 @@ end
 Return the grid point coordinates of the `level` as an `OffsetArray`.
 """
 function get_x(level::Level)
-    (; _x, offset_indices) = level
-    return OffsetArray(_x, offset_indices)
+    (; x, offset_indices) = level
+    return OffsetArray(x, offset_indices)
 end
 
 """
@@ -221,8 +220,8 @@ argument `i` specifies the time level, where `i=0` corresponds to the current
 time level `n`, `i=-1` to `n-1`, etc.
 """
 function get_state(level::Level, i::Int = 0)
-    (; _state, offset_indices) = level
-    return OffsetArray(_state[end+i], offset_indices, :)
+    (; state, offset_indices) = level
+    return OffsetArray(state[end+i], offset_indices, :)
 end
 
 """
@@ -232,8 +231,8 @@ Return a temporary array with the same size as the state variables of the `level
 as an `OffsetArray`.
 """
 function get_tmp_state(level::Level)
-    (; _tmp, offset_indices) = level
-    return OffsetArray(_tmp, offset_indices, :)
+    (; tmp_state, offset_indices) = level
+    return OffsetArray(tmp_state, offset_indices, :)
 end
 
 """
@@ -243,8 +242,8 @@ Return the `i`-th intermediate state `k_i` for the Runge-Kutta time stepping
 scheme as an `OffsetArray`.
 """
 function get_rk_stage(level::Level, i::Int)
-    (; _k, offset_indices) = level
-    return OffsetArray(_k[i], offset_indices, :)
+    (; rk_stages, offset_indices) = level
+    return OffsetArray(rk_stages[i], offset_indices, :)
 end
 
 """
@@ -264,10 +263,10 @@ Shift the time levels of the state variables in a `Level`. `state[i]` becomes
 `state[i+1]`. This is used to advance the solution in time.
 """
 function cycle_state!(level::Level)
-    (; _state, time_interpolation_order) = level
+    (; state, time_interpolation_order) = level
     # shift state vectors
     for i in 1:time_interpolation_order
-        _state[i] .= _state[i + 1]
+        state[i] .= state[i + 1]
     end
     return nothing
 end
