@@ -34,7 +34,7 @@ function wave_rhs!(level, rhs, u, p, t)
     end
 
     psi_rhs[begin:0] .= NaN
-    psi_rhs[(num_interior_points + 1):end] .= NaN
+    psi_rhs[(lastindex(x) - num_ghost_points + 1):end] .= NaN
 
     return apply_reflective_boundary_condition_rhs!(level, rhs)
 end
