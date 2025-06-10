@@ -12,9 +12,6 @@ function searchsortednearest(a::AbstractVector, x)
     end
 end
 
-function shift_physical_boundary!(level::Level, num_shift_points::NTuple{2,Int})
-end
-
 mutable struct Level{NumState,NumDiagnostic}
     num_interior_points::Int  # num of interior grid points
     const num_ghost_points::Int  # num of ghost points on each side
@@ -320,4 +317,7 @@ function Base.show(
         println(io, "  dt          = ", grid.levels[i].dt)
         println(io, "  t           = ", grid.levels[i].t)
     end
+end
+
+function shift_physical_boundary!(grid::Grid, num_shift_points::NTuple{2,Int})
 end
