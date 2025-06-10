@@ -166,7 +166,7 @@ end
 Return the indices that requires evaluation of the right-hand side.
 """
 function level_rhs_indices(level::Level)
-    (; num_additional_points, num_ghost_points) = level
+    (; num_additional_points, num_interior_points, num_ghost_points) = level
     return (-num_additional_points[1] + 1 + num_ghost_points):(num_interior_points + num_additional_points[2] - num_ghost_points)
 end
 
