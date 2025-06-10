@@ -14,7 +14,7 @@ function wave_rhs!(level, rhs, u, p, t)
     (; dx) = level
     (; dissipation) = p
 
-    rhs_indices = level_rhs_indices(level)
+    rhs_indices = get_rhs_evaluation_indices(level)
 
     @inbounds for i in rhs_indices
         # 4th order finite difference
@@ -64,14 +64,14 @@ function wave_energy(grid)
     base_level = grid.levels[1]
     (; dx) = base_level
 
-    u = level_state(base_level)
+    u = get_state(base_level)
     psi = @view(u[:, 1])
     Pi = @view(u[:, 2])
 
-    diag_state = level_diag_state(base_level)
+    diag_state = get_diagnostic_state(base_level)
     rho = @view(diag_state[:, 1])
 
-    interior_indices = level_interior_indices(base_level)
+    interior_indices = get_interior_indices(base_level)
 
     for i in interior_indices
         # 4th order finite difference

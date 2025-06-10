@@ -21,15 +21,15 @@ function nan_check(grid::Grid{NumState,NumDiagnostic}) where {NumState,NumDiagno
     has_nan = false
     for l in 1:(grid.num_levels)
         level = grid.levels[l]
-        u = level_state(level)
-        (; num_additional_points, parent_indices, is_physical_boundary) = level
-        interior_indices = level_interior_indices(level)
+        u = get_state(level)
+        (; num_boundary_points, parent_indices, is_physical_boundary) = level
+        interior_indices = get_interior_indices(level)
         if any(isnan.(u[interior_indices, :]))
             has_nan = true
             # print all the nan indexes
             println("level $l:")
-            println("  x: ", level_x(level))
-            println("  num_additional_points: ", num_additional_points)
+            println("  x: ", get_x(level))
+            println("  num_boundary_points: ", num_boundary_points)
             println("  parent_indices: ", parent_indices)
             println("  is_physical_boundary: ", is_physical_boundary)
             for i in 1:NumState

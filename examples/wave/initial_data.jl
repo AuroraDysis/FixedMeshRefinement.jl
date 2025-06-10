@@ -6,10 +6,10 @@ function gaussian!(grid; amp=1.0, sig=0.25, x0=0.0)
     (; levels, num_levels) = grid
     for l in 1:num_levels
         level = levels[l]
-        u = level_state(level)
+        u = get_state(level)
         psi = @view(u[:, 1])
         Pi = @view(u[:, 2])
-        x = level_x(level)
+        x = get_x(level)
         @.. psi = amp * exp(-((x - x0) / sig)^2)
         @.. Pi = 0.0
     end
@@ -26,11 +26,11 @@ function sinusoidal!(grid)
     for l in 1:num_levels
         level = levels[l]
 
-        u = level_state(level)
+        u = get_state(level)
         psi = @view(u[:, 1])
         Pi = @view(u[:, 2])
 
-        x = level_x(level)
+        x = get_x(level)
         @.. psi = sin(2 * pi * (x - 0.0))
         @.. Pi = -2 * pi * cos(2 * pi * (x - 0.0))
     end
@@ -61,9 +61,9 @@ function march_backwards!(grid, p)
         rk4!(level, wave_rhs_backward!, p)
 
         # save new u(-dt) -> u_p, u(0) -> u
-        tmp = level_tmp(level)
-        u = level_state(level)
-        u_p = level_state(level, -1)
+        tmp = get_tmp_state(level)
+        u = get_state(level)
+        u_p = get_state(level, -1)
         tmp .= u
         u .= u_p
         u_p .= tmp

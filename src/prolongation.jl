@@ -228,12 +228,12 @@ function apply_transition_zone!(
         div(num_spatial_interpolation_points, 2) + 1
     end
 
-    uf = level_state(fine_level)
-    uc_p = level_state(coarse_level, -1)
+    uf = get_state(fine_level)
+    uc_p = get_state(coarse_level, -1)
 
     dtc = coarse_level.dt
 
-    kc = [level_k(coarse_level, i) for i in 1:4]
+    kc = [get_rk_stage(coarse_level, i) for i in 1:4]
 
     aligned_buffer = MVector{NumState,Float64}(undef)
     spatial_buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
@@ -316,7 +316,7 @@ function prolongate_mongwane!(
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
-    (; num_additional_points, spatial_interpolation_order, is_physical_boundary) =
+    (; num_boundary_points, spatial_interpolation_order, is_physical_boundary) =
         fine_level
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
@@ -328,12 +328,12 @@ function prolongate_mongwane!(
 
     dtc = coarse_level.dt
 
-    kc = [level_k(coarse_level, i) for i in 1:4]
+    kc = [get_rk_stage(coarse_level, i) for i in 1:4]
 
-    uf = level_state(fine_level)
-    uc_p = level_state(coarse_level, -1)
+    uf = get_state(fine_level)
+    uc_p = get_state(coarse_level, -1)
 
-    additional_points_indices = level_additional_points_indices(fine_level)
+    boundary_indices = get_boundary_indices(fine_level)
 
     # buffer points for Yn
     Yn_buffer = fine_level.Yn_buffer
@@ -352,8 +352,8 @@ function prolongate_mongwane!(
             continue
         end
 
-        for i in 1:num_additional_points[dir]
-            fidx = additional_points_indices[dir][i]
+        for i in 1:num_boundary_points[dir]
+            fidx = boundary_indices[dir][i]
             is_aligned = mod(i + 1, 2) != 0
 
             if is_aligned
@@ -418,7 +418,7 @@ function prolongate!(
     coarse_level = grid.levels[l - 1]
 
     (;
-        num_additional_points,
+        num_boundary_points,
         spatial_interpolation_order,
         time_interpolation_order,
         is_physical_boundary,
@@ -431,9 +431,9 @@ function prolongate!(
         div(num_spatial_interpolation_points, 2) + 1
     end
 
-    uf = level_state(fine_level)
-    uc_p = level_state(coarse_level, -1)
-    additional_points_indices = level_additional_points_indices(fine_level)
+    uf = get_state(fine_level)
+    uc_p = get_state(coarse_level, -1)
+    boundary_indices = get_boundary_indices(fine_level)
 
     buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
 
@@ -443,15 +443,15 @@ function prolongate!(
             continue
         end
 
-        for i in 1:num_additional_points[dir]
-            fidx = additional_points_indices[dir][i]
+        for i in 1:num_boundary_points[dir]
+            fidx = boundary_indices[dir][i]
             is_aligned = mod(i + 1, 2) != 0
 
             if interp_in_time
                 if is_aligned
                     cidx = fidx2cidx(fine_level, fidx)
                     time_data = [
-                        view(level_state(coarse_level, m), cidx, :) for
+                        view(get_state(coarse_level, m), cidx, :) for
                         m in (-time_interpolation_order):0
                     ]
                     # time interpolation
@@ -463,7 +463,7 @@ function prolongate!(
                     for ic in 1:num_spatial_interpolation_points
                         ic_grid = cidx + ic - soffset
                         time_data = [
-                            view(level_state(coarse_level, m), ic_grid, :) for
+                            view(get_state(coarse_level, m), ic_grid, :) for
                             m in (-time_interpolation_order):0
                         ]
                         # time interpolation

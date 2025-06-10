@@ -13,16 +13,16 @@ the buffer is filled with `NaN` to avoid accidental reuse.
 - `stage::Int`: The RK stage index.
 """
 function fill_buffer!(u, level::Level, stage::Int)
-    (; Yn_buffer, num_additional_points, is_physical_boundary) =
+    (; Yn_buffer, num_boundary_points, is_physical_boundary) =
         level
     Yn = Yn_buffer[stage]
-    additional_points_indices = level_additional_points_indices(level)
+    boundary_indices = get_boundary_indices(level)
     for dir in 1:2
         if is_physical_boundary[dir]
             continue
         end
-        for i in 1:num_additional_points[dir]
-            idx = additional_points_indices[dir][i]
+        for i in 1:num_boundary_points[dir]
+            idx = boundary_indices[dir][i]
             u[idx, :] .= @view(Yn[i, :, dir])
         end
     end
@@ -47,15 +47,15 @@ Perform a single step of the classic 4th-order Runge-Kutta (RK4) method on a giv
 function rk4!(level::Level, f::Function, p; mongwane::Bool=false)
     (; t, dt) = level
 
-    tmp = level_tmp(level)
-    k1 = level_k(level, 1)
-    k2 = level_k(level, 2)
-    k3 = level_k(level, 3)
-    k4 = level_k(level, 4)
+    tmp = get_tmp_state(level)
+    k1 = get_rk_stage(level, 1)
+    k2 = get_rk_stage(level, 2)
+    k3 = get_rk_stage(level, 3)
+    k4 = get_rk_stage(level, 4)
 
     cycle_state!(level)
 
-    u_p = level_state(level, -1)
+    u_p = get_state(level, -1)
 
     sixth_dt = dt / 6
     half_dt = dt / 2
@@ -80,7 +80,7 @@ function rk4!(level::Level, f::Function, p; mongwane::Bool=false)
     end
     f(level, k4, tmp, p, t + dt)
 
-    u = level_state(level)
+    u = get_state(level)
     @.. u = u_p + sixth_dt * (2 * (k2 + k3) + (k1 + k4))
 
     # update time

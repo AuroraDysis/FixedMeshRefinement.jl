@@ -1,14 +1,13 @@
 export Level,
     Grid,
-    level_x,
-    level_state,
-    level_rhs,
-    level_tmp,
-    level_k,
-    level_diag_state,
-    level_additional_points_indices,
-    level_interior_indices,
-    level_rhs_indices,
+    get_x,
+    get_state,
+    get_tmp_state,
+    get_rk_stage,
+    get_diagnostic_state,
+    get_boundary_indices,
+    get_interior_indices,
+    get_rhs_evaluation_indices,
     level_total_points,
     cycle_state!,
     fidx2cidx
@@ -44,7 +43,7 @@ A struct representing a single refinement level in the mesh.
 - `num_ghost_points::Int`: Number of ghost points on each side.
 - `num_buffer_points::Int`: Number of buffer points on each side for inter-level communication.
 - `num_transition_points::NTuple{2,Int}`: Number of points in the transition zone for mesh refinement.
-- `num_additional_points::NTuple{2,Int}`: Number of additional points on each side (ghost or buffer).
+- `num_boundary_points::NTuple{2,Int}`: Number of additional points on each side (ghost or buffer).
 - `time_interpolation_order::Int`: Order of time interpolation.
 - `spatial_interpolation_order::Int`: Order of spatial interpolation.
 - `domain_box::Tuple{Float64,Float64}`: The computational domain (interior) of this level.
@@ -62,7 +61,7 @@ mutable struct Level{NumState,NumDiagnostic}
     const num_ghost_points::Int  # num of ghost points on each side
     const num_buffer_points::Int # num of buffer points on each side
     const num_transition_points::NTuple{2,Int}  # num of transition zone points
-    const num_additional_points::NTuple{2,Int} # num of additional points on each side
+    const num_boundary_points::NTuple{2,Int} # num of additional points on each side
     const time_interpolation_order::Int  # interpolation order in time
     const spatial_interpolation_order::Int  # interpolation order in space
     domain_box::Tuple{Float64,Float64}  # computational domain (interior)
@@ -162,35 +161,35 @@ mutable struct Level{NumState,NumDiagnostic}
 end
 
 """
-    level_rhs_indices(level::Level) -> UnitRange{Int}
+    get_rhs_evaluation_indices(level::Level) -> UnitRange{Int}
 
 Return the indices that requires evaluation of the right-hand side.
 """
-function level_rhs_indices(level::Level)
-    (; num_additional_points, num_interior_points, num_ghost_points) = level
-    return (-num_additional_points[1] + 1 + num_ghost_points):(num_interior_points + num_additional_points[2] - num_ghost_points)
+function get_rhs_evaluation_indices(level::Level)
+    (; num_boundary_points, num_interior_points, num_ghost_points) = level
+    return (-num_boundary_points[1] + 1 + num_ghost_points):(num_interior_points + num_boundary_points[2] - num_ghost_points)
 end
 
 """
-    level_interior_indices(level::Level) -> UnitRange{Int}
+    get_interior_indices(level::Level) -> UnitRange{Int}
 
 Return the indices of the interior grid points.
 """
-function level_interior_indices(level::Level)
+function get_interior_indices(level::Level)
     (; num_interior_points) = level
     return 1:num_interior_points
 end
 
 """
-    level_additional_points_indices(level::Level) -> NTuple{2,StepRange{Int,Int}}
+    get_boundary_indices(level::Level) -> NTuple{2,StepRange{Int,Int}}
 
 Return the indices of the additional points on each side.
 """
-function level_additional_points_indices(level::Level)
-    (; num_additional_points, num_interior_points) = level
+function get_boundary_indices(level::Level)
+    (; num_boundary_points, num_interior_points) = level
     return (
-        0:-1:(-num_additional_points[1] + 1),
-        (num_interior_points + 1):(num_interior_points + num_additional_points[2]),
+        0:-1:(-num_boundary_points[1] + 1),
+        (num_interior_points + 1):(num_interior_points + num_boundary_points[2]),
     )
 end
 
@@ -200,70 +199,60 @@ end
 Return the total number of grid points at this level.
 """
 function level_total_points(level::Level)
-    (; num_interior_points, num_additional_points) = level
-    return num_interior_points + num_additional_points[1] + num_additional_points[2]
+    (; num_interior_points, num_boundary_points) = level
+    return num_interior_points + num_boundary_points[1] + num_boundary_points[2]
 end
 
 """
-    level_x(level::Level)
+    get_x(level::Level)
 
 Return the grid point coordinates of the `level` as an `OffsetArray`.
 """
-function level_x(level::Level)
+function get_x(level::Level)
     (; _x, offset_indices) = level
     return OffsetArray(_x, offset_indices)
 end
 
 """
-    level_state(level::Level, i::Int=0)
+    get_state(level::Level, i::Int=0)
 
 Return the state variables of the `level` as an `OffsetArray`. The optional
 argument `i` specifies the time level, where `i=0` corresponds to the current
 time level `n`, `i=-1` to `n-1`, etc.
 """
-function level_state(level::Level, i::Int = 0)
+function get_state(level::Level, i::Int = 0)
     (; _state, offset_indices) = level
     return OffsetArray(_state[end+i], offset_indices, :)
 end
 
 """
-    level_rhs(level::Level)
-
-Return the right-hand side of the state variables of the `level` as an `OffsetArray`.
-"""
-function level_rhs(level::Level)
-    (; _rhs, offset_indices) = level
-    return OffsetArray(_rhs, offset_indices, :)
-end
-
-"""
-    level_tmp(level::Level)
+    get_tmp_state(level::Level)
 
 Return a temporary array with the same size as the state variables of the `level`
 as an `OffsetArray`.
 """
-function level_tmp(level::Level)
+function get_tmp_state(level::Level)
     (; _tmp, offset_indices) = level
     return OffsetArray(_tmp, offset_indices, :)
 end
 
 """
-    level_k(level::Level, i::Int)
+    get_rk_stage(level::Level, i::Int)
 
 Return the `i`-th intermediate state `k_i` for the Runge-Kutta time stepping
 scheme as an `OffsetArray`.
 """
-function level_k(level::Level, i::Int)
+function get_rk_stage(level::Level, i::Int)
     (; _k, offset_indices) = level
     return OffsetArray(_k[i], offset_indices, :)
 end
 
 """
-    level_diag_state(level::Level)
+    get_diagnostic_state(level::Level)
 
 Return the diagnostic state variables of the `level` as an `OffsetArray`.
 """
-function level_diag_state(level::Level)
+function get_diagnostic_state(level::Level)
     (; _diag_state, offset_indices) = level
     return OffsetArray(_diag_state, offset_indices, :)
 end
@@ -426,7 +415,7 @@ mutable struct Grid{NumState,NumDiagnostic}
             parent_idx_right = div(level_max_idx + 1, 2)
             parent_indices = parent_idx_left:parent_idx_right
 
-            parent_x = level_x(parent_level)
+            parent_x = get_x(parent_level)
             # check x are aligned
             if !(
                 isapprox_tol(parent_x[parent_indices[1]], level_domain[1]) &&
@@ -465,7 +454,7 @@ mutable struct Grid{NumState,NumDiagnostic}
                 parent_indices,
             )
             # ensure level is properly embedded in parent level
-            current_level_x = level_x(level)
+            current_level_x = get_x(level)
             if !(
                 level.is_physical_boundary[1] ||
                 current_level_x[1] > parent_level.domain_box[1]
@@ -564,7 +553,7 @@ function Base.show(
     println(io, "  Current time (t):      ", level.t)
     println(io, "  Ghost points:          ", level.num_ghost_points)
     println(io, "  Buffer points:         ", level.num_buffer_points)
-    println(io, "  Additional points:     ", level.num_additional_points)
+    println(io, "  Additional points:     ", level.num_boundary_points)
     println(io, "  Transition points:     ", level.num_transition_points)
     println(io, "  Interpolation (time):  ", level.time_interpolation_order)
     println(io, "  Interpolation (space): ", level.spatial_interpolation_order)

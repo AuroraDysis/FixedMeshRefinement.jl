@@ -5,21 +5,21 @@ function apply_reflective_boundary_condition!(
 
     for l in 1:num_levels
         level = levels[l]
-        u = level_state(level)
-        (; num_interior_points, num_additional_points, is_physical_boundary) = level
+        u = get_state(level)
+        (; num_interior_points, num_boundary_points, is_physical_boundary) = level
 
-        additional_points_indices = level_additional_points_indices(level)
+        boundary_indices = get_boundary_indices(level)
 
         # apply reflective boundary condition to state
         if is_physical_boundary[1]
-            for i in 1:num_additional_points[1]
-                @.. u[additional_points_indices[1][i], :] = -@view(u[i, :])
+            for i in 1:num_boundary_points[1]
+                @.. u[boundary_indices[1][i], :] = -@view(u[i, :])
             end
         end
 
         if is_physical_boundary[2]
-            for i in 1:num_additional_points[2]
-                @.. u[additional_points_indices[2][i], :] =
+            for i in 1:num_boundary_points[2]
+                @.. u[boundary_indices[2][i], :] =
                     -@view(u[num_interior_points + 1 - i, :])
             end
         end
@@ -31,20 +31,20 @@ end
 function apply_reflective_boundary_condition_rhs!(
     level::Level{NumState,NumDiagnostic}, rhs
 ) where {NumState,NumDiagnostic}
-    (; num_interior_points, num_additional_points, is_physical_boundary) = level
+    (; num_interior_points, num_boundary_points, is_physical_boundary) = level
 
-    additional_points_indices = level_additional_points_indices(level)
+    boundary_indices = get_boundary_indices(level)
 
     # apply reflective boundary condition to state
     if is_physical_boundary[1]
-        for i in 1:num_additional_points[1]
-            @.. rhs[additional_points_indices[1][i], :] = -@view(rhs[i, :])
+        for i in 1:num_boundary_points[1]
+            @.. rhs[boundary_indices[1][i], :] = -@view(rhs[i, :])
         end
     end
 
     if is_physical_boundary[2]
-        for i in 1:num_additional_points[2]
-            @.. rhs[additional_points_indices[2][i], :] =
+        for i in 1:num_boundary_points[2]
+            @.. rhs[boundary_indices[2][i], :] =
                 -@view(rhs[num_interior_points + 1 - i, :])
         end
     end
