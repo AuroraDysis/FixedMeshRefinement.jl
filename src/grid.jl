@@ -76,17 +76,17 @@ mutable struct Level{NumState,NumDiagnostic}
     offset_indices::UnitRange{Int}
 
     # data
-    _x::LinRange{Float64,Int64}
-    _state::Vector{Matrix{Float64}} # state vectors at different time levels
-    _rhs::Matrix{Float64} # rhs of state vectors
-    _tmp::Matrix{Float64}
+    const _x::LinRange{Float64,Int64}
+    const _state::Vector{Matrix{Float64}} # state vectors at different time levels
+    const _rhs::Matrix{Float64} # rhs of state vectors
+    const _tmp::Matrix{Float64}
 
     # intermediate state vectors for new subcycling
-    _k::Vector{Matrix{Float64}}
+    const _k::Vector{Matrix{Float64}}
     Yn_buffer::Vector{Array{Float64,3}}
 
     # diagnostic variables
-    _diag_state::Matrix{Float64} # state vectors for diagnostic variables
+    const _diag_state::Matrix{Float64} # state vectors for diagnostic variables
 
     function Level{NumState,NumDiagnostic}(
         num_interior_points,

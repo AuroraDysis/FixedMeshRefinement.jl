@@ -44,21 +44,17 @@ function excise_level!(level::Level, num_excise_points::NTuple{2,Int})
         physical_domain_box[2] - num_excise_points[2] * dx,
     )
     new_parent_indices = if is_base_level
-        (0, 0)
+        0:0
     else
         parent_indices[(1 + div(num_excise_points[1], 2)):(end - div(num_excise_points[2], 2))]
     end
-    x_min = new_domain_box[1] - num_additional_points[1] * dx
-    x_max = new_domain_box[2] + num_additional_points[2] * dx
     new_offset_indices = offset_indices .- num_excise_points[1]
-    new_x = LinRange(x_min, x_max, new_num_total_points)
 
     level.num_interior_points = new_num_interior_points
     level.domain_box = new_domain_box
     level.physical_domain_box = new_physical_domain_box
     level.parent_indices = new_parent_indices
     level.offset_indices = new_offset_indices
-    level._x = new_x
 
     return nothing
 end

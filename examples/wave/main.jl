@@ -21,9 +21,7 @@ function nan_check(grid)
     for l in 1:(grid.num_levels)
         level = grid.levels[l]
         u = level_state(level)
-        (;
-            num_additional_points, parent_indices, is_physical_boundary
-        ) = level
+        (; num_additional_points, parent_indices, is_physical_boundary) = level
         interior_indices = level_interior_indices(level)
         if any(isnan.(u[interior_indices, :]))
             has_nan = true
@@ -83,6 +81,13 @@ function main(params, out_dir)
         subcycling=subcycling,
     )
     p = (; dissipation)
+
+    # just for testing, if all levels are aligned with the physical boundary, then we excise some grid points
+    if all([level.is_physical_boundary[1] for level in grid.levels])
+        excise_grid!(grid, (2, 0))
+    elseif all([level.is_physical_boundary[2] for level in grid.levels])
+        excise_grid!(grid, (0, 2))
+    end
 
     ###############
     # Intial Data #
