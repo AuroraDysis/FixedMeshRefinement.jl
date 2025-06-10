@@ -111,7 +111,6 @@ mutable struct Level{NumState,NumDiagnostic}
             [OffsetArray(state[i], offset_indices, :) for i in 1:time_levels],
             OffsetArray(rhs, offset_indices, :),
             OffsetArray(tmp, offset_indices, :),
-            k,
             [OffsetArray(k[i], offset_indices, :) for i in 1:4],
             Yn_buffer,
             OffsetArray(diag_state, offset_indices, :),
