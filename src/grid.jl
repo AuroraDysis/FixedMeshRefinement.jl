@@ -42,6 +42,7 @@ A struct representing a single refinement level in the mesh.
 # Fields
 - `num_interior_points::Int`: Number of interior grid points.
 - `num_ghost_points::Int`: Number of ghost points on each side.
+- `num_buffer_points::Int`: Number of buffer points on each side for inter-level communication.
 - `num_transition_points::NTuple{2,Int}`: Number of points in the transition zone for mesh refinement.
 - `num_additional_points::NTuple{2,Int}`: Number of additional points on each side (ghost or buffer).
 - `time_interpolation_order::Int`: Order of time interpolation.
@@ -54,10 +55,12 @@ A struct representing a single refinement level in the mesh.
 - `t::Float64`: Current time of this level.
 - `is_base_level::Bool`: True if this is the coarsest level.
 - `parent_indices::UnitRange{Int}`: Range of indices in the parent level that this level covers.
+- `offset_indices::UnitRange{Int}`: Range of indices for `OffsetArray`s of this level.
 """
 mutable struct Level{NumState,NumDiagnostic}
     num_interior_points::Int  # num of interior grid points
     const num_ghost_points::Int  # num of ghost points on each side
+    const num_buffer_points::Int # num of buffer points on each side
     const num_transition_points::NTuple{2,Int}  # num of transition zone points
     const num_additional_points::NTuple{2,Int} # num of additional points on each side
     const time_interpolation_order::Int  # interpolation order in time
@@ -132,6 +135,7 @@ mutable struct Level{NumState,NumDiagnostic}
         return new{NumState,NumDiagnostic}(
             num_interior_points,
             num_ghost_points,
+            num_buffer_points,
             (num_left_transition_points, num_right_transition_points),
             (num_left_additional_points, num_right_additional_points),
             time_interpolation_order,
@@ -200,31 +204,65 @@ function level_total_points(level::Level)
     return num_interior_points + num_additional_points[1] + num_additional_points[2]
 end
 
+"""
+    level_x(level::Level)
+
+Return the grid point coordinates of the `level` as an `OffsetArray`.
+"""
 function level_x(level::Level)
     (; _x, offset_indices) = level
     return OffsetArray(_x, offset_indices)
 end
 
-function level_state(level::Level, i::Int=0)
+"""
+    level_state(level::Level, i::Int=0)
+
+Return the state variables of the `level` as an `OffsetArray`. The optional
+argument `i` specifies the time level, where `i=0` corresponds to the current
+time level `n`, `i=-1` to `n-1`, etc.
+"""
+function level_state(level::Level, i::Int = 0)
     (; _state, offset_indices) = level
-    return OffsetArray(_state[end + i], offset_indices, :)
+    return OffsetArray(_state[end+i], offset_indices, :)
 end
 
+"""
+    level_rhs(level::Level)
+
+Return the right-hand side of the state variables of the `level` as an `OffsetArray`.
+"""
 function level_rhs(level::Level)
     (; _rhs, offset_indices) = level
     return OffsetArray(_rhs, offset_indices, :)
 end
 
+"""
+    level_tmp(level::Level)
+
+Return a temporary array with the same size as the state variables of the `level`
+as an `OffsetArray`.
+"""
 function level_tmp(level::Level)
     (; _tmp, offset_indices) = level
     return OffsetArray(_tmp, offset_indices, :)
 end
 
+"""
+    level_k(level::Level, i::Int)
+
+Return the `i`-th intermediate state `k_i` for the Runge-Kutta time stepping
+scheme as an `OffsetArray`.
+"""
 function level_k(level::Level, i::Int)
     (; _k, offset_indices) = level
     return OffsetArray(_k[i], offset_indices, :)
 end
 
+"""
+    level_diag_state(level::Level)
+
+Return the diagnostic state variables of the `level` as an `OffsetArray`.
+"""
 function level_diag_state(level::Level)
     (; _diag_state, offset_indices) = level
     return OffsetArray(_diag_state, offset_indices, :)
@@ -287,6 +325,7 @@ A struct representing the entire FMR grid, which consists of multiple `Level`s.
 - `base_dt::Float64`: The time step of the coarsest level.
 - `t::Float64`: The current time of the simulation.
 - `subcycling::Bool`: A boolean indicating whether subcycling in time is enabled.
+
 """
 mutable struct Grid{NumState,NumDiagnostic}
     num_levels::Int
@@ -295,6 +334,31 @@ mutable struct Grid{NumState,NumDiagnostic}
     t::Float64
     subcycling::Bool  # turn on subcycling or not
 
+    """
+        Grid{NumState,NumDiagnostic}(
+            base_level_num_points,
+            domain_boxes,
+            num_ghost_points,
+            num_buffer_points;
+            kwargs...
+        )
+
+    Construct a `Grid`.
+
+    # Arguments
+    - `base_level_num_points::Int`: Number of interior grid points at the base level.
+    - `domain_boxes::Vector{Tuple{Float64,Float64}}`: A vector of domain boxes for each level. `domain_boxes[1]` is the physical domain.
+    - `num_ghost_points::Int`: Number of ghost points on each side.
+    - `num_buffer_points::Int`: Number of buffer points for inter-level communication.
+
+    # Keyword Arguments
+    - `num_transition_points::Int=3`: Number of points in the transition zone for mesh refinement.
+    - `time_interpolation_order::Int=2`: Order of time interpolation.
+    - `spatial_interpolation_order::Int=5`: Order of spatial interpolation.
+    - `cfl::Float64=0.25`: CFL number for time step calculation.
+    - `initial_time::Float64=0.0`: Initial time of the simulation.
+    - `subcycling::Bool=true`: Enable subcycling in time.
+    """
     function Grid{NumState,NumDiagnostic}(
         base_level_num_points,  # num of interior grid points at base level
         domain_boxes::Vector{Tuple{Float64,Float64}},
