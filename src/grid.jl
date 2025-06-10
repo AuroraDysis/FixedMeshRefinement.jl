@@ -8,9 +8,9 @@ export Level,
     get_boundary_indices,
     get_interior_indices,
     get_rhs_evaluation_indices,
-    level_total_points,
+    get_total_grid_points,
     cycle_state!,
-    fidx2cidx
+    fine_to_coarse_index
 
 # Find the index of the nearest value in a sorted array
 """
@@ -193,11 +193,11 @@ function get_boundary_indices(level::Level)
 end
 
 """
-    level_total_points(level::Level) -> Int
+    get_total_grid_points(level::Level) -> Int
 
 Return the total number of grid points at this level.
 """
-function level_total_points(level::Level)
+function get_total_grid_points(level::Level)
     (; num_interior_points, num_boundary_points) = level
     return num_interior_points + num_boundary_points[1] + num_boundary_points[2]
 end
@@ -272,17 +272,17 @@ function cycle_state!(level::Level)
 end
 
 """
-    fidx2cidx(fine_level::Level, fidx::Int) -> Int
+    fine_to_coarse_index(fine_level::Level, fidx::Int) -> Int
 
 Convert a fine grid index `fidx` to the corresponding coarse grid index.
 This function is not defined for the base level. An error is thrown if the fine
 grid point does not align with any coarse grid point.
 """
-function fidx2cidx(fine_level::Level, fidx::Int)
+function fine_to_coarse_index(fine_level::Level, fidx::Int)
     (; is_base_level, parent_indices) = fine_level
 
     if is_base_level
-        error("fidx2cidx is not defined for base level")
+        error("fine_to_coarse_index is not defined for base level")
     end
 
     parent_idx_left = parent_indices[1]

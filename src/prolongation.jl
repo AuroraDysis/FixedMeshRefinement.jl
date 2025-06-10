@@ -258,7 +258,7 @@ function apply_transition_zone!(
 
             w = transition_profile(a, b, fine_level.x[fidx])
             if is_aligned
-                cidx = fidx2cidx(fine_level, fidx)
+                cidx = fine_to_coarse_index(fine_level, fidx)
                 kcs = [view(kc[m], cidx, :) for m in 1:4]
                 yn = @view(uc_p[cidx, :])
                 if interp_in_time
@@ -267,7 +267,7 @@ function apply_transition_zone!(
                     aligned_buffer .= yn
                 end
             else
-                cidx = fidx2cidx(fine_level, fidx - 1)
+                cidx = fine_to_coarse_index(fine_level, fidx - 1)
                 for ic in 1:num_spatial_interpolation_points
                     ic_grid = cidx + ic - soffset
                     kcs = [view(kc[m], ic_grid, :) for m in 1:4]
@@ -357,13 +357,13 @@ function prolongate_mongwane!(
             is_aligned = mod(i + 1, 2) != 0
 
             if is_aligned
-                cidx = fidx2cidx(fine_level, fidx)
+                cidx = fine_to_coarse_index(fine_level, fidx)
                 buffer = [view(Yn_buffer[rk_stage], i, :, dir) for rk_stage in 1:4]
                 yn = @view(uc_p[cidx, :])
                 kcs = [view(kc[m], cidx, :) for m in 1:4]
                 calc_Yn_from_kcs!(buffer, yn, kcs, dtc, interp_in_time, dytmp)
             else
-                cidx = fidx2cidx(fine_level, fidx - 1)
+                cidx = fine_to_coarse_index(fine_level, fidx - 1)
 
                 for ic in 1:num_spatial_interpolation_points
                     ic_grid = cidx + ic - soffset
@@ -449,7 +449,7 @@ function prolongate!(
 
             if interp_in_time
                 if is_aligned
-                    cidx = fidx2cidx(fine_level, fidx)
+                    cidx = fine_to_coarse_index(fine_level, fidx)
                     time_data = [
                         view(get_state(coarse_level, m), cidx, :) for
                         m in (-time_interpolation_order):0
@@ -459,7 +459,7 @@ function prolongate!(
                         @view(uf[fidx, :]), time_data, time_interpolation_order
                     )
                 else
-                    cidx = fidx2cidx(fine_level, fidx - 1)
+                    cidx = fine_to_coarse_index(fine_level, fidx - 1)
                     for ic in 1:num_spatial_interpolation_points
                         ic_grid = cidx + ic - soffset
                         time_data = [
@@ -481,10 +481,10 @@ function prolongate!(
                 end
             else
                 if is_aligned
-                    cidx = fidx2cidx(fine_level, fidx)
+                    cidx = fine_to_coarse_index(fine_level, fidx)
                     uf[fidx, :] .= @view(uc_p[cidx, :])
                 else
-                    cidx = fidx2cidx(fine_level, fidx - 1)
+                    cidx = fine_to_coarse_index(fine_level, fidx - 1)
                     # spatial interpolation
                     prolongation_spatial_interpolate!(
                         @view(uf[fidx, :]),
