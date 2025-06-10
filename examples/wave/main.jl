@@ -1,4 +1,4 @@
-include("../src/FixedMeshRefinement.jl")
+include("../../src/FixedMeshRefinement.jl")
 using .FixedMeshRefinement
 
 include("boundary.jl")
