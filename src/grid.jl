@@ -32,21 +32,16 @@ mutable struct Level{NumState,NumDiagnostic}
 
     # data
     x::OffsetVector{Float64,LinRange{Float64,Int64}}
-    const _state::Vector{Matrix{Float64}}  # state vectors at different time levels
-    state::Vector{OffsetMatrix{Float64,Matrix{Float64}}}
-    const _rhs::Matrix{Float64}  # rhs of state vectors
-    rhs::OffsetMatrix{Float64,Matrix{Float64}}
-    const _tmp::Matrix{Float64}
+    state::Vector{OffsetMatrix{Float64,Matrix{Float64}}} # state vectors at different time levels
+    rhs::OffsetMatrix{Float64,Matrix{Float64}} # rhs of state vectors
     tmp::OffsetMatrix{Float64,Matrix{Float64}}
 
     # intermediate state vectors for new subcycling
-    const _k::Vector{Matrix{Float64}}
     k::Vector{OffsetMatrix{Float64,Matrix{Float64}}}
     Yn_buffer::Vector{Array{Float64,3}}
 
     # diagnostic variables
-    const _diag_state::Matrix{Float64}  # state vectors for diagnostic variables
-    diag_state::OffsetMatrix{Float64,Matrix{Float64}}
+    diag_state::OffsetMatrix{Float64,Matrix{Float64}} # state vectors for diagnostic variables
 
     function Level{NumState,NumDiagnostic}(
         num_interior_points,
@@ -113,16 +108,12 @@ mutable struct Level{NumState,NumDiagnostic}
             additional_points_indices,
             # data
             OffsetArray(x, offset_indices),
-            state,
             [OffsetArray(state[i], offset_indices, :) for i in 1:time_levels],
-            rhs,
             OffsetArray(rhs, offset_indices, :),
-            tmp,
             OffsetArray(tmp, offset_indices, :),
             k,
             [OffsetArray(k[i], offset_indices, :) for i in 1:4],
             Yn_buffer,
-            diag_state,
             OffsetArray(diag_state, offset_indices, :),
         )
     end
