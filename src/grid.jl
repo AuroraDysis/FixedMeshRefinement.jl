@@ -1,4 +1,4 @@
-export Level, Grid, move_level_boundary!, move_grid_boundary!
+export Level, Grid
 
 # Find the index of the nearest value in a sorted array
 """
@@ -391,48 +391,4 @@ function Base.show(
         println(io, "  dt          = ", grid.levels[i].dt)
         println(io, "  t           = ", grid.levels[i].t)
     end
-end
-
-"""
-    move_level_boundary!(level::Level, num_shift_points::NTuple{2,Float64})
-
-Move the boundary of a `Level` by a given number of points.
-"""
-function move_level_boundary!(level::Level, num_shift_points::NTuple{2,Float64})
-    # TODO: implement
-end
-"""
-    move_physical_boundary!(grid::Grid, num_shift_points::NTuple{2,Float64})
-
-Move the physical boundary of the grid by a given number of points.
-"""
-function move_grid_boundary!(grid::Grid, num_shift_points::NTuple{2,Float64})
-    (; num_levels, levels) = grid
-
-    # make sure all levels are at same time
-    t = levels[1].t
-    for l in 2:num_levels
-        isapprox_tol(levels[l].t, t) ||
-            error("Level $(l) is not at same time, t = $(t), levels[l].t = $(levels[l].t)")
-    end
-
-    for l in 1:num_levels
-        level = levels[l]
-
-        left_shift_points = if level.is_physical_boundary[1]
-            num_shift_points[1] * 2^(l - 1)
-        else
-            0
-        end
-
-        right_shift_points = if level.is_physical_boundary[2]
-            num_shift_points[2] * 2^(l - 1)
-        else
-            0
-        end
-
-        move_level_boundary!(level, (left_shift_points, right_shift_points))
-    end
-
-    # TODO:check if levels are properly embedded in parent levels
 end

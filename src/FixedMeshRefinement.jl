@@ -11,5 +11,6 @@ include("prolongation.jl")
 include("restriction.jl")
 include("rk.jl")
 include("step.jl")
+include("excision.jl")
 
 end
