@@ -11,8 +11,10 @@ function wave_rhs!(level, rhs, u, p, t)
     psi_rhs = @view(rhs[:, 1])
     Pi_rhs = @view(rhs[:, 2])
 
-    (; dx, rhs_indices) = level
+    (; dx) = level
     (; dissipation) = p
+
+    rhs_indices = level_rhs_indices(level)
 
     @inbounds for i in rhs_indices
         # 4th order finite difference
@@ -60,7 +62,7 @@ end
 
 function wave_energy(grid)
     base_level = grid.levels[1]
-    (; num_interior_points, dx, state, diag_state) = base_level
+    (; dx, state, diag_state) = base_level
 
     u = state[end]
     psi = @view(u[:, 1])
@@ -68,14 +70,16 @@ function wave_energy(grid)
 
     rho = @view(diag_state[:, 1])
 
-    for i in 1:num_interior_points
+    interior_indices = level_interior_indices(base_level)
+
+    for i in interior_indices
         # 4th order finite difference
         dpsi = (psi[i - 2] - 8 * psi[i - 1] + 8 * psi[i + 1] - psi[i + 2]) / (12 * dx)
         rho[i] = (0.5 * Pi[i] * Pi[i] + 0.5 * dpsi * dpsi)
     end
 
     # integrate over the domain
-    E = integrate(@view(rho[1:num_interior_points]), dx)
+    E = integrate(@view(rho[interior_indices]), dx)
 
     return E
 end

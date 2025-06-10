@@ -1,11 +1,11 @@
 export excise_level!, excise_grid!
 
 """
-    excise_level!(level::Level, num_excise_points::NTuple{2,Float64})
+    excise_level!(level::Level, num_excise_points::NTuple{2,Int})
 
 Excise the boundary of a `Level` by a given number of points, as a prerequisite, the level must align with the physical boundary.
 """
-function excise_level!(level::Level, num_excise_points::NTuple{2,Float64})
+function excise_level!(level::Level, num_excise_points::NTuple{2,Int})
     (; is_physical_boundary) = level
 
     if (num_excise_points[1] > 0 && !is_physical_boundary[1]) ||
@@ -62,8 +62,6 @@ function excise_level!(level::Level, num_excise_points::NTuple{2,Float64})
     x_min = new_domain_box[1] - num_additional_points[1] * dx
     x_max = new_domain_box[2] + num_additional_points[2] * dx
     new_offset_indices = offset_indices .- num_excise_points[1]
-    new_rhs_indices =
-        (-num_additional_points[1] + 1 + num_ghost_points):(new_num_interior_points + num_additional_points[2] - num_ghost_points)
     new_x = OffsetVector(LinRange(x_min, x_max, new_num_total_points), new_offset_indices)
     new_state = [OffsetArray(s, new_offset_indices, :) for s in state]
     new_rhs = OffsetArray(rhs, new_offset_indices, :)
@@ -77,7 +75,6 @@ function excise_level!(level::Level, num_excise_points::NTuple{2,Float64})
     level.physical_domain_box = new_physical_domain_box
     level.parent_indices = new_parent_indices
     level.additional_points_indices = new_additional_points_indices
-    level.rhs_indices = new_rhs_indices
     level.x = new_x
     level.state = new_state
     level.rhs = new_rhs
@@ -89,11 +86,11 @@ function excise_level!(level::Level, num_excise_points::NTuple{2,Float64})
 end
 
 """
-    excise_grid!(grid::Grid, num_excise_points::NTuple{2,Float64})
+    excise_grid!(grid::Grid, num_excise_points::NTuple{2,Int})
 
 Excise the grid by a given number of points; as a prerequisite, all levels must align with the physical boundary.
 """
-function excise_grid!(grid::Grid, num_excise_points::NTuple{2,Float64})
+function excise_grid!(grid::Grid, num_excise_points::NTuple{2,Int})
     num_excise_points[1] >= 0 && num_excise_points[2] >= 0 ||
         error("num_excise_points must be non-negative")
 

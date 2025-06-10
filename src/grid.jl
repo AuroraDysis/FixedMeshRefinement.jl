@@ -69,7 +69,6 @@ mutable struct Level{NumState,NumDiagnostic}
     parent_indices::UnitRange{Int}
     additional_points_indices::NTuple{2,StepRange{Int,Int}}
     offset_indices::UnitRange{Int}
-    rhs_indices::UnitRange{Int}
 
     # data
     x::OffsetVector{Float64,LinRange{Float64,Int64}}
@@ -131,8 +130,6 @@ mutable struct Level{NumState,NumDiagnostic}
             (-num_left_additional_points + 1):(num_interior_points + num_right_additional_points)
         num_left_transition_points = is_physical_boundary[1] ? num_transition_points : 0
         num_right_transition_points = is_physical_boundary[2] ? num_transition_points : 0
-        rhs_indices =
-            (-num_left_additional_points + 1 + num_ghost_points):(num_interior_points + num_right_additional_points - num_ghost_points)
 
         return new{NumState,NumDiagnostic}(
             num_interior_points,
@@ -163,6 +160,26 @@ mutable struct Level{NumState,NumDiagnostic}
             OffsetArray(diag_state, offset_indices, :),
         )
     end
+end
+
+"""
+    level_rhs_indices(level::Level) -> UnitRange{Int}
+
+Return the indices that requires evaluation of the right-hand side.
+"""
+function level_rhs_indices(level::Level)
+    (; num_additional_points, num_ghost_points) = level
+    return (-num_additional_points[1] + 1 + num_ghost_points):(num_interior_points + num_additional_points[2] - num_ghost_points)
+end
+
+"""
+    level_interior_indices(level::Level) -> UnitRange{Int}
+
+Return the indices of the interior grid points.
+"""
+function level_interior_indices(level::Level)
+    (; num_interior_points) = level
+    return 1:num_interior_points
 end
 
 """
