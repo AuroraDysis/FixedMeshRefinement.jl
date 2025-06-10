@@ -31,17 +31,22 @@ mutable struct Level{NumState,NumDiagnostic}
     additional_points_indices::NTuple{2,StepRange{Int,Int}}
 
     # data
-    x::LinRange{Float64,Int}  # x
-    state::Vector{Matrix{Float64}}  # state vectors at different time levels
-    rhs::Matrix{Float64}  # rhs of state vectors
-    tmp::Matrix{Float64}  # intermediate state vectors
+    x::LinRange{Float64,Int}
+    _state::Vector{Matrix{Float64}}  # state vectors at different time levels
+    state::Vector{OffsetMatrix{Float64,Matrix{Float64}}}
+    _rhs::Matrix{Float64}  # rhs of state vectors
+    rhs::OffsetMatrix{Float64,Matrix{Float64}}
+    _tmp::Matrix{Float64}
+    tmp::OffsetMatrix{Float64,Matrix{Float64}}
 
     # intermediate state vectors for new subcycling
-    k::Vector{Matrix{Float64}}
+    _k::Vector{Matrix{Float64}}
+    k::Vector{OffsetMatrix{Float64,Matrix{Float64}}}
     Yn_buffer::Vector{Array{Float64,3}}
 
     # diagnostic variables
-    diag_state::Matrix{Float64}  # state vectors for diagnostic variables
+    _diag_state::Matrix{Float64}  # state vectors for diagnostic variables
+    diag_state::OffsetMatrix{Float64,Matrix{Float64}}
 
     function Level{NumState,NumDiagnostic}(
         num_interior_points,
@@ -86,6 +91,8 @@ mutable struct Level{NumState,NumDiagnostic}
             num_left_additional_points:-1:1,
             (num_total_points - num_right_additional_points + 1):num_total_points,
         )
+        offset_indices =
+            (-num_left_additional_points):(num_interior_points + num_right_additional_points)
 
         return new{NumState,NumDiagnostic}(
             num_interior_points,
@@ -107,9 +114,13 @@ mutable struct Level{NumState,NumDiagnostic}
             # data
             x,
             state,
+            [OffsetArray(state[i], offset_indices, :) for i in 1:time_levels],
             rhs,
+            OffsetArray(rhs, offset_indices, :),
             tmp,
+            OffsetArray(tmp, offset_indices, :),
             k,
+            [OffsetArray(k[i], offset_indices, :) for i in 1:4],
             Yn_buffer,
             diag_state,
         )
@@ -319,5 +330,4 @@ function Base.show(
     end
 end
 
-function shift_physical_boundary!(grid::Grid, num_shift_points::NTuple{2,Int})
-end
+function shift_physical_boundary!(grid::Grid, num_shift_points::NTuple{2,Int}) end
