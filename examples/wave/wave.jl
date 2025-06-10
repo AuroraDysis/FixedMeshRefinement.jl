@@ -60,22 +60,20 @@ end
 
 function wave_energy(grid)
     base_level = grid.levels[1]
-    (; num_total_points, num_ghost_points, dx, state, diag_state) = base_level
+    (; num_interior_points, dx, state, diag_state) = base_level
     u = state[end]
     rho = @view(diag_state[:, 1])
     psi = @view(u[:, 1])
     Pi = @view(u[:, 2])
 
-    for i in (1 + num_ghost_points):(num_total_points - num_ghost_points)
+    for i in 1:num_interior_points
         # 4th order finite difference
         dpsi = (psi[i - 2] - 8 * psi[i - 1] + 8 * psi[i + 1] - psi[i + 2]) / (12 * dx)
         rho[i] = (0.5 * Pi[i] * Pi[i] + 0.5 * dpsi * dpsi)
     end
 
     # integrate over the domain
-    E = integrate(
-        @view(rho[(1 + num_ghost_points):(num_total_points - num_ghost_points)]), dx
-    )
+    E = integrate(@view(rho[1:num_interior_points]), dx)
 
     return E
 end

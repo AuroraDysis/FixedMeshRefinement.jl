@@ -31,7 +31,7 @@ mutable struct Level{NumState,NumDiagnostic}
     additional_points_indices::NTuple{2,StepRange{Int,Int}}
 
     # data
-    x::LinRange{Float64,Int}
+    x::OffsetVector{Float64,LinRange{Float64,Int64}}
     const _state::Vector{Matrix{Float64}}  # state vectors at different time levels
     state::Vector{OffsetMatrix{Float64,Matrix{Float64}}}
     const _rhs::Matrix{Float64}  # rhs of state vectors
@@ -112,7 +112,7 @@ mutable struct Level{NumState,NumDiagnostic}
             parent_indices,
             additional_points_indices,
             # data
-            x,
+            OffsetArray(x, offset_indices),
             state,
             [OffsetArray(state[i], offset_indices, :) for i in 1:time_levels],
             rhs,
