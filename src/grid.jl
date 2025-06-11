@@ -116,7 +116,6 @@ mutable struct Level{NumState,NumDiagnostic}
         x = LinRange(x_min, x_max, num_total_points)
         time_levels = max(time_interpolation_order + 1, 2)
         state = [fill(NaN, num_total_points, NumState) for _ in 1:time_levels]
-        rhs = fill(NaN, num_total_points, NumState)
         tmp = fill(NaN, num_total_points, NumState)
         k = Vector{Matrix{Float64}}(undef, 4)
         Yn_buffer = Vector{Array{Float64,3}}(undef, 4)
@@ -150,7 +149,6 @@ mutable struct Level{NumState,NumDiagnostic}
             # data
             x,
             state,
-            rhs,
             tmp,
             k,
             Yn_buffer,
