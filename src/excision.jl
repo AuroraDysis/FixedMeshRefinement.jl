@@ -1,11 +1,11 @@
-export excise_level!, excise_grid!
+export shift_level_boundaries!, shift_grid_boundaries!
 
 """
-    excise_level!(level::Level, num_excise_points::NTuple{2,Int})
+    shift_level_boundaries!(level::Level, num_excise_points::NTuple{2,Int})
 
 Excise the boundary of a `Level` by a given number of points, as a prerequisite, the level must align with the physical boundary.
 """
-function excise_level!(level::Level, num_excise_points::NTuple{2,Int})
+function shift_level_boundaries!(level::Level, num_excise_points::NTuple{2,Int})
     (; is_physical_boundary) = level
 
     if (num_excise_points[1] > 0 && !is_physical_boundary[1]) ||
@@ -57,11 +57,11 @@ function excise_level!(level::Level, num_excise_points::NTuple{2,Int})
 end
 
 """
-    excise_grid!(grid::Grid, num_excise_points::NTuple{2,Int})
+    shift_grid_boundaries!(grid::Grid, num_excise_points::NTuple{2,Int})
 
 Excise the grid by a given number of points; as a prerequisite, all levels must align with the physical boundary.
 """
-function excise_grid!(grid::Grid, num_excise_points::NTuple{2,Int})
+function shift_grid_boundaries!(grid::Grid, num_excise_points::NTuple{2,Int})
     num_excise_points[1] >= 0 && num_excise_points[2] >= 0 ||
         error("num_excise_points must be non-negative")
 
@@ -79,6 +79,6 @@ function excise_grid!(grid::Grid, num_excise_points::NTuple{2,Int})
         level = levels[l]
         left_excise_points = num_excise_points[1] * 2^(l - 1)
         right_excise_points = num_excise_points[2] * 2^(l - 1)
-        excise_level!(level, (left_excise_points, right_excise_points))
+        shift_level_boundaries!(level, (left_excise_points, right_excise_points))
     end
 end
