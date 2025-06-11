@@ -9,11 +9,10 @@ using FastBroadcast
 
 include("boundary.jl")
 include("initial_data.jl")
-include("output.jl")
+include("output_hdf5.jl")
 include("output_csv.jl")
+include("output_checkpoint.jl")
 include("wave.jl")
-
-using .CsvOutput
 
 const NumState = 2
 const NumDiagnostic = 1

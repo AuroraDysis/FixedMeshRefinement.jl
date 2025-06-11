@@ -1,5 +1,3 @@
-module CsvOutput
-
 using StaticArrays
 
 export OutputCSV, write_row
@@ -24,7 +22,9 @@ mutable struct OutputCSV{NumColumns}
         return new{0}(filepath, io, nothing)
     end
 
-    function OutputCSV(filepath::String, header::SVector{NumColumns,String}) where {NumColumns}
+    function OutputCSV(
+        filepath::String, header::SVector{NumColumns,String}
+    ) where {NumColumns}
         io = open(filepath, "a")
         println(io, join(header, ","))
         return new{NumColumns}(filepath, io, header)
@@ -54,5 +54,3 @@ function Base.close(out::OutputCSV)
         close(out.io)
     end
 end
-
-end # module CsvOutput
