@@ -151,7 +151,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
         step!(grid, wave_rhs!, p; mongwane=mongwane, apply_trans_zone=apply_trans_zone)
 
         @printf(
-            "Simulation time: %.4f, iteration %d. E = %.4f\n",
+            "t = %.4f, iteration %d. E = %.17f\n",
             grid.t,
             step,
             wave_energy(grid)
