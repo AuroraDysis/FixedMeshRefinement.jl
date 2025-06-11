@@ -20,8 +20,6 @@ mutable struct OutputHDF5
     Create an `OutputHDF5` object. This will create a new HDF5 file (or
     truncate an existing one) and set up the necessary groups and extendible
     datasets based on the initial grid structure.
-    The datasets for fields (`psi`, `Pi`) will have dimensions `(time, x)`
-    which is convenient for reading with Python's h5py library.
     """
     function OutputHDF5(
         filepath::String, grid::Grid{NumState,NumDiagnostic}
