@@ -98,11 +98,11 @@ function main(params, out_dir; grid=nothing, start_step=1)
         )
 
         # just for testing, if all levels are aligned with the physical boundary, then we excise some grid points
-        if all([level.is_physical_boundary[1] for level in grid.levels])
-            shift_grid_boundaries!(grid, (-2, 0))
-        elseif all([level.is_physical_boundary[2] for level in grid.levels])
-            shift_grid_boundaries!(grid, (0, -2))
-        end
+        # if all([level.is_physical_boundary[1] for level in grid.levels])
+        #     shift_grid_boundaries!(grid, (-2, 0))
+        # elseif all([level.is_physical_boundary[2] for level in grid.levels])
+        #     shift_grid_boundaries!(grid, (0, -2))
+        # end
 
         ###############
         # Intial Data #
@@ -130,7 +130,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
     out_h5 = OutputHDF5(joinpath(out_dir, "data.h5"), grid)
 
     @printf(
-        "Simulation time: %.4f, iteration %d. E = %.4f\n",
+        "t = %.4f, iteration %d. E = %.17f\n",
         grid.t,
         start_step - 1,
         wave_energy(grid)
