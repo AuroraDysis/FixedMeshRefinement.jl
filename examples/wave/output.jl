@@ -8,8 +8,8 @@ function write_output(dir_path, grid, it)
         h5open(joinpath(dir_path, "data.it$(lpad(it, 6, '0')).h5"), "w") do file
             for l in 1:num_levels
                 level = levels[l]
-                u = get_state(level)
                 x = get_x(level)
+                u = get_state(level)
                 num_interior_indices = get_interior_indices(level)
 
                 g = create_group(file, "level$(lpad(l, 2, '0'))")
