@@ -494,12 +494,12 @@ function Base.show(
 end
 
 """
-    Base.show(io::IO, ::MIME"text/plain", grid::Grid)
+    Base.show(io::IO, grid::Grid)
 
 Display a detailed summary of the `Grid` structure.
 """
 function Base.show(
-    io::IO, ::MIME"text/plain", grid::Grid{NumState,NumDiagnostic}
+    io::IO, grid::Grid{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
     println(
         io, "Grid{$NumState, $NumDiagnostic} with $(grid.num_levels) levels at t=$(grid.t):"
