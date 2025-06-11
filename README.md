@@ -11,3 +11,7 @@
 # Acknowledgments
 
 This package was originally adapted from [lwJi/Infino.jl](https://github.com/lwJi/Infino.jl), created by [lwJi](https://github.com/lwJi). Another useful resource is [JLRipley314/one-dim-amr: A simple one-dimensional AMR code](https://github.com/JLRipley314/one-dim-amr).
+
+# References
+
+- [[2503.09629] GPU-accelerated Subcycling Time Integration with the Einstein Toolkit](https://arxiv.org/abs/2503.09629)
