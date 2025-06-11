@@ -246,7 +246,11 @@ function apply_transition_zone!(
         end
 
         a = domain_box[dir]
-        b = domain_box[dir] + (num_transition_points[dir] - 1) * dxf
+        b = if dir == 1
+            domain_box[dir] + (num_transition_points[dir] - 1) * dxf
+        else
+            domain_box[dir] - (num_transition_points[dir] - 1) * dxf
+        end
 
         for i in 1:num_transition_points[dir]
             fidx = if dir == 1
@@ -316,8 +320,7 @@ function prolongate_mongwane!(
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
-    (; num_boundary_points, spatial_interpolation_order, is_physical_boundary) =
-        fine_level
+    (; num_boundary_points, spatial_interpolation_order, is_physical_boundary) = fine_level
 
     num_spatial_interpolation_points = spatial_interpolation_order + 1
     soffset = if mod(num_spatial_interpolation_points, 2) == 0
