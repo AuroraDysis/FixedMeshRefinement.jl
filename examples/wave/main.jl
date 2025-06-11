@@ -88,9 +88,9 @@ function main(params, out_dir)
 
     # just for testing, if all levels are aligned with the physical boundary, then we excise some grid points
     if all([level.is_physical_boundary[1] for level in grid.levels])
-        shift_grid_boundaries!(grid, (2, 0))
+        shift_grid_boundaries!(grid, (-2, 0))
     elseif all([level.is_physical_boundary[2] for level in grid.levels])
-        shift_grid_boundaries!(grid, (0, 2))
+        shift_grid_boundaries!(grid, (0, -2))
     end
 
     ###############

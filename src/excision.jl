@@ -35,22 +35,22 @@ function shift_level_boundaries!(level::Level, num_shift_points::NTuple{2,Int})
     end
 
     new_num_interior_points =
-        num_interior_points - num_shift_points[1] - num_shift_points[2]
+        num_interior_points + num_shift_points[1] + num_shift_points[2]
     new_domain_box = (
-        domain_box[1] + num_shift_points[1] * dx, domain_box[2] - num_shift_points[2] * dx
+        domain_box[1] - num_shift_points[1] * dx, domain_box[2] + num_shift_points[2] * dx
     )
     new_physical_domain_box = (
-        physical_domain_box[1] + num_shift_points[1] * dx,
-        physical_domain_box[2] - num_shift_points[2] * dx,
+        physical_domain_box[1] - num_shift_points[1] * dx,
+        physical_domain_box[2] + num_shift_points[2] * dx,
     )
     new_parent_indices = if is_base_level
         0:0
     else
-        left_parent_indices = first(parent_indices) + div(num_shift_points[1], 2)
-        right_parent_indices = last(parent_indices) - div(num_shift_points[2], 2)
+        left_parent_indices = first(parent_indices) - div(num_shift_points[1], 2)
+        right_parent_indices = last(parent_indices) + div(num_shift_points[2], 2)
         left_parent_indices:right_parent_indices
     end
-    new_offset_indices = offset_indices .- num_shift_points[1]
+    new_offset_indices = offset_indices .+ num_shift_points[1]
 
     level.num_interior_points = new_num_interior_points
     level.domain_box = new_domain_box
@@ -65,7 +65,7 @@ end
     shift_grid_boundaries!(grid::Grid, num_shift_points::NTuple{2,Int})
 
 Shift the boundary of the grid by a given number of points; as a prerequisite, all levels must align with the physical boundary.
-If the number of shift points is negative, the grid will be extended, otherwise it will be shrunk.
+If the number of shift points is positive, the grid will be extended, otherwise it will be shrunk.
 The tuple `num_shift_points` is the number of points to shift on the left and right boundaries, respectively.
 """
 function shift_grid_boundaries!(grid::Grid, num_shift_points::NTuple{2,Int})
