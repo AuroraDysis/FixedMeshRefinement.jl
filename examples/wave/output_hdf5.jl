@@ -52,28 +52,29 @@ mutable struct OutputHDF5
 
                     # Create extendible datasets for time-dependent data
                     t_ds_space = HDF5.dataspace((3, 0); max_dims=(3, -1))
-                    field_ds_space = HDF5.dataspace(
+                    t_chunk = (3, 1024)
+                    create_dataset(g, "t", Float64, t_ds_space; chunk=t_chunk)
+
+                    state_ds_space = HDF5.dataspace(
                         (num_points, NumState, 0); max_dims=(num_points, NumState, -1)
                     )
-                    diagnostic_ds_space = HDF5.dataspace(
-                        (num_points, NumDiagnostic, 0);
-                        max_dims=(num_points, NumDiagnostic, -1),
-                    )
+                    state_chunk = (num_points, NumState, 1) # chunked by time slice
+                    create_dataset(g, "state", Float64, state_ds_space; chunk=state_chunk)
 
-                    # Use chunking for performance with extendible datasets
-                    t_chunk = (3, 1024)
-                    field_chunk = (num_points, NumState, 1) # chunked by time slice
-                    diagnostic_chunk = (num_points, NumDiagnostic, 1)
-
-                    create_dataset(g, "t", Float64, t_ds_space; chunk=t_chunk)
-                    create_dataset(g, "state", Float64, field_ds_space; chunk=field_chunk)
-                    create_dataset(
-                        g,
-                        "diagnostic",
-                        Float64,
-                        diagnostic_ds_space;
-                        chunk=diagnostic_chunk,
-                    )
+                    if NumDiagnostic > 0
+                        diagnostic_ds_space = HDF5.dataspace(
+                            (num_points, NumDiagnostic, 0);
+                            max_dims=(num_points, NumDiagnostic, -1),
+                        )
+                        diagnostic_chunk = (num_points, NumDiagnostic, 1)
+                        create_dataset(
+                            g,
+                            "diagnostic",
+                            Float64,
+                            diagnostic_ds_space;
+                            chunk=diagnostic_chunk,
+                        )
+                    end
                 end
             catch e
                 close(file)
