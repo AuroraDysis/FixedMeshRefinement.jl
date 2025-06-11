@@ -66,6 +66,7 @@ end
 
 Shift the boundary of the grid by a given number of points; as a prerequisite, all levels must align with the physical boundary.
 If the number of shift points is negative, the grid will be extended, otherwise it will be shrunk.
+The tuple `num_shift_points` is the number of points to shift on the left and right boundaries, respectively.
 """
 function shift_grid_boundaries!(grid::Grid, num_shift_points::NTuple{2,Int})
     (; num_levels, levels) = grid
