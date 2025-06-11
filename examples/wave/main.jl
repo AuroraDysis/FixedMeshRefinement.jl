@@ -147,6 +147,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
 
     step = start_step
     while (max_step > 0 && step <= max_step) || (stop_time > 0.0 && grid.t < stop_time)
+        apply_reflective_boundary_condition!(grid)
         step!(grid, wave_rhs!, p; mongwane=mongwane, apply_trans_zone=apply_trans_zone)
 
         @printf(

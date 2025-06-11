@@ -105,15 +105,18 @@ function append_data(
         # map indices to the HDF5 dataset
         interior_indices = get_interior_indices(level)
         offset_indices = get_offset_indices(level)
+        left_indices = first(offset_indices):(first(interior_indices) - 1)
+        right_indices = (last(interior_indices) + 1):last(offset_indices)
+        state[left_indices, :] .= NaN
+        state[right_indices, :] .= NaN
+
+        # interior indices for the HDF5 dataset
         nleft = first(interior_indices) - first(offset_indices)
         dset_interior_indices = interior_indices .+ nleft
-        dset_offset_indices = offset_indices .+ nleft
-        dset_left_indices = first(dset_offset_indices):(first(dset_interior_indices) - 1)
-        dset_right_indices = (last(dset_interior_indices) + 1):last(dset_offset_indices)
 
         g = out.file["level$(lpad(l, 2, '0'))"]
 
-        # Append time
+        # Append time and interior indices
         dset_t = g["t"]
         current_len = size(dset_t, 2)
         new_len = current_len + 1
@@ -125,18 +128,12 @@ function append_data(
         # Append state
         dset_state = g["state"]
         HDF5.set_extent_dims(dset_state, (num_points, NumState, new_len))
-        dset_state[dset_left_indices, :, new_len] .= NaN
-        dset_state[dset_interior_indices, :, new_len] .= @view(state[interior_indices, :])
-        dset_state[dset_right_indices, :, new_len] .= NaN
+        dset_state[:, :, new_len] = parent(state)
 
         # Append diagnostic
         dset_diagnostic = g["diagnostic"]
         HDF5.set_extent_dims(dset_diagnostic, (num_points, NumDiagnostic, new_len))
-        dset_diagnostic[dset_left_indices, :, new_len] .= NaN
-        dset_diagnostic[dset_interior_indices, :, new_len] .= @view(
-            diagnostic[interior_indices, :]
-        )
-        dset_diagnostic[dset_right_indices, :, new_len] .= NaN
+        dset_diagnostic[:, :, new_len] = parent(diagnostic)
     end
 end
 
