@@ -494,12 +494,12 @@ function Base.show(
 end
 
 """
-    Base.show(io::IO, grid::Grid)
+    Base.show(io::IO, ::MIME"text/plain", grid::Grid)
 
 Display a detailed summary of the `Grid` structure.
 """
 function Base.show(
-    io::IO, grid::Grid{NumState,NumDiagnostic}
+    io::IO, ::MIME"text/plain", grid::Grid{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
     println(
         io, "Grid{$NumState, $NumDiagnostic} with $(grid.num_levels) levels at t=$(grid.t):"
@@ -531,12 +531,12 @@ function Base.show(io::IO, level::Level)
 end
 
 """
-    Base.show(io::IO, level::Level)
+    Base.show(io::IO, ::MIME"text/plain", level::Level)
 
 Display a detailed summary of the `Level`.
 """
 function Base.show(
-    io::IO, level::Level{NumState,NumDiagnostic}
+    io::IO, ::MIME"text/plain", level::Level{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
     println(io, "Level{$NumState, $NumDiagnostic}:")
     println(io, "  Domain:                ", level.domain_box)
