@@ -84,7 +84,7 @@ mutable struct Level{NumState,NumDiagnostic}
     Yn_buffer::Vector{Array{Float64,3}}
 
     # diagnostic variables
-    const _diag_state::Matrix{Float64} # state vectors for diagnostic variables
+    const diagnostic_state::Matrix{Float64} # state vectors for diagnostic variables
 
     function Level{NumState,NumDiagnostic}(
         num_interior_points,
@@ -250,8 +250,8 @@ end
 Return the diagnostic state variables of the `level` as an `OffsetArray`.
 """
 function get_diagnostic_state(level::Level)
-    (; _diag_state, offset_indices) = level
-    return OffsetArray(_diag_state, offset_indices, :)
+    (; diagnostic_state, offset_indices) = level
+    return OffsetArray(diagnostic_state, offset_indices, :)
 end
 
 """

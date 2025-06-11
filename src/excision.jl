@@ -35,9 +35,6 @@ function fill_extended_grid_extrapolate!(
         return nothing
     end
 
-    # This implementation assumes that `state` is an iterable over the arrays to be filled.
-    # For example, a tuple of arrays: `(u, v, w)`. If `state` is a single array,
-    # it should be wrapped in a tuple, e.g., `(state,)`.
     if direction == :left
         for idx in extended_indices
             input = [@view(state[i, :]) for i in (idx + 1):(idx + order)]
