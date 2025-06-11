@@ -1,11 +1,58 @@
 export shift_level_boundaries!, shift_grid_boundaries!
 
-const DEFAULT_FILL_EXTENDED_GRID_EXTRAPOLATION_ORDER = 1
+const DEFAULT_FILL_EXTENDED_GRID_EXTRAPOLATION_ORDER = 4
+
+function _extrapolate!(out, input, order::Int)
+    length(input) == order || error("Length of input must be equal to order.")
+
+    if order == 1
+        @.. out = input[1]
+    elseif order == 2
+        @.. out = 2 * input[1] - input[2]
+    elseif order == 3
+        @.. out = 3 * input[1] - 3 * input[2] + input[3]
+    elseif order == 4
+        @.. out = 4 * input[1] - 6 * input[2] + 4 * input[3] - input[4]
+    elseif order == 5
+        @.. out = 5 * input[1] - 10 * input[2] + 10 * input[3] - 5 * input[4] + input[5]
+    elseif order == 6
+        @.. out =
+            6 * input[1] - 15 * input[2] + 20 * input[3] - 15 * input[4] + 6 * input[5] -
+            input[6]
+    else
+        error("Extrapolation order $order is not supported.")
+    end
+end
 
 function fill_extended_grid_extrapolate!(
     state, extended_indices, direction::Symbol, order::Int
 )
-    # TODO: implement extrapolation
+    if order < 0
+        error("Extrapolation order must be non-negative.")
+    end
+
+    if isempty(extended_indices)
+        return nothing
+    end
+
+    # This implementation assumes that `state` is an iterable over the arrays to be filled.
+    # For example, a tuple of arrays: `(u, v, w)`. If `state` is a single array,
+    # it should be wrapped in a tuple, e.g., `(state,)`.
+    if direction == :left
+        for idx in extended_indices
+            input = [@view(state[i, :]) for i in (idx + 1):(idx + order)]
+            _extrapolate!(@view(state[idx, :]), input, order)
+        end
+    elseif direction == :right
+        for idx in extended_indices
+            input = [@view(state[i, :]) for i in (idx - 1):-1:(idx - order)]
+            _extrapolate!(@view(state[idx, :]), input, order)
+        end
+    else
+        error("Unsupported direction for extrapolation: $direction")
+    end
+
+    return nothing
 end
 
 """
