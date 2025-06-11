@@ -9,6 +9,7 @@ include("wave.jl")
 
 using Printf
 using TOML
+using JLD2
 
 const NumState = 2
 const NumDiagnostic = 1
@@ -42,87 +43,102 @@ function nan_check(grid::Grid{NumState,NumDiagnostic}) where {NumState,NumDiagno
     return has_nan
 end
 
-function main(params, out_dir)
+function main(params, out_dir; grid = nothing, start_step = 1)
     ########################
     # Read Parameter Files #
     ########################
-    num_interior_points = params["num_interior_points"]
-    num_ghost_points = params["num_ghost_points"]
-    num_buffer_points = get(params, "num_buffer_points", 4 * num_ghost_points)
     stop_time = get(params, "stop_time", -1.0)
     max_step = get(params, "max_step", -1)
     out_every = params["out_every"]
-    params_domain_boxes = params["domain_boxes"]
-    domain_boxes = [NTuple{2,Float64}(box) for box in params_domain_boxes]
     cfl = get(params, "cfl", 0.25)
     dissipation = get(params, "dissipation", 0.0)
     subcycling = get(params, "subcycling", true)
     mongwane = get(params, "mongwane", false)
-    num_transition_points = get(params, "num_transition_points", 3)
-    spatial_interpolation_order = get(params, "spatial_interpolation_order", 5)
     apply_trans_zone = get(params, "apply_trans_zone", true)
-    initial_data = get(params, "initial_data", "gaussian")
+    checkpoint_every = get(params, "checkpoint_every", -1)
+
     println("Parameters:")
-    println("  cfl        = ", cfl)
-    println("  mongwane   = ", mongwane)
-    println("  trans_zone = ", apply_trans_zone)
-    println("  max_step   = ", max_step)
-    println("  stop_time  = ", stop_time)
-    println("  out_every  = ", out_every)
-    println("  out_dir    = ", out_dir)
+    println("  cfl              = ", cfl)
+    println("  mongwane         = ", mongwane)
+    println("  trans_zone       = ", apply_trans_zone)
+    println("  max_step         = ", max_step)
+    println("  stop_time        = ", stop_time)
+    println("  out_every        = ", out_every)
+    println("  checkpoint_every = ", checkpoint_every)
+    println("  out_dir          = ", out_dir)
 
     ########################
     # build grid structure #
     ########################
-    grid = Grid{NumState,NumDiagnostic}(
-        num_interior_points,
-        domain_boxes,
-        num_ghost_points,
-        num_buffer_points;
-        num_transition_points=num_transition_points,
-        spatial_interpolation_order=spatial_interpolation_order,
-        cfl=cfl,
-        subcycling=subcycling,
-    )
     p = (; dissipation)
+    if grid === nothing
+        num_interior_points = params["num_interior_points"]
+        num_ghost_points = params["num_ghost_points"]
+        num_buffer_points = get(params, "num_buffer_points", 4 * num_ghost_points)
+        params_domain_boxes = params["domain_boxes"]
+        domain_boxes = [NTuple{2,Float64}(box) for box in params_domain_boxes]
+        num_transition_points = get(params, "num_transition_points", 3)
+        spatial_interpolation_order = get(params, "spatial_interpolation_order", 5)
+        initial_data = get(params, "initial_data", "gaussian")
 
-    # just for testing, if all levels are aligned with the physical boundary, then we excise some grid points
-    if all([level.is_physical_boundary[1] for level in grid.levels])
-        shift_grid_boundaries!(grid, (-2, 0))
-    elseif all([level.is_physical_boundary[2] for level in grid.levels])
-        shift_grid_boundaries!(grid, (0, -2))
-    end
+        grid = Grid{NumState,NumDiagnostic}(
+            num_interior_points,
+            domain_boxes,
+            num_ghost_points,
+            num_buffer_points;
+            num_transition_points = num_transition_points,
+            spatial_interpolation_order = spatial_interpolation_order,
+            cfl = cfl,
+            subcycling = subcycling,
+        )
 
-    ###############
-    # Intial Data #
-    ###############
-    println("Setting up initial conditions...")
-    println("  initial data type: $initial_data")
-    if initial_data == "gaussian"
-        gaussian!(grid)
-    elseif initial_data == "sinusoidal"
-        sinusoidal!(grid)
-    else
-        error("Initial data type '$initial_data' unsupported yet")
-    end
+        # just for testing, if all levels are aligned with the physical boundary, then we excise some grid points
+        if all([level.is_physical_boundary[1] for level in grid.levels])
+            shift_grid_boundaries!(grid, (-2, 0))
+        elseif all([level.is_physical_boundary[2] for level in grid.levels])
+            shift_grid_boundaries!(grid, (0, -2))
+        end
 
-    apply_reflective_boundary_condition!(grid)
-    if !mongwane
-        march_backwards!(grid, p)
+        ###############
+        # Intial Data #
+        ###############
+        println("Setting up initial conditions...")
+        println("  initial data type: $initial_data")
+        if initial_data == "gaussian"
+            gaussian!(grid)
+        elseif initial_data == "sinusoidal"
+            sinusoidal!(grid)
+        else
+            error("Initial data type '$initial_data' unsupported yet")
+        end
+
         apply_reflective_boundary_condition!(grid)
+        if !mongwane
+            march_backwards!(grid, p)
+            apply_reflective_boundary_condition!(grid)
+        end
+    else
+        println("Restarting from step $(start_step-1)")
     end
 
-    @printf("Simulation time: %.4f, iteration %d. E = %.4f\n", grid.t, 0, wave_energy(grid))
-    write_output(out_dir, grid, 0)
+    @printf(
+        "Simulation time: %.4f, iteration %d. E = %.4f\n",
+        grid.t,
+        start_step - 1,
+        wave_energy(grid)
+    )
+    if start_step == 1
+        write_output(out_dir, grid, 0)
+    end
 
     ##########
     # Evolve #
     ##########
     println("Start evolution...")
 
-    step = 1
+    step = start_step
     while (max_step > 0 && step <= max_step) || (stop_time > 0.0 && grid.t < stop_time)
-        step!(grid, wave_rhs!, p; mongwane=mongwane, apply_trans_zone=apply_trans_zone)
+        step!(grid, wave_rhs!, p; mongwane = mongwane, apply_trans_zone = apply_trans_zone)
 
         @printf(
             "Simulation time: %.4f, iteration %d. E = %.4f\n",
@@ -133,6 +149,10 @@ function main(params, out_dir)
 
         if mod(step, out_every) == 0
             write_output(out_dir, grid, step)
+        end
+
+        if checkpoint_every > 0 && mod(step, checkpoint_every) == 0
+            write_checkpoint(out_dir, grid, step, params)
         end
 
         # nan check
@@ -155,9 +175,10 @@ function main(params, out_dir)
     return nothing
 end
 
-function redirect_to_files(dofunc, outfile, errfile)
-    open(outfile, "w") do out
-        open(errfile, "w") do err
+function redirect_to_files(dofunc, outfile, errfile; append = false)
+    mode = append ? "a" : "w"
+    open(outfile, mode) do out
+        open(errfile, mode) do err
             redirect_stdout(out) do
                 redirect_stderr(err) do
                     dofunc()
@@ -171,37 +192,66 @@ end
 Start Execution
 ===============================================================================#
 if length(ARGS) < 1
-    println("Usage: julia Subcycling.jl parfile.toml")
+    println("Usage: julia main.jl parfile.toml")
+    println("Or:    julia main.jl checkpoint.jld2")
     exit(1)
 end
 
-params_path = ARGS[1]
-params = TOML.parsefile(params_path)
+input_file = ARGS[1]
+if endswith(input_file, ".toml")
+    params_path = input_file
+    params = TOML.parsefile(params_path)
 
-# create output directory
-out_dir = joinpath(
-    dirname(params_path), get(params, "out_dir", splitext(basename(params_path))[1])
-)
-if isdir(out_dir)
-    println("Removing old directory '$out_dir'...")
-    rm(out_dir; recursive=true)
-end
-println("Creating new directory '$out_dir'...")
-mkdir(out_dir)
+    # create output directory
+    out_dir = joinpath(
+        dirname(params_path), get(params, "out_dir", splitext(basename(params_path))[1])
+    )
+    if isdir(out_dir)
+        println("Removing old directory '$out_dir'...")
+        rm(out_dir; recursive = true)
+    end
+    println("Creating new directory '$out_dir'...")
+    mkdir(out_dir)
 
-# copy parfile into out_dir
-cp(params_path, out_dir * "/" * basename(params_path))
+    # copy parfile into out_dir
+    cp(params_path, out_dir * "/" * basename(params_path))
 
-# config
-redirect_std = get(params, "redirect_std", true)
+    # config
+    redirect_std = get(params, "redirect_std", true)
 
-if redirect_std
-    # redirect output and error
-    redirect_to_files(out_dir * "/stdout.txt", out_dir * "/stderr.txt") do
+    if redirect_std
+        # redirect output and error
+        redirect_to_files(out_dir * "/stdout.txt", out_dir * "/stderr.txt") do
+            main(params, out_dir)
+        end
+    else
         main(params, out_dir)
     end
+elseif endswith(input_file, ".jld2")
+    checkpoint_file = input_file
+    println("Restarting from checkpoint: $checkpoint_file")
+    grid, step, params = jldopen(checkpoint_file, "r") do file
+        file["grid"], file["step"], file["params"]
+    end
+
+    out_dir = dirname(checkpoint_file)
+    redirect_std = get(params, "redirect_std", true)
+
+    if redirect_std
+        # redirect output and error
+        redirect_to_files(
+            out_dir * "/stdout.txt",
+            out_dir * "/stderr.txt";
+            append = true,
+        ) do
+            main(params, out_dir; grid = grid, start_step = step + 1)
+        end
+    else
+        main(params, out_dir; grid = grid, start_step = step + 1)
+    end
 else
-    main(params, out_dir)
+    println("Error: unsupported file extension. Use .toml for new runs or .jld2 for restarts.")
+    exit(1)
 end
 #===============================================================================
 End Execution
