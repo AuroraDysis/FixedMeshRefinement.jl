@@ -1,7 +1,7 @@
 export prolongate!, prolongate_mongwane!, apply_transition_zone!
 
 """
-    prolongation_spatial_interpolate!(res, u, i, order)
+    spatial_interpolate!(res, u, i, order)
 
 Performs spatial interpolation for prolongation using a set of predefined stencils of a given `order`.
 The result is stored in `res`. The interpolation uses values from `u` around index `i`.
@@ -12,7 +12,7 @@ The result is stored in `res`. The interpolation uses values from `u` around ind
 - `i::Int`: The index in `u` to center the interpolation stencil.
 - `order::Int`: The order of spatial interpolation (1 through 5 are supported).
 """
-function prolongation_spatial_interpolate!(res, u, i, order)
+function spatial_interpolate!(res, u, i, order)
     if order == 1
         # {0.5, 0.5}
         @.. res = (u[i] + u[i + 1]) * 0.5
@@ -39,7 +39,7 @@ function prolongation_spatial_interpolate!(res, u, i, order)
 end
 
 """
-    prolongation_time_interpolate!(res, u, order)
+    time_interpolate!(res, u, order)
 
 Performs time interpolation for prolongation. `u` should be ordered from oldest to newest.
 The result is stored in `res`.
@@ -50,7 +50,7 @@ The result is stored in `res`.
 - `order::Int`: The order of time interpolation (1 through 4 are supported).
 """
 # u from oldest to newest
-function prolongation_time_interpolate!(res, u, order)
+function time_interpolate!(res, u, order)
     length(u) == order + 1 || error("Length of u must be equal to order + 1")
 
     if order == 1
@@ -282,7 +282,7 @@ function apply_transition_zone!(
                         spatial_buffer[ic, :] .= yn
                     end
                 end
-                prolongation_spatial_interpolate!(
+                spatial_interpolate!(
                     aligned_buffer,
                     [
                         @view(spatial_buffer[ic, :]) for
@@ -376,7 +376,7 @@ function prolongate_mongwane!(
                     calc_Yn_from_kcs!(sbuffer, yn, kcs, dtc, interp_in_time, dytmp)
                 end
                 for rk_stage in 1:4
-                    prolongation_spatial_interpolate!(
+                    spatial_interpolate!(
                         view(Yn_buffer[rk_stage], i, :, dir),
                         [
                             view(spatial_buffer[rk_stage], ic, :) for
@@ -458,7 +458,7 @@ function prolongate!(
                         m in (-time_interpolation_order):0
                     ]
                     # time interpolation
-                    prolongation_time_interpolate!(
+                    time_interpolate!(
                         @view(uf[fidx, :]), time_data, time_interpolation_order
                     )
                 else
@@ -470,12 +470,12 @@ function prolongate!(
                             m in (-time_interpolation_order):0
                         ]
                         # time interpolation
-                        prolongation_time_interpolate!(
+                        time_interpolate!(
                             @view(buffer[ic, :]), time_data, time_interpolation_order
                         )
                     end
                     # spatial interpolation
-                    prolongation_spatial_interpolate!(
+                    spatial_interpolate!(
                         @view(uf[fidx, :]),
                         [@view(buffer[m, :]) for m in 1:num_spatial_interpolation_points],
                         soffset,
@@ -489,7 +489,7 @@ function prolongate!(
                 else
                     cidx = fine_to_coarse_index(fine_level, fidx - 1)
                     # spatial interpolation
-                    prolongation_spatial_interpolate!(
+                    spatial_interpolate!(
                         @view(uf[fidx, :]),
                         [
                             @view(uc_p[cidx + ic - soffset, :]) for
