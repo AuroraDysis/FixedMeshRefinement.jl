@@ -46,7 +46,9 @@ function shift_level_boundaries!(level::Level, num_shift_points::NTuple{2,Int})
     new_parent_indices = if is_base_level
         0:0
     else
-        parent_indices[(1 + div(num_shift_points[1], 2)):(end - div(num_shift_points[2], 2))]
+        left_parent_indices = first(parent_indices) + div(num_shift_points[1], 2)
+        right_parent_indices = last(parent_indices) - div(num_shift_points[2], 2)
+        left_parent_indices:right_parent_indices
     end
     new_offset_indices = offset_indices .- num_shift_points[1]
 
@@ -63,6 +65,7 @@ end
     shift_grid_boundaries!(grid::Grid, num_shift_points::NTuple{2,Int})
 
 Shift the boundary of the grid by a given number of points; as a prerequisite, all levels must align with the physical boundary.
+If the number of shift points is negative, the grid will be extended, otherwise it will be shrunk.
 """
 function shift_grid_boundaries!(grid::Grid, num_shift_points::NTuple{2,Int})
     (; num_levels, levels) = grid
