@@ -1,15 +1,19 @@
 include("../../src/FixedMeshRefinement.jl")
 using .FixedMeshRefinement
+
+using Printf
+using TOML
+using JLD2
+using StaticArrays
 using FastBroadcast
 
 include("boundary.jl")
 include("initial_data.jl")
 include("output.jl")
+include("output_csv.jl")
 include("wave.jl")
 
-using Printf
-using TOML
-using JLD2
+using .CsvOutput
 
 const NumState = 2
 const NumDiagnostic = 1
@@ -121,6 +125,8 @@ function main(params, out_dir; grid=nothing, start_step=1)
         println("Restarting from step $(start_step-1)")
     end
 
+    out_csv = OutputCSV(joinpath(out_dir, "output.csv"), SVector{2,String}(("t", "E")))
+
     @printf(
         "Simulation time: %.4f, iteration %d. E = %.4f\n",
         grid.t,
@@ -128,6 +134,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
         wave_energy(grid)
     )
     if start_step == 1
+        write_row(out_csv, SVector{2,Float64}(grid.t, wave_energy(grid)))
         write_output(out_dir, grid, 0)
     end
 
@@ -148,6 +155,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
         )
 
         if mod(step, out_every) == 0
+            write_row(out_csv, SVector{2,Float64}(grid.t, wave_energy(grid)))
             write_output(out_dir, grid, step)
         end
 
