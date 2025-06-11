@@ -258,7 +258,7 @@ function apply_transition_zone!(
             else
                 num_interior_points + 1 - i
             end
-            is_aligned = mod(i + 1, 2) == 0
+            is_aligned = mod(i, 2) == 0
 
             w = transition_profile(a, b, fine_level.x[fidx])
             if is_aligned
@@ -357,7 +357,7 @@ function prolongate_mongwane!(
 
         for i in 1:num_boundary_points[dir]
             fidx = boundary_indices[dir][i]
-            is_aligned = mod(i + 1, 2) != 0
+            is_aligned = mod(i, 2) == 0
 
             if is_aligned
                 cidx = fine_to_coarse_index(fine_level, fidx)
@@ -448,7 +448,7 @@ function prolongate!(
 
         for i in 1:num_boundary_points[dir]
             fidx = boundary_indices[dir][i]
-            is_aligned = mod(i + 1, 2) != 0
+            is_aligned = mod(i, 2) == 0
 
             if interp_in_time
                 if is_aligned
