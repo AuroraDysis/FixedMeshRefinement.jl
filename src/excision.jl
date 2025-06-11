@@ -3,7 +3,7 @@ export shift_level_boundaries!, shift_grid_boundaries!
 const DEFAULT_FILL_EXTENDED_GRID_EXTRAPOLATION_ORDER = 1
 
 function fill_extended_grid_extrapolate!(
-    state::Matrix{Float64}, extended_indices::UnitRange{Int}, order::Int
+    state, extended_indices, direction::Symbol, order::Int
 )
     # TODO: implement extrapolation
 end
@@ -16,9 +16,12 @@ Shift the boundary of a `Level` by a given number of points, as a prerequisite, 
 function shift_level_boundaries!(
     level::Level,
     num_shift_points::NTuple{2,Int};
-    func_fill_extended::Function=(state, extended_indices) ->
+    func_fill_extended::Function=(state, extended_indices, direction) ->
         fill_extended_grid_extrapolate!(
-            state, extended_indices, DEFAULT_FILL_EXTENDED_GRID_EXTRAPOLATION_ORDER
+            state,
+            extended_indices,
+            direction,
+            DEFAULT_FILL_EXTENDED_GRID_EXTRAPOLATION_ORDER,
         ),
 )
     (; is_physical_boundary) = level
@@ -77,14 +80,14 @@ function shift_level_boundaries!(
     if num_shift_points[1] > 0
         state = get_state(level)
         extended_indices = num_shift_points[1]:-1:1
-        func_fill_extended(state, extended_indices)
+        func_fill_extended(state, extended_indices, :left)
     end
 
     if num_shift_points[2] > 0
         state = get_state(level)
         extended_indices =
             (new_num_interior_points - num_shift_points[2] + 1):new_num_interior_points
-        func_fill_extended(state, extended_indices)
+        func_fill_extended(state, extended_indices, :right)
     end
 
     return nothing
@@ -105,9 +108,12 @@ The tuple `num_shift_points` is the number of points to shift on the left and ri
 function shift_grid_boundaries!(
     grid::Grid,
     num_shift_points::NTuple{2,Int};
-    func_fill_extended::Function=(state, extended_indices) ->
+    func_fill_extended::Function=(state, extended_indices, direction) ->
         fill_extended_grid_extrapolate!(
-            state, extended_indices, DEFAULT_FILL_EXTENDED_GRID_EXTRAPOLATION_ORDER
+            state,
+            extended_indices,
+            direction,
+            DEFAULT_FILL_EXTENDED_GRID_EXTRAPOLATION_ORDER,
         ),
 )
     (; num_levels, levels) = grid
