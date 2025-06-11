@@ -62,6 +62,7 @@ mutable struct Level{NumState,NumDiagnostic}
     const num_buffer_points::Int # num of buffer points on each side
     const num_transition_points::NTuple{2,Int}  # num of transition zone points
     const num_boundary_points::NTuple{2,Int} # num of boundary points on each side
+    num_unused_points::NTuple{2,Int}
     const time_interpolation_order::Int  # interpolation order in time
     const spatial_interpolation_order::Int  # interpolation order in space
     domain_box::Tuple{Float64,Float64}  # computational domain (interior)
@@ -135,6 +136,7 @@ mutable struct Level{NumState,NumDiagnostic}
             num_buffer_points,
             (num_left_transition_points, num_right_transition_points),
             (num_left_boundary_points, num_right_boundary_points),
+            (0, 0),
             time_interpolation_order,
             spatial_interpolation_order,
             domain_box,

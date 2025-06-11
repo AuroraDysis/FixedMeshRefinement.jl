@@ -96,6 +96,13 @@ function shift_level_boundaries!(
         )
     end
 
+    new_num_unused_points = level.num_unused_points .- num_shift_points
+    if any(new_num_unused_points .< 0)
+        error(
+            "num_unused_points must be non-negative, please consider increasing preallocation, num_unused_points = $(level.num_unused_points), num_shift_points = $(num_shift_points)",
+        )
+    end
+
     new_num_interior_points =
         num_interior_points + num_shift_points[1] + num_shift_points[2]
     new_domain_box = (
@@ -114,6 +121,7 @@ function shift_level_boundaries!(
     end
     new_offset_indices = offset_indices .+ num_shift_points[1]
 
+    level.num_unused_points = new_num_unused_points
     level.num_interior_points = new_num_interior_points
     level.domain_box = new_domain_box
     level.physical_domain_box = new_physical_domain_box
