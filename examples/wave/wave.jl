@@ -1,4 +1,3 @@
-
 #===============================================================================
 wave_rhs!:
     * rhs of wave equation
@@ -25,12 +24,12 @@ function wave_rhs!(level, rhs, u, p, t)
             (
                 (psi[i + 3] + psi[i - 3]) - 6 * (psi[i + 2] + psi[i - 2]) +
                 15 * (psi[i + 1] + psi[i - 1]) - 20 * psi[i]
-            ) / dx
+            ) / (64 * dx)
         diss_Pi =
             (
                 (Pi[i + 3] + Pi[i - 3]) - 6 * (Pi[i + 2] + Pi[i - 2]) +
                 15 * (Pi[i + 1] + Pi[i - 1]) - 20 * Pi[i]
-            ) / dx
+            ) / (64 * dx)
         psi_rhs[i] = Pi[i] + dissipation * diss_psi
         Pi_rhs[i] = ddpsi + dissipation * diss_Pi
     end
