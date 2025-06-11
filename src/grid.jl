@@ -308,7 +308,7 @@ function fine_to_coarse_index(fine_level::Level, fidx::Int)
     parent_idx_left = parent_indices[1]
     offset = fidx - 1
 
-    if mod(offset, 2) != 0
+    if !iseven(offset)
         println("parent_indices = ", parent_indices)
         println("fidx = $fidx, offset = $offset")
         error("fidx = $fidx is not aligned with any point in parent level")
