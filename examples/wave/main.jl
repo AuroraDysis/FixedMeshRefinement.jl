@@ -71,7 +71,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
     # build grid structure #
     ########################
     p = (; dissipation)
-    if grid === nothing
+    if isnothing(grid)
         num_interior_points = params["num_interior_points"]
         num_ghost_points = params["num_ghost_points"]
         num_buffer_points = get(params, "num_buffer_points", 4 * num_ghost_points)
