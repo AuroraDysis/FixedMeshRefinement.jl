@@ -7,8 +7,10 @@ export Level,
     get_diagnostic_state,
     get_boundary_indices,
     get_interior_indices,
+    get_offset_indices,
     get_rhs_evaluation_indices,
     get_total_grid_points,
+    get_maximum_grid_points,
     cycle_state!,
     fine_to_coarse_index
 
@@ -193,13 +195,31 @@ function get_boundary_indices(level::Level)
 end
 
 """
+    get_offset_indices(level::Level) -> UnitRange{Int}
+
+Return the indices of the grid points in the `OffsetArray` of the `level`.
+"""
+function get_offset_indices(level::Level)
+    return level.offset_indices
+end
+
+"""
     get_total_grid_points(level::Level) -> Int
 
-Return the total number of grid points at this level.
+Return the total number of grid points at this level (including ghost and buffer points).
 """
 function get_total_grid_points(level::Level)
     (; num_interior_points, num_boundary_points) = level
     return num_interior_points + num_boundary_points[1] + num_boundary_points[2]
+end
+
+"""
+    get_maximum_grid_points(level::Level) -> Int
+
+Return the maximum number of grid points at this level (including ghost, buffer and unused points).
+"""
+function get_maximum_grid_points(level::Level)
+    return length(level.x)
 end
 
 """

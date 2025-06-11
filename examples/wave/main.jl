@@ -52,7 +52,8 @@ function main(params, out_dir; grid=nothing, start_step=1)
     ########################
     stop_time = get(params, "stop_time", -1.0)
     max_step = get(params, "max_step", -1)
-    out_every = params["out_every"]
+    out_every_0d = get(params, "out_every_0d", 10)
+    out_every_1d = get(params, "out_every_1d", 100)
     cfl = get(params, "cfl", 0.25)
     dissipation = get(params, "dissipation", 0.0)
     subcycling = get(params, "subcycling", true)
@@ -66,7 +67,8 @@ function main(params, out_dir; grid=nothing, start_step=1)
     println("  trans_zone       = ", apply_trans_zone)
     println("  max_step         = ", max_step)
     println("  stop_time        = ", stop_time)
-    println("  out_every        = ", out_every)
+    println("  out_every_0d     = ", out_every_0d)
+    println("  out_every_1d     = ", out_every_1d)
     println("  checkpoint_every = ", checkpoint_every)
     println("  out_dir          = ", out_dir)
 
@@ -125,6 +127,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
     end
 
     out_csv = OutputCSV(joinpath(out_dir, "output.csv"), SVector{2,String}(("t", "E")))
+    out_h5 = OutputHDF5(joinpath(out_dir, "data.h5"), grid)
 
     @printf(
         "Simulation time: %.4f, iteration %d. E = %.4f\n",
@@ -134,7 +137,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
     )
     if start_step == 1
         write_row(out_csv, SVector{2,Float64}(grid.t, wave_energy(grid)))
-        write_output(out_dir, grid, 0)
+        append_data(out_h5, grid)
     end
 
     ##########
@@ -153,9 +156,12 @@ function main(params, out_dir; grid=nothing, start_step=1)
             wave_energy(grid)
         )
 
-        if mod(step, out_every) == 0
+        if out_every_0d > 0 && mod(step, out_every_0d) == 0
             write_row(out_csv, SVector{2,Float64}(grid.t, wave_energy(grid)))
-            write_output(out_dir, grid, step)
+        end
+
+        if out_every_1d > 0 && mod(step, out_every_1d) == 0
+            append_data(out_h5, grid)
         end
 
         if checkpoint_every > 0 && mod(step, checkpoint_every) == 0
@@ -178,6 +184,9 @@ function main(params, out_dir; grid=nothing, start_step=1)
         "--------------------------------------------------------------------------------"
     )
     println("Successfully Done.")
+
+    close(out_csv)
+    close(out_h5)
 
     return nothing
 end
