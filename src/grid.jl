@@ -531,12 +531,12 @@ function Base.show(io::IO, level::Level)
 end
 
 """
-    Base.show(io::IO, ::MIME"text/plain", level::Level)
+    Base.show(io::IO, level::Level)
 
 Display a detailed summary of the `Level`.
 """
 function Base.show(
-    io::IO, ::MIME"text/plain", level::Level{NumState,NumDiagnostic}
+    io::IO, level::Level{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
     println(io, "Level{$NumState, $NumDiagnostic}:")
     println(io, "  Domain:                ", level.domain_box)
