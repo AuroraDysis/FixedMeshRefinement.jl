@@ -43,7 +43,7 @@ function nan_check(grid::Grid{NumState,NumDiagnostic}) where {NumState,NumDiagno
     return has_nan
 end
 
-function main(params, out_dir; grid = nothing, start_step = 1)
+function main(params, out_dir; grid=nothing, start_step=1)
     ########################
     # Read Parameter Files #
     ########################
@@ -86,10 +86,10 @@ function main(params, out_dir; grid = nothing, start_step = 1)
             domain_boxes,
             num_ghost_points,
             num_buffer_points;
-            num_transition_points = num_transition_points,
-            spatial_interpolation_order = spatial_interpolation_order,
-            cfl = cfl,
-            subcycling = subcycling,
+            num_transition_points=num_transition_points,
+            spatial_interpolation_order=spatial_interpolation_order,
+            cfl=cfl,
+            subcycling=subcycling,
         )
 
         # just for testing, if all levels are aligned with the physical boundary, then we excise some grid points
@@ -138,7 +138,7 @@ function main(params, out_dir; grid = nothing, start_step = 1)
 
     step = start_step
     while (max_step > 0 && step <= max_step) || (stop_time > 0.0 && grid.t < stop_time)
-        step!(grid, wave_rhs!, p; mongwane = mongwane, apply_trans_zone = apply_trans_zone)
+        step!(grid, wave_rhs!, p; mongwane=mongwane, apply_trans_zone=apply_trans_zone)
 
         @printf(
             "Simulation time: %.4f, iteration %d. E = %.4f\n",
@@ -175,7 +175,7 @@ function main(params, out_dir; grid = nothing, start_step = 1)
     return nothing
 end
 
-function redirect_to_files(dofunc, outfile, errfile; append = false)
+function redirect_to_files(dofunc, outfile, errfile; append=false)
     mode = append ? "a" : "w"
     open(outfile, mode) do out
         open(errfile, mode) do err
@@ -208,7 +208,7 @@ if endswith(input_file, ".toml")
     )
     if isdir(out_dir)
         println("Removing old directory '$out_dir'...")
-        rm(out_dir; recursive = true)
+        rm(out_dir; recursive=true)
     end
     println("Creating new directory '$out_dir'...")
     mkdir(out_dir)
@@ -239,18 +239,16 @@ elseif endswith(input_file, ".jld2")
 
     if redirect_std
         # redirect output and error
-        redirect_to_files(
-            out_dir * "/stdout.txt",
-            out_dir * "/stderr.txt";
-            append = true,
-        ) do
-            main(params, out_dir; grid = grid, start_step = step + 1)
+        redirect_to_files(out_dir * "/stdout.txt", out_dir * "/stderr.txt"; append=true) do
+            main(params, out_dir; grid=grid, start_step=step + 1)
         end
     else
-        main(params, out_dir; grid = grid, start_step = step + 1)
+        main(params, out_dir; grid=grid, start_step=step + 1)
     end
 else
-    println("Error: unsupported file extension. Use .toml for new runs or .jld2 for restarts.")
+    println(
+        "Error: unsupported file extension. Use .toml for new runs or .jld2 for restarts."
+    )
     exit(1)
 end
 #===============================================================================

@@ -217,9 +217,9 @@ Return the state variables of the `level` as an `OffsetArray`. The optional
 argument `i` specifies the time level, where `i=0` corresponds to the current
 time level `n`, `i=-1` to `n-1`, etc.
 """
-function get_state(level::Level, i::Int = 0)
+function get_state(level::Level, i::Int=0)
     (; state, offset_indices) = level
-    return OffsetArray(state[end+i], offset_indices, :)
+    return OffsetArray(state[end + i], offset_indices, :)
 end
 
 """
@@ -486,10 +486,11 @@ end
 Display a compact summary of the `Grid`.
 """
 function Base.show(
-    io::IO,
-    grid::Grid{NumState,NumDiagnostic},
+    io::IO, grid::Grid{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
-    print(io, "Grid{$NumState, $NumDiagnostic} with $(grid.num_levels) levels at t=$(grid.t)")
+    return print(
+        io, "Grid{$NumState, $NumDiagnostic} with $(grid.num_levels) levels at t=$(grid.t)"
+    )
 end
 
 """
@@ -498,13 +499,10 @@ end
 Display a detailed summary of the `Grid` structure.
 """
 function Base.show(
-    io::IO,
-    ::MIME"text/plain",
-    grid::Grid{NumState,NumDiagnostic},
+    io::IO, ::MIME"text/plain", grid::Grid{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
     println(
-        io,
-        "Grid{$NumState, $NumDiagnostic} with $(grid.num_levels) levels at t=$(grid.t):",
+        io, "Grid{$NumState, $NumDiagnostic} with $(grid.num_levels) levels at t=$(grid.t):"
     )
     println(io, "  Subcycling: ", grid.subcycling)
     println(io, "  Base dt:    ", grid.base_dt)
@@ -520,14 +518,14 @@ end
 Display a compact summary of the `Level`.
 """
 function Base.show(io::IO, level::Level)
-    print(
+    return print(
         io,
         "Level(domain=",
         level.domain_box,
         ", N=",
         level.num_interior_points,
         ", dx=",
-        round(level.dx, sigdigits = 3),
+        round(level.dx; sigdigits=3),
         ")",
     )
 end
@@ -538,9 +536,7 @@ end
 Display a detailed summary of the `Level`.
 """
 function Base.show(
-    io::IO,
-    ::MIME"text/plain",
-    level::Level{NumState,NumDiagnostic},
+    io::IO, ::MIME"text/plain", level::Level{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
     println(io, "Level{$NumState, $NumDiagnostic}:")
     println(io, "  Domain:                ", level.domain_box)
@@ -559,5 +555,5 @@ function Base.show(
     if !level.is_base_level
         println(io, "  Parent indices:        ", level.parent_indices)
     end
-    println(io, "  Indices:               ", level.offset_indices)
+    return println(io, "  Indices:               ", level.offset_indices)
 end
