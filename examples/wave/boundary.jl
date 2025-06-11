@@ -13,14 +13,13 @@ function apply_reflective_boundary_condition!(
         # apply reflective boundary condition to state
         if is_physical_boundary[1]
             for i in 1:num_boundary_points[1]
-                @.. u[boundary_indices[1][i], :] = -@view(u[i, :])
+                @.. u[boundary_indices[1][i], :] = -@view(u[1 + i, :])
             end
         end
 
         if is_physical_boundary[2]
             for i in 1:num_boundary_points[2]
-                @.. u[boundary_indices[2][i], :] =
-                    -@view(u[num_interior_points + 1 - i, :])
+                @.. u[boundary_indices[2][i], :] = -@view(u[num_interior_points - i, :])
             end
         end
     end
@@ -38,14 +37,13 @@ function apply_reflective_boundary_condition_rhs!(
     # apply reflective boundary condition to state
     if is_physical_boundary[1]
         for i in 1:num_boundary_points[1]
-            @.. rhs[boundary_indices[1][i], :] = -@view(rhs[i, :])
+            @.. rhs[boundary_indices[1][i], :] = -@view(rhs[1 + i, :])
         end
     end
 
     if is_physical_boundary[2]
         for i in 1:num_boundary_points[2]
-            @.. rhs[boundary_indices[2][i], :] =
-                -@view(rhs[num_interior_points + 1 - i, :])
+            @.. rhs[boundary_indices[2][i], :] = -@view(rhs[num_interior_points - i, :])
         end
     end
 
