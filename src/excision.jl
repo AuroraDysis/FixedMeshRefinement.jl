@@ -77,6 +77,12 @@ function shift_grid_boundaries!(grid::Grid, num_shift_points::NTuple{2,Int})
         level = levels[l]
         isapprox_tol(level.t, t) ||
             error("Level $(l) is not at same time, t = $(t), levels[l].t = $(levels[l].t)")
+        if (num_shift_points[1] != 0 && !level.is_physical_boundary[1]) ||
+            (num_shift_points[2] != 0 && !level.is_physical_boundary[2])
+            error(
+                "shifting the boundary of the level that is not aligned with the physical boundary is not allowed.",
+            )
+        end
     end
 
     for l in 1:num_levels
