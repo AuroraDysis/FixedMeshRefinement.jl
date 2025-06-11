@@ -1,8 +1,8 @@
 export shift_level_boundaries!, shift_grid_boundaries!
 
-const DEFAULT_FILL_EXTENDED_GRID_EXTRAPOLATION_ORDER = 4
+const DEFAULT_FILL_EXTENDED_GRID_EXTRAPOLATION_ORDER = 5
 
-function _extrapolate!(out, input, order::Int)
+function extrapolate!(out, input, order::Int)
     length(input) == order || error("Length of input must be equal to order.")
 
     if order == 1
@@ -38,12 +38,12 @@ function fill_extended_grid_extrapolate!(
     if direction == :left
         for idx in extended_indices
             input = [@view(state[i, :]) for i in (idx + 1):(idx + order)]
-            _extrapolate!(@view(state[idx, :]), input, order)
+            extrapolate!(@view(state[idx, :]), input, order)
         end
     elseif direction == :right
         for idx in extended_indices
             input = [@view(state[i, :]) for i in (idx - 1):-1:(idx - order)]
-            _extrapolate!(@view(state[idx, :]), input, order)
+            extrapolate!(@view(state[idx, :]), input, order)
         end
     else
         error("Unsupported direction for extrapolation: $direction")
