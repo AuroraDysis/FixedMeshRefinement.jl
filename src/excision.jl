@@ -1,11 +1,26 @@
 export shift_level_boundaries!, shift_grid_boundaries!
 
+const DEFAULT_FILL_EXTENDED_GRID_EXTRAPOLATION_ORDER = 1
+
+function fill_extended_grid_extrapolate!(
+    state::Matrix{Float64}, extended_indices::UnitRange{Int}, order::Int
+)
+    # TODO: implement extrapolation
+end
+
 """
-    shift_level_boundaries!(level::Level, num_shift_points::NTuple{2,Int})
+    shift_level_boundaries!(level::Level, num_shift_points::NTuple{2,Int}; func_fill_extended::Function=(i, level) -> 0.0)
 
 Shift the boundary of a `Level` by a given number of points, as a prerequisite, the level must align with the physical boundary.
 """
-function shift_level_boundaries!(level::Level, num_shift_points::NTuple{2,Int})
+function shift_level_boundaries!(
+    level::Level,
+    num_shift_points::NTuple{2,Int};
+    func_fill_extended::Function=(state, extended_indices) ->
+        fill_extended_grid_extrapolate!(
+            state, extended_indices, DEFAULT_FILL_EXTENDED_GRID_EXTRAPOLATION_ORDER
+        ),
+)
     (; is_physical_boundary) = level
 
     if (num_shift_points[1] != 0 && !is_physical_boundary[1]) ||
@@ -58,17 +73,43 @@ function shift_level_boundaries!(level::Level, num_shift_points::NTuple{2,Int})
     level.parent_indices = new_parent_indices
     level.offset_indices = new_offset_indices
 
+    # Fill extended regions
+    if num_shift_points[1] > 0
+        state = get_state(level)
+        extended_indices = num_shift_points[1]:-1:1
+        func_fill_extended(state, extended_indices)
+    end
+
+    if num_shift_points[2] > 0
+        state = get_state(level)
+        extended_indices =
+            (new_num_interior_points - num_shift_points[2] + 1):new_num_interior_points
+        func_fill_extended(state, extended_indices)
+    end
+
     return nothing
 end
 
 """
-    shift_grid_boundaries!(grid::Grid, num_shift_points::NTuple{2,Int})
+    shift_grid_boundaries!(grid::Grid, num_shift_points::NTuple{2,Int}; func_fill_extended::Function=(i, level) -> 0.0)
 
 Shift the boundary of the grid by a given number of points; as a prerequisite, all levels must align with the physical boundary.
 If the number of shift points is positive, the grid will be extended, otherwise it will be shrunk.
 The tuple `num_shift_points` is the number of points to shift on the left and right boundaries, respectively.
+
+# Arguments
+- `grid::Grid`: The grid to shift boundaries of
+- `num_shift_points::NTuple{2,Int}`: Number of points to shift on left and right boundaries
+- `func_fill_extended::Function=(i, level) -> 0.0`: Function to compute fill values, takes index and level as arguments
 """
-function shift_grid_boundaries!(grid::Grid, num_shift_points::NTuple{2,Int})
+function shift_grid_boundaries!(
+    grid::Grid,
+    num_shift_points::NTuple{2,Int};
+    func_fill_extended::Function=(state, extended_indices) ->
+        fill_extended_grid_extrapolate!(
+            state, extended_indices, DEFAULT_FILL_EXTENDED_GRID_EXTRAPOLATION_ORDER
+        ),
+)
     (; num_levels, levels) = grid
 
     # make sure all levels are at same time
@@ -89,6 +130,10 @@ function shift_grid_boundaries!(grid::Grid, num_shift_points::NTuple{2,Int})
         level = levels[l]
         left_shift_points = num_shift_points[1] * 2^(l - 1)
         right_shift_points = num_shift_points[2] * 2^(l - 1)
-        shift_level_boundaries!(level, (left_shift_points, right_shift_points))
+        shift_level_boundaries!(
+            level,
+            (left_shift_points, right_shift_points);
+            func_fill_extended=func_fill_extended,
+        )
     end
 end
