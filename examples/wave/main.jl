@@ -126,14 +126,20 @@ function main(params, out_dir; grid=nothing, start_step=1)
         println("Restarting from step $(start_step-1)")
     end
 
+    # print grid
+    for l in 1:grid.num_levels
+        show(stdout, MIME("text/plain"), grid.levels[l])
+    end
+
     out_csv = OutputCSV(joinpath(out_dir, "output.csv"), SVector{2,String}(("t", "E")))
     out_h5 = OutputHDF5(joinpath(out_dir, "data.h5"), grid)
 
+    E0 = wave_energy(grid)
     @printf(
         "t = %.4f, iteration %d. E = %.17f\n",
         grid.t,
         start_step - 1,
-        wave_energy(grid)
+        E0
     )
     if start_step == 1
         write_row(out_csv, SVector{2,Float64}(grid.t, wave_energy(grid)))
@@ -151,10 +157,10 @@ function main(params, out_dir; grid=nothing, start_step=1)
         step!(grid, wave_rhs!, p; mongwane=mongwane, apply_trans_zone=apply_trans_zone)
 
         @printf(
-            "t = %.4f, iteration %d. E = %.17f\n",
+            "t = %.4f, iteration %d. dE = %.5g\n",
             grid.t,
             step,
-            wave_energy(grid)
+            wave_energy(grid) - E0
         )
 
         if out_every_0d > 0 && mod(step, out_every_0d) == 0
