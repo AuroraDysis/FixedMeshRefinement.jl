@@ -129,8 +129,8 @@ mutable struct Level{NumState,NumDiagnostic}
         end
         offset_indices =
             (-num_left_boundary_points + 1):(num_interior_points + num_right_boundary_points)
-        num_left_transition_points = is_physical_boundary[1] ? num_transition_points : 0
-        num_right_transition_points = is_physical_boundary[2] ? num_transition_points : 0
+        num_left_transition_points = is_physical_boundary[1] ? 0 : num_transition_points
+        num_right_transition_points = is_physical_boundary[2] ? 0 : num_transition_points
 
         return new{NumState,NumDiagnostic}(
             num_interior_points,
