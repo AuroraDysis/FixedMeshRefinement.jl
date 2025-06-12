@@ -170,12 +170,8 @@ function shift_grid_boundaries!(
 )
     (; num_levels, levels) = grid
 
-    # make sure all levels are at same time
-    t = levels[1].t
     for l in 2:num_levels
         level = levels[l]
-        isapprox_tol(level.t, t) ||
-            error("Level $(l) is not at same time, t = $(t), levels[l].t = $(levels[l].t)")
         if (num_shift_points[1] != 0 && !level.is_physical_boundary[1]) ||
             (num_shift_points[2] != 0 && !level.is_physical_boundary[2])
             error(
