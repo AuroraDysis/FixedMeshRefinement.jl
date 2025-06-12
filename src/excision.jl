@@ -86,11 +86,10 @@ function shift_level_boundaries!(
         physical_domain_box,
         parent_indices,
         offset_indices,
-        is_base_level,
     ) = level
 
     # if base level then num_shift_points can be odd, otherwise it must be even
-    if !is_base_level
+    if !is_base_level(level)
         num_shift_points[1] % 2 == 0 && num_shift_points[2] % 2 == 0 || error(
             "num_shift_points must be even for non-base levels, num_shift_points = $(num_shift_points)",
         )
@@ -112,7 +111,7 @@ function shift_level_boundaries!(
         physical_domain_box[1] - num_shift_points[1] * dx,
         physical_domain_box[2] + num_shift_points[2] * dx,
     )
-    new_parent_indices = if is_base_level
+    new_parent_indices = if is_base_level(level)
         0:0
     else
         left_parent_indices = first(parent_indices) - div(num_shift_points[1], 2)

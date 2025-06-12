@@ -55,7 +55,6 @@ A struct representing a single refinement level in the mesh.
 - `dx::Float64`: Grid spacing.
 - `dt::Float64`: Time step.
 - `t::Float64`: Current time of this level.
-- `is_base_level::Bool`: True if this is the coarsest level.
 - `parent_indices::UnitRange{Int}`: Range of indices in the parent level that this level covers.
 - `offset_indices::UnitRange{Int}`: Range of indices for `OffsetArray`s of this level.
 """
@@ -75,7 +74,6 @@ mutable struct Level{NumState,NumDiagnostic}
     const dx::Float64
     dt::Float64
     t::Float64
-    const is_base_level::Bool
     parent_indices::UnitRange{Int}
     offset_indices::UnitRange{Int}
 
@@ -103,7 +101,6 @@ mutable struct Level{NumState,NumDiagnostic}
         physical_domain_box,
         dt,
         t,
-        is_base_level,
         parent_indices,
     ) where {NumState,NumDiagnostic}
         is_physical_boundary = (
@@ -151,7 +148,6 @@ mutable struct Level{NumState,NumDiagnostic}
             dx,
             dt,
             t,
-            is_base_level,
             parent_indices,
             offset_indices,
             # data
@@ -163,6 +159,10 @@ mutable struct Level{NumState,NumDiagnostic}
             diag_state,
         )
     end
+end
+
+function is_base_level(level::Level)
+    return level.index == 1
 end
 
 """
@@ -303,9 +303,9 @@ This function is not defined for the base level. An error is thrown if the fine
 grid point does not align with any coarse grid point.
 """
 function fine_to_coarse_index(fine_level::Level, fidx::Int)
-    (; is_base_level, parent_indices) = fine_level
+    (; parent_indices) = fine_level
 
-    if is_base_level
+    if is_base_level(fine_level)
         error("fine_to_coarse_index is not defined for base level")
     end
 
@@ -577,8 +577,7 @@ function Base.show(
     println(io, "  Interpolation (time):  ", level.time_interpolation_order)
     println(io, "  Interpolation (space): ", level.spatial_interpolation_order)
     println(io, "  Physical boundary:     ", level.is_physical_boundary)
-    println(io, "  Base level:            ", level.is_base_level)
-    if !level.is_base_level
+    if !is_base_level(level)
         println(io, "  Parent indices:        ", level.parent_indices)
     end
     return println(io, "  Indices:               ", level.offset_indices)
