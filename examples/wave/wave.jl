@@ -34,8 +34,12 @@ function wave_rhs!(level, rhs, u, p, t)
         Pi_rhs[i] = ddpsi + dissipation * diss_Pi
     end
 
-    psi_rhs[begin:(first(rhs_indices) - 1)] .= NaN
-    psi_rhs[(last(rhs_indices) + 1):end] .= NaN
+    first_idx = first(rhs_indices)
+    last_idx = last(rhs_indices)
+    psi_rhs[begin:(first_idx - 1)] .= NaN
+    psi_rhs[(last_idx + 1):end] .= NaN
+    Pi_rhs[begin:(first_idx - 1)] .= NaN
+    Pi_rhs[(last_idx + 1):end] .= NaN
 
     apply_reflective_boundary_condition_rhs!(level, rhs)
 
@@ -47,20 +51,6 @@ Energy:
     * int_xmin^xmax (Pi^2/2 + dpsi^2/2)
     * calculate on base level (interior) only
 ===============================================================================#
-function integrate(y::AbstractVector{Float64}, dx::Float64)
-    @inbounds retval =
-        (
-            17 * (y[1] + y[end]) +
-            59 * (y[2] + y[end - 1]) +
-            43 * (y[3] + y[end - 2]) +
-            49 * (y[4] + y[end - 3])
-        ) / 48
-    @simd for i in 5:(length(y) - 4)
-        @inbounds retval += y[i]
-    end
-    return retval * dx
-end
-
 function wave_energy(grid)
     base_level = grid.levels[1]
     (; dx) = base_level
@@ -80,8 +70,13 @@ function wave_energy(grid)
         rho[i] = (0.5 * Pi[i] * Pi[i] + 0.5 * dpsi * dpsi)
     end
 
-    # integrate over the domain
-    E = integrate(@view(rho[interior_indices]), dx)
+    first_idx = first(interior_indices)
+    last_idx = last(interior_indices)
+    indices = (first_idx + 1):(last_idx - 1)
+    E =
+        sum(@view(rho[indices])) * dx +
+        (rho[first_idx] + rho[last_idx]) * dx / 2 +
+        0.5 * (rho[first_idx] + rho[last_idx]) * dx
 
     return E
 end
