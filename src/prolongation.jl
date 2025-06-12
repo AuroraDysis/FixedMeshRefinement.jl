@@ -229,6 +229,8 @@ function apply_transition_zone!(
     aligned_buffer = MVector{NumState,Float64}(undef)
     spatial_buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
 
+    fine_x = get_x(fine_level)
+
     # left or right
     for dir in 1:2
         # skip physical boundary
@@ -251,7 +253,7 @@ function apply_transition_zone!(
             end
             is_aligned = isodd(i)
 
-            w = transition_profile(a, b, fine_level.x[fidx])
+            w = transition_profile(a, b, fine_x[fidx])
             if is_aligned
                 cidx = fine_to_coarse_index(fine_level, fidx)
                 kcs = [view(kc[m], cidx, :) for m in 1:4]
