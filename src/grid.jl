@@ -346,6 +346,7 @@ mutable struct Grid{NumState,NumDiagnostic}
     base_dt::Float64
     t::Float64
     subcycling::Bool  # turn on subcycling or not
+    substeps::Vector{Int}
     spatial_interpolation_buffer::Vector{Array{Float64,2}}
 
     """
@@ -495,6 +496,7 @@ mutable struct Grid{NumState,NumDiagnostic}
             push!(levels, level)
         end
 
+        substeps = ones(Int, num_levels)
         spatial_interpolation_buffer = [fill(NaN, num_buffer_points, NumState) for _ in 1:4]
 
         # construct
@@ -504,6 +506,7 @@ mutable struct Grid{NumState,NumDiagnostic}
             base_dt,
             initial_time,
             subcycling,
+            substeps,
             spatial_interpolation_buffer,
         )
     end
