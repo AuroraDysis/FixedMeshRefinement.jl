@@ -52,8 +52,6 @@ function step!(
     # march the other substeps to the same time slice #
     #-------------------------------------------------#
     if grid.subcycling
-        levels = grid.levels
-        dt_min = levels[max_level].dt
         substeps = ones(Int, max_level)
         for s in 2:(2^(max_level - 1))  # from second to final substep (of the finest level)
             for l in 2:max_level  # march all levels except the coarest (from coarse to fine)
