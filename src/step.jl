@@ -57,10 +57,8 @@ function step!(
         substeps = ones(Int, max_level)
         for s in 2:(2^(max_level - 1))  # from second to final substep (of the finest level)
             for l in 2:max_level  # march all levels except the coarest (from coarse to fine)
-                if l == max_level || (
-                    isapprox_tol(levels[l].t, levels[l + 1].t) &&
-                    abs(levels[l].t - levels[1].t) > dt_min
-                )
+                if l == max_level ||
+                    (2 * substeps[l] == substeps[l + 1] && substeps[l] < 2^(l - 1))
                     substeps[l] += 1
                     interp_in_time = iseven(substeps[l])
 
