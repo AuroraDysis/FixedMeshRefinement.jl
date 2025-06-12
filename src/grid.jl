@@ -283,9 +283,9 @@ Shift the time levels of the state variables in a `Level`. `state[i]` becomes
 `state[i+1]`. This is used to advance the solution in time.
 """
 function cycle_state!(level::Level)
-    (; state, time_interpolation_order) = level
+    (; state) = level
     # shift state vectors
-    for i in 1:time_interpolation_order
+    for i in 1:length(state) - 1
         state[i] .= state[i + 1]
     end
     return nothing
@@ -315,7 +315,8 @@ function fine_to_coarse_index(fine_level::Level, fidx::Int)
     end
 
     half_offset = div(offset, 2)
-    return parent_idx_left + half_offset
+    cidx = parent_idx_left + half_offset
+    return cidx
 end
 
 """
