@@ -62,7 +62,7 @@ function step!(
                     abs(levels[l].t - levels[1].t) > dt_min
                 )
                     substeps[l] += 1
-                    interp_in_time = mod(substeps[l], 2) == 0
+                    interp_in_time = iseven(substeps[l])
 
                     if l < max_level
                         restrict_injection!(grid, l; apply_trans_zone=apply_trans_zone)  # from l+1 to l
