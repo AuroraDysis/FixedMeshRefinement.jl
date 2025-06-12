@@ -543,7 +543,9 @@ Display a compact summary of the `Level`.
 function Base.show(io::IO, level::Level)
     return print(
         io,
-        "Level(domain=",
+        "Level(index=",
+        level.index,
+        ", domain=",
         level.domain_box,
         ", N=",
         level.num_interior_points,
@@ -562,6 +564,7 @@ function Base.show(
     io::IO, ::MIME"text/plain", level::Level{NumState,NumDiagnostic}
 ) where {NumState,NumDiagnostic}
     println(io, "Level{$NumState, $NumDiagnostic}:")
+    println(io, "  Index:                 ", level.index)
     println(io, "  Domain:                ", level.domain_box)
     println(io, "  Interior points:       ", level.num_interior_points)
     println(io, "  Grid spacing (dx):     ", level.dx)
