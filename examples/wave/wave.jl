@@ -64,7 +64,7 @@ function wave_energy(grid)
 
     interior_indices = get_interior_indices(base_level)
 
-    for i in interior_indices
+    @inbounds for i in interior_indices
         # 4th order finite difference
         dpsi = (psi[i - 2] - 8 * psi[i - 1] + 8 * psi[i + 1] - psi[i + 2]) / (12 * dx)
         rho[i] = (0.5 * Pi[i] * Pi[i] + 0.5 * dpsi * dpsi)
