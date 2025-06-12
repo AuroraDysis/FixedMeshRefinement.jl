@@ -70,6 +70,7 @@ function wave_energy(grid)
         rho[i] = (0.5 * Pi[i] * Pi[i] + 0.5 * dpsi * dpsi)
     end
 
+    # TODO: improve trapezoidal rule for boundary points
     first_idx = first(interior_indices)
     last_idx = last(interior_indices)
     indices = (first_idx + 1):(last_idx - 1)
