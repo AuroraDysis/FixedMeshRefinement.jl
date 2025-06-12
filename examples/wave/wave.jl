@@ -52,6 +52,8 @@ Energy:
     * calculate on base level (interior) only
 ===============================================================================#
 function wave_energy(grid)
+    apply_reflective_boundary_condition!(grid)
+
     base_level = grid.levels[1]
     (; dx) = base_level
 
