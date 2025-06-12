@@ -536,7 +536,8 @@ function Base.show(
     io::IO, grid::Grid{NumState,NumDiagnostic,NumTemp}
 ) where {NumState,NumDiagnostic,NumTemp}
     return print(
-        io, "Grid{$NumState, $NumDiagnostic} with $(grid.num_levels) levels at t=$(grid.t)"
+        io,
+        "Grid{$NumState, $NumDiagnostic, $NumTemp} with $(grid.num_levels) levels at t=$(grid.t)",
     )
 end
 
@@ -549,7 +550,8 @@ function Base.show(
     io::IO, ::MIME"text/plain", grid::Grid{NumState,NumDiagnostic,NumTemp}
 ) where {NumState,NumDiagnostic,NumTemp}
     println(
-        io, "Grid{$NumState, $NumDiagnostic} with $(grid.num_levels) levels at t=$(grid.t):"
+        io,
+        "Grid{$NumState, $NumDiagnostic, $NumTemp} with $(grid.num_levels) levels at t=$(grid.t):",
     )
     println(io, "  Subcycling: ", grid.subcycling)
     println(io, "  Base dt:    ", grid.base_dt)
@@ -587,7 +589,7 @@ Display a detailed summary of the `Level`.
 function Base.show(
     io::IO, ::MIME"text/plain", level::Level{NumState,NumDiagnostic,NumTemp}
 ) where {NumState,NumDiagnostic,NumTemp}
-    println(io, "Level{$NumState, $NumDiagnostic}:")
+    println(io, "Level{$NumState, $NumDiagnostic, $NumTemp}:")
     println(io, "  Index:                 ", level.index)
     println(io, "  Domain:                ", level.domain_box)
     println(io, "  Interior points:       ", level.num_interior_points)
