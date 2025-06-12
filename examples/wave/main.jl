@@ -16,7 +16,7 @@ include("wave.jl")
 
 const NumState = 2
 const NumDiagnostic = 1
-const NumTemp = 1
+const NumTemp = 3
 
 function get(params, key, default)
     return haskey(params, key) ? params[key] : default
