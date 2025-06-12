@@ -16,14 +16,14 @@ where machine precision is a factor.
 # Examples
 ```jldoctest
 julia> typetol(Float64)
-3.000213634488528e-13
+3.666852862501036e-11
 
 julia> typetol(Float32)
-2.8909994f-6
+2.422181f-5
 ```
 """
 function typetol(TF::Type{<:AbstractFloat})
-    return eps(TF)^(4//5)
+    return eps(TF)^(2//3)
 end
 
 function isapprox_tol(a::T, b::T) where {T<:AbstractFloat}
