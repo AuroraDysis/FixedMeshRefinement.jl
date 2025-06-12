@@ -23,12 +23,12 @@ subcycling, prolongation, restriction, and application of transition zones.
   boundaries. Defaults to `false`.
 """
 function step!(
-    grid::Grid{NumState,NumDiagnostic},
+    grid::Grid{NumState,NumDiagnostic,NumTemp},
     f::Function,
     p;
     mongwane::Bool=false,
     apply_trans_zone::Bool=false,
-) where {NumState,NumDiagnostic}
+) where {NumState,NumDiagnostic,NumTemp}
     max_level = length(grid.levels)
 
     #-------------------------------------------------#

@@ -22,8 +22,8 @@ mutable struct OutputHDF5
     datasets based on the initial grid structure.
     """
     function OutputHDF5(
-        filepath::String, grid::Grid{NumState,NumDiagnostic}
-    ) where {NumState,NumDiagnostic}
+        filepath::String, grid::Grid{NumState,NumDiagnostic,NumTemp}
+    ) where {NumState,NumDiagnostic,NumTemp}
         # Ensure the directory exists
         dir = dirname(filepath)
         if !isdir(dir)
@@ -93,8 +93,8 @@ end
 Append a new time slice of data from the grid to the HDF5 file.
 """
 function append_data(
-    out::OutputHDF5, grid::Grid{NumState,NumDiagnostic}
-) where {NumState,NumDiagnostic}
+    out::OutputHDF5, grid::Grid{NumState,NumDiagnostic,NumTemp}
+) where {NumState,NumDiagnostic,NumTemp}
     (; num_levels, levels) = grid
 
     for l in 1:num_levels

@@ -196,8 +196,8 @@ a prolonged solution from the coarse grid.
 - `interp_in_time::Bool`: Whether to use time interpolation.
 """
 function apply_transition_zone!(
-    grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool
-) where {NumState,NumDiagnostic}
+    grid::Grid{NumState,NumDiagnostic,NumTemp}, l::Int, interp_in_time::Bool
+) where {NumState,NumDiagnostic,NumTemp}
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
@@ -308,8 +308,8 @@ when subcycling is enabled.
 - `interp_in_time::Bool`: Whether to use time interpolation for the coarse grid state.
 """
 function prolongate_mongwane!(
-    grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool
-) where {NumState,NumDiagnostic}
+    grid::Grid{NumState,NumDiagnostic,NumTemp}, l::Int, interp_in_time::Bool
+) where {NumState,NumDiagnostic,NumTemp}
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
@@ -406,8 +406,8 @@ in space and, optionally, in time.
 - `interp_in_time::Bool`: Whether to use time interpolation.
 """
 function prolongate!(
-    grid::Grid{NumState,NumDiagnostic}, l::Int, interp_in_time::Bool
-) where {NumState,NumDiagnostic}
+    grid::Grid{NumState,NumDiagnostic,NumTemp}, l::Int, interp_in_time::Bool
+) where {NumState,NumDiagnostic,NumTemp}
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 

@@ -16,12 +16,13 @@ include("wave.jl")
 
 const NumState = 2
 const NumDiagnostic = 1
+const NumTemp = 1
 
 function get(params, key, default)
     return haskey(params, key) ? params[key] : default
 end
 
-function nan_check(grid::Grid{NumState,NumDiagnostic}) where {NumState,NumDiagnostic}
+function nan_check(grid::Grid{NumState,NumDiagnostic,NumTemp}) where {NumState,NumDiagnostic,NumTemp}
     has_nan = false
     for l in 1:(grid.num_levels)
         level = grid.levels[l]
@@ -86,7 +87,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
         spatial_interpolation_order = get(params, "spatial_interpolation_order", 5)
         initial_data = get(params, "initial_data", "gaussian")
 
-        grid = Grid{NumState,NumDiagnostic}(
+        grid = Grid{NumState,NumDiagnostic,NumTemp}(
             num_interior_points,
             domain_boxes,
             num_ghost_points,

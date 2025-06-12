@@ -32,13 +32,14 @@ function searchsortednearest(a::AbstractVector, x)
 end
 
 """
-    Level{NumState, NumDiagnostic}
+    Level{NumState,NumDiagnostic,NumTemp}
 
 A struct representing a single refinement level in the mesh.
 
 # Type Parameters
 - `NumState`: Number of state variables.
 - `NumDiagnostic`: Number of diagnostic variables.
+- `NumTemp`: Number of temporary variables (for evaluation of rhs and diagnostic variables).
 
 # Fields
 - `index::Int`: Index of the level.
@@ -58,7 +59,7 @@ A struct representing a single refinement level in the mesh.
 - `parent_indices::UnitRange{Int}`: Range of indices in the parent level that this level covers.
 - `offset_indices::UnitRange{Int}`: Range of indices for `OffsetArray`s of this level.
 """
-mutable struct Level{NumState,NumDiagnostic}
+mutable struct Level{NumState,NumDiagnostic,NumTemp}
     const index::Int
     num_interior_points::Int  # num of interior grid points
     const num_ghost_points::Int  # num of ghost points on each side
@@ -88,8 +89,9 @@ mutable struct Level{NumState,NumDiagnostic}
 
     # diagnostic variables
     const diagnostic_state::Matrix{Float64} # state vectors for diagnostic variables
+    const tmp_state::Matrix{Float64} # temporary state for evaluation of rhs and diagnostic variables
 
-    function Level{NumState,NumDiagnostic}(
+    function Level{NumState,NumDiagnostic,NumTemp}(
         index,
         num_interior_points,
         num_ghost_points,
@@ -102,7 +104,7 @@ mutable struct Level{NumState,NumDiagnostic}
         dt,
         t,
         parent_indices,
-    ) where {NumState,NumDiagnostic}
+    ) where {NumState,NumDiagnostic,NumTemp}
         is_physical_boundary = (
             isapprox_tol(domain_box[1], physical_domain_box[1]),
             isapprox_tol(domain_box[2], physical_domain_box[2]),
@@ -131,8 +133,9 @@ mutable struct Level{NumState,NumDiagnostic}
             (-num_left_boundary_points + 1):(num_interior_points + num_right_boundary_points)
         num_left_transition_points = is_physical_boundary[1] ? 0 : num_transition_points
         num_right_transition_points = is_physical_boundary[2] ? 0 : num_transition_points
+        tmp_state = fill(NaN, num_total_points, NumTemp)
 
-        return new{NumState,NumDiagnostic}(
+        return new{NumState,NumDiagnostic,NumTemp}(
             index,
             num_interior_points,
             num_ghost_points,
@@ -157,6 +160,7 @@ mutable struct Level{NumState,NumDiagnostic}
             k,
             Yn_buffer,
             diag_state,
+            tmp_state,
         )
     end
 end
@@ -281,6 +285,16 @@ function get_diagnostic_state(level::Level)
 end
 
 """
+    get_tmp_state(level::Level)
+
+Return the temporary state variables of the `level` as an `OffsetArray`.
+"""
+function get_tmp_state(level::Level)
+    (; tmp_state, offset_indices) = level
+    return OffsetArray(tmp_state, offset_indices, :)
+end
+
+"""
     cycle_state!(level::Level)
 
 Shift the time levels of the state variables in a `Level`. `state[i]` becomes
@@ -324,25 +338,26 @@ function fine_to_coarse_index(fine_level::Level, fidx::Int)
 end
 
 """
-    Grid{NumState, NumDiagnostic}
+    Grid{NumState,NumDiagnostic,NumTemp}
 
 A struct representing the entire FMR grid, which consists of multiple `Level`s.
 
 # Type Parameters
 - `NumState`: Number of state variables.
 - `NumDiagnostic`: Number of diagnostic variables.
+- `NumTemp`: Number of temporary variables (for evaluation of rhs and diagnostic variables).
 
 # Fields
 - `num_levels::Int`: The total number of refinement levels.
-- `levels::Vector{Level{NumState,NumDiagnostic}}`: A vector of `Level` objects.
+- `levels::Vector{Level{NumState,NumDiagnostic,NumTemp}}`: A vector of `Level` objects.
 - `base_dt::Float64`: The time step of the coarsest level.
 - `t::Float64`: The current time of the simulation.
 - `subcycling::Bool`: A boolean indicating whether subcycling in time is enabled.
 
 """
-mutable struct Grid{NumState,NumDiagnostic}
+mutable struct Grid{NumState,NumDiagnostic,NumTemp}
     num_levels::Int
-    levels::Vector{Level{NumState,NumDiagnostic}}
+    levels::Vector{Level{NumState,NumDiagnostic,NumTemp}}
     base_dt::Float64
     t::Float64
     subcycling::Bool  # turn on subcycling or not
@@ -350,7 +365,7 @@ mutable struct Grid{NumState,NumDiagnostic}
     spatial_interpolation_buffer::Vector{Array{Float64,2}}
 
     """
-        Grid{NumState,NumDiagnostic}(
+        Grid{NumState,NumDiagnostic,NumTemp}(
             base_level_num_points,
             domain_boxes,
             num_ghost_points,
@@ -374,7 +389,7 @@ mutable struct Grid{NumState,NumDiagnostic}
     - `initial_time::Float64=0.0`: Initial time of the simulation.
     - `subcycling::Bool=true`: Enable subcycling in time.
     """
-    function Grid{NumState,NumDiagnostic}(
+    function Grid{NumState,NumDiagnostic,NumTemp}(
         base_level_num_points,  # num of interior grid points at base level
         domain_boxes::Vector{Tuple{Float64,Float64}},
         num_ghost_points,
@@ -385,7 +400,7 @@ mutable struct Grid{NumState,NumDiagnostic}
         cfl=0.25,
         initial_time=0.0,
         subcycling=true,
-    ) where {NumState,NumDiagnostic}
+    ) where {NumState,NumDiagnostic,NumTemp}
         num_levels = length(domain_boxes)
         physical_domain_box = domain_boxes[1]
 
@@ -396,7 +411,7 @@ mutable struct Grid{NumState,NumDiagnostic}
         else
             cfl * base_dx / 2^(num_levels - 1)
         end
-        base_level = Level{NumState,NumDiagnostic}(
+        base_level = Level{NumState,NumDiagnostic,NumTemp}(
             1,
             base_level_num_points,
             num_ghost_points,
@@ -465,7 +480,7 @@ mutable struct Grid{NumState,NumDiagnostic}
             end
 
             # build level
-            level = Level{NumState,NumDiagnostic}(
+            level = Level{NumState,NumDiagnostic,NumTemp}(
                 l,
                 level_num_interior_points,
                 num_ghost_points,
@@ -500,7 +515,7 @@ mutable struct Grid{NumState,NumDiagnostic}
         spatial_interpolation_buffer = [fill(NaN, num_buffer_points, NumState) for _ in 1:4]
 
         # construct
-        return new{NumState,NumDiagnostic}(
+        return new{NumState,NumDiagnostic,NumTemp}(
             num_levels,
             levels,
             base_dt,
@@ -518,8 +533,8 @@ end
 Display a compact summary of the `Grid`.
 """
 function Base.show(
-    io::IO, grid::Grid{NumState,NumDiagnostic}
-) where {NumState,NumDiagnostic}
+    io::IO, grid::Grid{NumState,NumDiagnostic,NumTemp}
+) where {NumState,NumDiagnostic,NumTemp}
     return print(
         io, "Grid{$NumState, $NumDiagnostic} with $(grid.num_levels) levels at t=$(grid.t)"
     )
@@ -531,8 +546,8 @@ end
 Display a detailed summary of the `Grid` structure.
 """
 function Base.show(
-    io::IO, ::MIME"text/plain", grid::Grid{NumState,NumDiagnostic}
-) where {NumState,NumDiagnostic}
+    io::IO, ::MIME"text/plain", grid::Grid{NumState,NumDiagnostic,NumTemp}
+) where {NumState,NumDiagnostic,NumTemp}
     println(
         io, "Grid{$NumState, $NumDiagnostic} with $(grid.num_levels) levels at t=$(grid.t):"
     )
@@ -570,8 +585,8 @@ end
 Display a detailed summary of the `Level`.
 """
 function Base.show(
-    io::IO, ::MIME"text/plain", level::Level{NumState,NumDiagnostic}
-) where {NumState,NumDiagnostic}
+    io::IO, ::MIME"text/plain", level::Level{NumState,NumDiagnostic,NumTemp}
+) where {NumState,NumDiagnostic,NumTemp}
     println(io, "Level{$NumState, $NumDiagnostic}:")
     println(io, "  Index:                 ", level.index)
     println(io, "  Domain:                ", level.domain_box)
