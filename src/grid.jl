@@ -41,6 +41,7 @@ A struct representing a single refinement level in the mesh.
 - `NumDiagnostic`: Number of diagnostic variables.
 
 # Fields
+- `index::Int`: Index of the level.
 - `num_interior_points::Int`: Number of interior grid points.
 - `num_ghost_points::Int`: Number of ghost points on each side.
 - `num_buffer_points::Int`: Number of buffer points on each side for inter-level communication.
@@ -59,6 +60,7 @@ A struct representing a single refinement level in the mesh.
 - `offset_indices::UnitRange{Int}`: Range of indices for `OffsetArray`s of this level.
 """
 mutable struct Level{NumState,NumDiagnostic}
+    const index::Int
     num_interior_points::Int  # num of interior grid points
     const num_ghost_points::Int  # num of ghost points on each side
     const num_buffer_points::Int # num of buffer points on each side
@@ -90,6 +92,7 @@ mutable struct Level{NumState,NumDiagnostic}
     const diagnostic_state::Matrix{Float64} # state vectors for diagnostic variables
 
     function Level{NumState,NumDiagnostic}(
+        index,
         num_interior_points,
         num_ghost_points,
         num_buffer_points,
@@ -133,6 +136,7 @@ mutable struct Level{NumState,NumDiagnostic}
         num_right_transition_points = is_physical_boundary[2] ? 0 : num_transition_points
 
         return new{NumState,NumDiagnostic}(
+            index,
             num_interior_points,
             num_ghost_points,
             num_buffer_points,
@@ -391,6 +395,7 @@ mutable struct Grid{NumState,NumDiagnostic}
             cfl * base_dx / 2^(num_levels - 1)
         end
         base_level = Level{NumState,NumDiagnostic}(
+            1,
             base_level_num_points,
             num_ghost_points,
             num_buffer_points,
@@ -460,6 +465,7 @@ mutable struct Grid{NumState,NumDiagnostic}
 
             # build level
             level = Level{NumState,NumDiagnostic}(
+                l,
                 level_num_interior_points,
                 num_ghost_points,
                 num_buffer_points,
