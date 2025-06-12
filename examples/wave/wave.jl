@@ -63,18 +63,18 @@ function wave_energy(grid)
 
     diag_state = get_diagnostic_state(base_level)
     rho = @view(diag_state[:, 1])
+    tmp_state = get_tmp_state(base_level)
+    dpsi = @view(tmp_state[:, 1])
 
-    interior_indices = get_interior_indices(base_level)
+    idx = get_interior_indices(base_level)
 
-    @inbounds for i in interior_indices
-        # 4th order finite difference
-        dpsi = (psi[i - 2] - 8 * psi[i - 1] + 8 * psi[i + 1] - psi[i + 2]) / (12 * dx)
-        rho[i] = (0.5 * Pi[i] * Pi[i] + 0.5 * dpsi * dpsi)
-    end
+    @.. dpsi[idx] =
+        (psi[idx .- 2] - 8 * psi[idx .- 1] + 8 * psi[idx .+ 1] - psi[idx .+ 2]) / (12 * dx)
+    @.. rho[idx] = (0.5 * Pi[idx] * Pi[idx] + 0.5 * dpsi[idx] * dpsi[idx])
 
     # TODO: improve trapezoidal rule for boundary points
-    first_idx = first(interior_indices)
-    last_idx = last(interior_indices)
+    first_idx = first(idx)
+    last_idx = last(idx)
     indices = (first_idx + 1):(last_idx - 1)
     E =
         sum(@view(rho[indices])) * dx +
