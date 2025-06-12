@@ -406,7 +406,6 @@ mutable struct Grid{NumState,NumDiagnostic}
             physical_domain_box,
             base_dt,
             initial_time,
-            true,
             (0:0),
         )
         levels = [base_level]
@@ -476,7 +475,6 @@ mutable struct Grid{NumState,NumDiagnostic}
                 physical_domain_box,
                 level_dt,
                 initial_time,
-                false,
                 parent_indices,
             )
             # ensure level is properly embedded in parent level
