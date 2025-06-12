@@ -227,7 +227,7 @@ function apply_transition_zone!(
     kc = [get_rk_stage(coarse_level, i) for i in 1:4]
 
     aligned_buffer = MVector{NumState,Float64}(undef)
-    spatial_buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
+    spatial_buffer = grid.spatial_interpolation_buffer[1]
 
     fine_x = get_x(fine_level)
 
@@ -335,9 +335,7 @@ function prolongate_mongwane!(
     Yn_buffer = fine_level.Yn_buffer
 
     # buffer points for spatial interpolation
-    spatial_buffer = [
-        zeros(Float64, num_spatial_interpolation_points, NumState) for _ in 1:4
-    ]
+    spatial_buffer = grid.spatial_interpolation_buffer
 
     # Yn buffer
     dytmp = [MVector{NumState,Float64}(undef) for _ in 1:3]
