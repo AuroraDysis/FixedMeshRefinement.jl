@@ -11,8 +11,10 @@ the buffer is filled with `NaN` to avoid accidental reuse.
 - `u`: The solution array with ghost cells to be filled.
 - `level::Level`: The grid level.
 - `stage::Int`: The RK stage index.
+- `fill_with_nan::Bool`: If `true`, fill the buffer with `NaN` to avoid accidental reuse.
+  Defaults to `true`.
 """
-function fill_buffer!(u, level::Level, stage::Int)
+function fill_buffer!(u, level::Level, stage::Int; fill_with_nan::Bool=true)
     (; Yn_buffer, num_boundary_points, is_physical_boundary) = level
     Yn = Yn_buffer[stage]
     boundary_indices = get_boundary_indices(level)
@@ -25,7 +27,12 @@ function fill_buffer!(u, level::Level, stage::Int)
             u[idx, :] .= @view(Yn[i, :, dir])
         end
     end
-    Yn .= NaN
+
+    # fill with NaN to avoid accidental reuse
+    if fill_with_nan
+        Yn .= NaN
+    end
+
     return nothing
 end
 
