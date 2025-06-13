@@ -49,7 +49,6 @@ The result is stored in `res`.
 - `u`: A vector of states at different time levels, ordered from oldest to newest.
 - `order::Int`: The order of time interpolation (1 through 4 are supported).
 """
-# u from oldest to newest
 function time_interpolate!(res, u, order)
     length(u) == order + 1 || error("Length of u must be equal to order + 1")
 
@@ -196,8 +195,8 @@ a prolonged solution from the coarse grid.
 - `interp_in_time::Bool`: Whether to use time interpolation.
 """
 function apply_transition_zone!(grid::Grid, l::Int, interp_in_time::Bool)
-    fine_level = grid.levels[l]
-    coarse_level = grid.levels[l - 1]
+    fine_level = get_level(grid, l)
+    coarse_level = get_level(grid, l - 1)
 
     (;
         num_interior_points,
@@ -288,11 +287,6 @@ function apply_transition_zone!(grid::Grid, l::Int, interp_in_time::Bool)
     end
 end
 
-#===============================================================================
-prolongate_mongwane!: use Mongwane's method
-    * from level l-1 to level l
-    * we assume that we always march coarse level first (for l in 2:lmax)
-===============================================================================#
 """
     prolongate_mongwane!(grid::Grid, l::Int, interp_in_time::Bool)
 
@@ -306,8 +300,8 @@ when subcycling is enabled.
 - `interp_in_time::Bool`: Whether to use time interpolation for the coarse grid state.
 """
 function prolongate_mongwane!(grid::Grid, l::Int, interp_in_time::Bool)
-    fine_level = grid.levels[l]
-    coarse_level = grid.levels[l - 1]
+    fine_level = get_level(grid, l)
+    coarse_level = get_level(grid, l - 1)
 
     (; num_boundary_points, spatial_interpolation_order, is_physical_boundary) = fine_level
 
@@ -383,12 +377,6 @@ function prolongate_mongwane!(grid::Grid, l::Int, interp_in_time::Bool)
     return nothing
 end
 
-#===============================================================================
-prolongate!:
-    * from level l-1 to level l
-    * we assume that we always march coarse level first (for l in 2:lmax)
-    * time interpolation is used when time_interpolation_order > 0
-===============================================================================#
 """
     prolongate!(grid::Grid, l::Int, interp_in_time::Bool)
 
@@ -402,8 +390,8 @@ in space and, optionally, in time.
 - `interp_in_time::Bool`: Whether to use time interpolation.
 """
 function prolongate!(grid::Grid, l::Int, interp_in_time::Bool)
-    fine_level = grid.levels[l]
-    coarse_level = grid.levels[l - 1]
+    fine_level = get_level(grid, l)
+    coarse_level = get_level(grid, l - 1)
 
     (;
         num_boundary_points,
