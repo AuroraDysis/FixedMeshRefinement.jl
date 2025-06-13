@@ -14,10 +14,6 @@ include("output_csv.jl")
 include("output_checkpoint.jl")
 include("wave.jl")
 
-const NumState = 2
-const NumDiagnostic = 1
-const NumTemp = 3
-
 function get(params, key, default)
     return haskey(params, key) ? params[key] : default
 end
@@ -78,6 +74,10 @@ function main(params, out_dir; grid=nothing, start_step=1)
     ########################
     p = (; dissipation)
     if isnothing(grid)
+        num_state_variables = 2
+        num_diagnostic_variables = 1
+        num_tmp_variables = 3
+
         num_interior_points = params["num_interior_points"]
         num_ghost_points = params["num_ghost_points"]
         num_buffer_points = get(params, "num_buffer_points", 4 * num_ghost_points)
@@ -88,13 +88,13 @@ function main(params, out_dir; grid=nothing, start_step=1)
         initial_data = get(params, "initial_data", "gaussian")
 
         grid = Grid(
-            NumState,
+            num_state_variables,
             num_interior_points,
             domain_boxes,
             num_ghost_points,
             num_buffer_points;
-            num_diagnostic_variables=NumDiagnostic,
-            num_tmp_variables=NumTemp,
+            num_diagnostic_variables=num_diagnostic_variables,
+            num_tmp_variables=num_tmp_variables,
             num_transition_points=num_transition_points,
             spatial_interpolation_order=spatial_interpolation_order,
             cfl=cfl,
