@@ -4,7 +4,6 @@ using .FixedMeshRefinement
 using Printf
 using TOML
 using JLD2
-using StaticArrays
 using FastBroadcast
 
 include("boundary.jl")
@@ -141,7 +140,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
     E0 = wave_energy(grid)
     @printf("t = %.4f, iteration %d. E = %.17f\n", grid.t, start_step - 1, E0)
     if start_step == 1
-        write_row(out_csv, SVector{2,Float64}(grid.t, wave_energy(grid)))
+        write_row(out_csv, (grid.t, wave_energy(grid)))
         append_data(out_h5, grid)
     end
 

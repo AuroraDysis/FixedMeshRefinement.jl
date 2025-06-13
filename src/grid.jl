@@ -602,8 +602,7 @@ end
 Display a detailed summary of the `Level`.
 """
 function Base.show(io::IO, ::MIME"text/plain", level::Level)
-    println(io, "Level:")
-    println(io, "  Index:                 ", level.index)
+    println(io, "Level $(level.index):")
     println(io, "  State variables:       ", level.num_state_variables)
     println(io, "  Diagnostic variables:  ", level.num_diagnostic_variables)
     println(io, "  Temporary variables:   ", level.num_tmp_variables)

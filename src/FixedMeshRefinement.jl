@@ -1,7 +1,6 @@
 module FixedMeshRefinement
 
 using LinearAlgebra
-using StaticArrays
 using OffsetArrays
 using FastBroadcast
 
