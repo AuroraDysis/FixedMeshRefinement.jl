@@ -60,12 +60,12 @@ mutable struct OutputHDF5
                     state_chunk = (num_points, num_state_variables, 1) # chunked by time slice
                     create_dataset(g, "state", Float64, state_ds_space; chunk=state_chunk)
 
-                    if NumDiagnostic > 0
+                    if num_diagnostic_variables > 0
                         diagnostic_ds_space = HDF5.dataspace(
-                            (num_points, NumDiagnostic, 0);
-                            max_dims=(num_points, NumDiagnostic, -1),
+                            (num_points, num_diagnostic_variables, 0);
+                            max_dims=(num_points, num_diagnostic_variables, -1),
                         )
-                        diagnostic_chunk = (num_points, NumDiagnostic, 1)
+                        diagnostic_chunk = (num_points, num_diagnostic_variables, 1)
                         create_dataset(
                             g,
                             "diagnostic",
