@@ -135,7 +135,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
         show(stdout, MIME("text/plain"), grid.levels[l])
     end
 
-    out_csv = OutputCSV(joinpath(out_dir, "output.csv"), @SVector["t", "E"])
+    out_csv = OutputCSV(joinpath(out_dir, "output.csv"), ["t", "E"])
     out_h5 = OutputHDF5(joinpath(out_dir, "data.h5"), grid)
 
     E0 = wave_energy(grid)
@@ -158,7 +158,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
         @printf("t = %.4f, iteration %d. dE = %.5g\n", grid.t, step, wave_energy(grid) - E0)
 
         if out_every_0d > 0 && mod(step, out_every_0d) == 0
-            write_row(out_csv, SVector{2,Float64}(grid.t, wave_energy(grid)))
+            write_row(out_csv, (grid.t, wave_energy(grid)))
         end
 
         if out_every_1d > 0 && mod(step, out_every_1d) == 0
