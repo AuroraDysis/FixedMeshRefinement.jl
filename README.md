@@ -30,7 +30,7 @@ julia main.jl ./config/wave_3levels_mid_patch_mongwane.toml
 
 # Acknowledgments
 
-This package was originally adapted from [lwJi/Infino.jl](https://github.com/lwJi/Infino.jl), created by [lwJi](https://github.com/lwJi). Another useful resource is [JLRipley314/one-dim-amr: A simple one-dimensional AMR code](https://github.com/JLRipley314/one-dim-amr).
+This package was originally adapted from [lwJi/Infino.jl](https://github.com/lwJi/Infino.jl), created by [lwJi](https://github.com/lwJi). Other useful resources are [JLRipley314/one-dim-amr: A simple one-dimensional AMR code](https://github.com/JLRipley314/one-dim-amr) and [AMReX-Codes/amrex: AMReX: Software Framework for Block Structured AMR](https://github.com/AMReX-Codes/amrex).
 
 # References
 
