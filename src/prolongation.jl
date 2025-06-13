@@ -425,7 +425,7 @@ function prolongate!(grid::Grid, l::Int, interp_in_time::Bool)
     uc_p = get_state(coarse_level, -1)
     boundary_indices = get_boundary_indices(fine_level)
 
-    buffer = grid.spatial_interpolation_buffer[1]
+    spatial_buffer = grid.spatial_interpolation_buffer[1]
 
     # dir: 1: left, 2: right
     for dir in 1:2
@@ -458,13 +458,18 @@ function prolongate!(grid::Grid, l::Int, interp_in_time::Bool)
                         ]
                         # time interpolation
                         time_interpolate!(
-                            @view(buffer[ic, :]), time_data, time_interpolation_order
+                            @view(spatial_buffer[ic, :]),
+                            time_data,
+                            time_interpolation_order,
                         )
                     end
                     # spatial interpolation
                     spatial_interpolate!(
                         @view(uf[fidx, :]),
-                        [@view(buffer[m, :]) for m in 1:num_spatial_interpolation_points],
+                        [
+                            @view(spatial_buffer[m, :]) for
+                            m in 1:num_spatial_interpolation_points
+                        ],
                         soffset,
                         spatial_interpolation_order,
                     )
