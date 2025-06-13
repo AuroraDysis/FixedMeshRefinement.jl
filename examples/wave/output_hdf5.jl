@@ -21,16 +21,14 @@ mutable struct OutputHDF5
     truncate an existing one) and set up the necessary groups and extendible
     datasets based on the initial grid structure.
     """
-    function OutputHDF5(
-        filepath::String, grid::Grid{NumState,NumDiagnostic,NumTemp}
-    ) where {NumState,NumDiagnostic,NumTemp}
+    function OutputHDF5(filepath::String, grid::Grid)
         # Ensure the directory exists
         dir = dirname(filepath)
         if !isdir(dir)
             mkpath(dir)
         end
 
-        (; num_levels, levels) = grid
+        (; num_levels, levels, num_state_variables, num_diagnostic_variables) = grid
 
         local file::HDF5.File
         if isfile(filepath)
@@ -56,9 +54,10 @@ mutable struct OutputHDF5
                     create_dataset(g, "t", Float64, t_ds_space; chunk=t_chunk)
 
                     state_ds_space = HDF5.dataspace(
-                        (num_points, NumState, 0); max_dims=(num_points, NumState, -1)
+                        (num_points, num_state_variables, 0);
+                        max_dims=(num_points, num_state_variables, -1),
                     )
-                    state_chunk = (num_points, NumState, 1) # chunked by time slice
+                    state_chunk = (num_points, num_state_variables, 1) # chunked by time slice
                     create_dataset(g, "state", Float64, state_ds_space; chunk=state_chunk)
 
                     if NumDiagnostic > 0
@@ -92,10 +91,8 @@ end
 
 Append a new time slice of data from the grid to the HDF5 file.
 """
-function append_data(
-    out::OutputHDF5, grid::Grid{NumState,NumDiagnostic,NumTemp}
-) where {NumState,NumDiagnostic,NumTemp}
-    (; num_levels, levels) = grid
+function append_data(out::OutputHDF5, grid::Grid)
+    (; num_levels, levels, num_state_variables, num_diagnostic_variables) = grid
 
     for l in 1:num_levels
         level = levels[l]
@@ -128,12 +125,14 @@ function append_data(
 
         # Append state
         dset_state = g["state"]
-        HDF5.set_extent_dims(dset_state, (num_points, NumState, new_len))
+        HDF5.set_extent_dims(dset_state, (num_points, num_state_variables, new_len))
         dset_state[:, :, new_len] = parent(state)
 
         # Append diagnostic
         dset_diagnostic = g["diagnostic"]
-        HDF5.set_extent_dims(dset_diagnostic, (num_points, NumDiagnostic, new_len))
+        HDF5.set_extent_dims(
+            dset_diagnostic, (num_points, num_diagnostic_variables, new_len)
+        )
         dset_diagnostic[:, :, new_len] = parent(diagnostic)
     end
 end

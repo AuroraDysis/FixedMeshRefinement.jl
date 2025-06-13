@@ -14,9 +14,7 @@ coarse grid points.
 - `apply_trans_zone::Bool`: If `true`, the restriction is only applied outside of the
   transition zones. Defaults to `false`.
 """
-function restrict_injection!(
-    grid::Grid{NumState,NumDiagnostic,NumTemp}, l::Int; apply_trans_zone=false
-) where {NumState,NumDiagnostic,NumTemp}
+function restrict_injection!(grid::Grid, l::Int; apply_trans_zone=false)
     fine_level = grid.levels[l + 1]
     coarse_level = grid.levels[l]
 

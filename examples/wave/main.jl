@@ -22,7 +22,7 @@ function get(params, key, default)
     return haskey(params, key) ? params[key] : default
 end
 
-function nan_check(grid::Grid{NumState,NumDiagnostic,NumTemp}) where {NumState,NumDiagnostic,NumTemp}
+function nan_check(grid::Grid)
     has_nan = false
     for l in 1:(grid.num_levels)
         level = grid.levels[l]
@@ -37,7 +37,7 @@ function nan_check(grid::Grid{NumState,NumDiagnostic,NumTemp}) where {NumState,N
             println("  num_boundary_points: ", num_boundary_points)
             println("  parent_indices: ", parent_indices)
             println("  is_physical_boundary: ", is_physical_boundary)
-            for i in 1:NumState
+            for i in 1:(level.num_state_variables)
                 println(
                     "  nan_points $(i): ", interior_indices[isnan.(u[interior_indices, i])]
                 )
@@ -87,11 +87,14 @@ function main(params, out_dir; grid=nothing, start_step=1)
         spatial_interpolation_order = get(params, "spatial_interpolation_order", 5)
         initial_data = get(params, "initial_data", "gaussian")
 
-        grid = Grid{NumState,NumDiagnostic,NumTemp}(
+        grid = Grid(
+            NumState,
             num_interior_points,
             domain_boxes,
             num_ghost_points,
             num_buffer_points;
+            num_diagnostic_variables=NumDiagnostic,
+            num_tmp_variables=NumTemp,
             num_transition_points=num_transition_points,
             spatial_interpolation_order=spatial_interpolation_order,
             cfl=cfl,

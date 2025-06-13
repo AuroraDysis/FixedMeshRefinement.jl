@@ -195,9 +195,7 @@ a prolonged solution from the coarse grid.
 - `l::Int`: The fine level index.
 - `interp_in_time::Bool`: Whether to use time interpolation.
 """
-function apply_transition_zone!(
-    grid::Grid, l::Int, interp_in_time::Bool
-)
+function apply_transition_zone!(grid::Grid, l::Int, interp_in_time::Bool)
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
@@ -226,7 +224,8 @@ function apply_transition_zone!(
 
     kc = [get_rk_stage(coarse_level, i) for i in 1:4]
 
-    aligned_buffer = MVector{NumState,Float64}(undef)
+    # TODO: preallocate in grid
+    aligned_buffer = zeros(Float64, fine_level.num_state_variables)
     spatial_buffer = grid.spatial_interpolation_buffer[1]
 
     fine_x = get_x(fine_level)
@@ -307,9 +306,7 @@ when subcycling is enabled.
 - `l::Int`: The fine level index.
 - `interp_in_time::Bool`: Whether to use time interpolation for the coarse grid state.
 """
-function prolongate_mongwane!(
-    grid::Grid{NumState,NumDiagnostic,NumTemp}, l::Int, interp_in_time::Bool
-) where {NumState,NumDiagnostic,NumTemp}
+function prolongate_mongwane!(grid::Grid, l::Int, interp_in_time::Bool)
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
@@ -338,7 +335,8 @@ function prolongate_mongwane!(
     spatial_buffer = grid.spatial_interpolation_buffer
 
     # Yn buffer
-    dytmp = [MVector{NumState,Float64}(undef) for _ in 1:3]
+    # TODO: preallocate in grid
+    dytmp = [zeros(Float64, fine_level.num_state_variables) for _ in 1:3]
 
     # dir: 1: left, 2: right
     for dir in 1:2

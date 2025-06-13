@@ -1,6 +1,4 @@
-function apply_reflective_boundary_condition!(
-    grid::Grid{NumState,NumDiagnostic,NumTemp}
-) where {NumState,NumDiagnostic,NumTemp}
+function apply_reflective_boundary_condition!(grid::Grid)
     (; num_levels, levels) = grid
 
     for l in 1:num_levels
@@ -27,9 +25,7 @@ function apply_reflective_boundary_condition!(
     return nothing
 end
 
-function apply_reflective_boundary_condition_rhs!(
-    level::Level{NumState,NumDiagnostic,NumTemp}, rhs
-) where {NumState,NumDiagnostic,NumTemp}
+function apply_reflective_boundary_condition_rhs!(level::Level, rhs)
     (; num_interior_points, num_boundary_points, is_physical_boundary) = level
 
     boundary_indices = get_boundary_indices(level)
