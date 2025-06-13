@@ -13,7 +13,9 @@ export Level,
     get_total_grid_points,
     get_maximum_grid_points,
     cycle_state!,
-    fine_to_coarse_index
+    fine_to_coarse_index,
+    get_num_levels,
+    get_level
 
 # Find the index of the nearest value in a sorted array
 """
@@ -351,7 +353,6 @@ end
 A struct representing the entire FMR grid, which consists of multiple `Level`s.
 
 # Fields
-- `num_levels::Int`: The total number of refinement levels.
 - `levels::Vector{Level}`: A vector of `Level` objects.
 - `base_dt::Float64`: The time step of the coarsest level.
 - `t::Float64`: The current time of the simulation.
@@ -359,11 +360,10 @@ A struct representing the entire FMR grid, which consists of multiple `Level`s.
 
 """
 mutable struct Grid
-    num_levels::Int
     const num_state_variables::Int
     const num_diagnostic_variables::Int
     const num_tmp_variables::Int
-    levels::Vector{Level}
+    const levels::Vector{Level}
     base_dt::Float64
     t::Float64
     subcycling::Bool  # turn on subcycling or not
@@ -537,7 +537,6 @@ mutable struct Grid
 
         # construct
         return new(
-            num_levels,
             num_state_variables,
             num_diagnostic_variables,
             num_tmp_variables,
@@ -552,13 +551,22 @@ mutable struct Grid
     end
 end
 
+function get_num_levels(grid::Grid)
+    return length(grid.levels)
+end
+
+function get_level(grid::Grid, l::Int)
+    return grid.levels[l]
+end
+
 """
     Base.show(io::IO, grid::Grid)
 
 Display a compact summary of the `Grid`.
 """
 function Base.show(io::IO, grid::Grid)
-    return print(io, "Grid with $(grid.num_levels) levels at t=$(grid.t)")
+    num_levels = get_num_levels(grid)
+    return print(io, "Grid with $num_levels levels at t=$(grid.t)")
 end
 
 """
@@ -567,12 +575,13 @@ end
 Display a detailed summary of the `Grid` structure.
 """
 function Base.show(io::IO, ::MIME"text/plain", grid::Grid)
-    println(io, "Grid with $(grid.num_levels) levels at t=$(grid.t):")
+    num_levels = get_num_levels(grid)
+    println(io, "Grid with $num_levels levels at t=$(grid.t):")
     println(io, "  Subcycling: ", grid.subcycling)
     println(io, "  Base dt:    ", grid.base_dt)
     println(io, "Levels:")
-    for i in 1:(grid.num_levels)
-        println(io, "  [$i]: ", grid.levels[i])
+    for i in 1:num_levels
+        println(io, "  [$i]: ", get_level(grid, i))
     end
 end
 

@@ -19,8 +19,9 @@ end
 
 function nan_check(grid::Grid)
     has_nan = false
-    for l in 1:(grid.num_levels)
-        level = grid.levels[l]
+    num_levels = get_num_levels(grid)
+    for l in 1:num_levels
+        level = get_level(grid, l)
         u = get_state(level)
         (; num_boundary_points, parent_indices, is_physical_boundary) = level
         interior_indices = get_interior_indices(level)
@@ -130,8 +131,9 @@ function main(params, out_dir; grid=nothing, start_step=1)
     end
 
     # print grid
-    for l in 1:(grid.num_levels)
-        show(stdout, MIME("text/plain"), grid.levels[l])
+    num_levels = get_num_levels(grid)
+    for l in 1:num_levels
+        show(stdout, MIME("text/plain"), get_level(grid, l))
     end
 
     out_csv = OutputCSV(joinpath(out_dir, "output.csv"), ["t", "E"])

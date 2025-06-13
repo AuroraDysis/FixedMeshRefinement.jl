@@ -167,10 +167,10 @@ function shift_grid_boundaries!(
             DEFAULT_FILL_EXTENDED_GRID_EXTRAPOLATION_ORDER,
         ),
 )
-    (; num_levels, levels) = grid
+    num_levels = get_num_levels(grid)
 
     for l in 2:num_levels
-        level = levels[l]
+        level = get_level(grid, l)
         if (num_shift_points[1] != 0 && !level.is_physical_boundary[1]) ||
             (num_shift_points[2] != 0 && !level.is_physical_boundary[2])
             error(
@@ -180,7 +180,7 @@ function shift_grid_boundaries!(
     end
 
     for l in 1:num_levels
-        level = levels[l]
+        level = get_level(grid, l)
         left_shift_points = num_shift_points[1] * 2^(l - 1)
         right_shift_points = num_shift_points[2] * 2^(l - 1)
         shift_level_boundaries!(

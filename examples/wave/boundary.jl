@@ -1,8 +1,8 @@
 function apply_reflective_boundary_condition!(grid::Grid)
-    (; num_levels, levels) = grid
+    num_levels = get_num_levels(grid)
 
     for l in 1:num_levels
-        level = levels[l]
+        level = get_level(grid, l)
         u = get_state(level)
         (; num_interior_points, num_boundary_points, is_physical_boundary) = level
 

@@ -28,7 +28,8 @@ mutable struct OutputHDF5
             mkpath(dir)
         end
 
-        (; num_levels, levels, num_state_variables, num_diagnostic_variables) = grid
+        (; num_state_variables, num_diagnostic_variables) = grid
+        num_levels = get_num_levels(grid)
 
         local file::HDF5.File
         if isfile(filepath)
@@ -38,7 +39,7 @@ mutable struct OutputHDF5
 
             try
                 for l in 1:num_levels
-                    level = levels[l]
+                    level = get_level(grid, l)
 
                     x = parent(get_x(level))
                     num_points = length(x)
@@ -81,7 +82,11 @@ mutable struct OutputHDF5
             end
         end
 
-        level_grid_points = get_maximum_grid_points.(levels)
+        level_grid_points = zeros(Int, num_levels)
+        for l in 1:num_levels
+            level = get_level(grid, l)
+            level_grid_points[l] = get_maximum_grid_points(level)
+        end
         return new(filepath, file, level_grid_points)
     end
 end
@@ -92,10 +97,11 @@ end
 Append a new time slice of data from the grid to the HDF5 file.
 """
 function append_data(out::OutputHDF5, grid::Grid)
-    (; num_levels, levels, num_state_variables, num_diagnostic_variables) = grid
+    (; num_state_variables, num_diagnostic_variables) = grid
+    num_levels = get_num_levels(grid)
 
     for l in 1:num_levels
-        level = levels[l]
+        level = get_level(grid, l)
         num_points = out.level_grid_points[l]
         state = get_state(level)
         diagnostic = get_diagnostic_state(level)

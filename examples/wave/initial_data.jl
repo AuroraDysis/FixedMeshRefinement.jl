@@ -3,9 +3,10 @@ Initial Data Types:
     * Gaussian
 ===============================================================================#
 function gaussian!(grid; amp=1.0, sig=0.25, x0=0.0)
-    (; levels, num_levels) = grid
+    num_levels = get_num_levels(grid)
+
     for l in 1:num_levels
-        level = levels[l]
+        level = get_level(grid, l)
         u = get_state(level)
         psi = @view(u[:, 1])
         Pi = @view(u[:, 2])
@@ -21,10 +22,10 @@ function gaussian!(grid; amp=1.0, sig=0.25, x0=0.0)
 end
 
 function sinusoidal!(grid)
-    (; levels, num_levels) = grid
+    num_levels = get_num_levels(grid)
 
     for l in 1:num_levels
-        level = levels[l]
+        level = get_level(grid, l)
 
         u = get_state(level)
         psi = @view(u[:, 1])
@@ -51,13 +52,13 @@ function wave_rhs_backward!(level, r, u, p, t)
 end
 
 function march_backwards!(grid, p)
-    (; levels, num_levels) = grid
+    num_levels = get_num_levels(grid)
 
     for l in 1:num_levels
+        level = get_level(grid, l)
         if l > 1
             prolongate!(grid, l, false)
         end
-        level = levels[l]
         rk4!(level, wave_rhs_backward!, p)
 
         # save new u(-dt) -> u_p, u(0) -> u
@@ -74,7 +75,8 @@ function march_backwards!(grid, p)
     # reset time
     grid.t = 0.0
     for l in 1:num_levels
-        levels[l].t = 0.0
+        level = get_level(grid, l)
+        level.t = 0.0
     end
 
     return nothing
