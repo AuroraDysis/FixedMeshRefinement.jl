@@ -196,8 +196,8 @@ a prolonged solution from the coarse grid.
 - `interp_in_time::Bool`: Whether to use time interpolation.
 """
 function apply_transition_zone!(
-    grid::Grid{NumState,NumDiagnostic,NumTemp}, l::Int, interp_in_time::Bool
-) where {NumState,NumDiagnostic,NumTemp}
+    grid::Grid, l::Int, interp_in_time::Bool
+)
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
@@ -405,9 +405,7 @@ in space and, optionally, in time.
 - `l::Int`: The fine level index.
 - `interp_in_time::Bool`: Whether to use time interpolation.
 """
-function prolongate!(
-    grid::Grid{NumState,NumDiagnostic,NumTemp}, l::Int, interp_in_time::Bool
-) where {NumState,NumDiagnostic,NumTemp}
+function prolongate!(grid::Grid, l::Int, interp_in_time::Bool)
     fine_level = grid.levels[l]
     coarse_level = grid.levels[l - 1]
 
@@ -429,7 +427,7 @@ function prolongate!(
     uc_p = get_state(coarse_level, -1)
     boundary_indices = get_boundary_indices(fine_level)
 
-    buffer = zeros(Float64, num_spatial_interpolation_points, NumState)
+    buffer = grid.spatial_interpolation_buffer[1]
 
     # dir: 1: left, 2: right
     for dir in 1:2
