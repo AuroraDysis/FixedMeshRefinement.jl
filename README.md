@@ -8,6 +8,26 @@
 [![PkgEval](https://JuliaCI.github.io/NanosoldierReports/pkgeval_badges/B/FixedMeshRefinement.svg)](https://JuliaCI.github.io/NanosoldierReports/pkgeval_badges/B/FixedMeshRefinement.html)
 [![Aqua](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
+# Examples
+
+- [Wave](examples/wave/main.jl): Wave equation with reflection boundary condition.
+
+```bash
+cd examples/wave
+
+# 3 levels, with default subcycling, patch is at the left of the domain
+julia main.jl ./config/wave_3levels.toml
+
+# 3 levels, with Mongwane's subcycling, patch is at the left of the domain
+julia main.jl ./config/wave_3levels_mongwane.toml
+
+# 3 levels, with default subcycling, patch is at the middle of the domain
+julia main.jl ./config/wave_3levels_mid_patch.toml
+
+# 3 levels, with Mongwane's subcycling, patch is at the middle of the domain
+julia main.jl ./config/wave_3levels_mid_patch_mongwane.toml
+```
+
 # Acknowledgments
 
 This package was originally adapted from [lwJi/Infino.jl](https://github.com/lwJi/Infino.jl), created by [lwJi](https://github.com/lwJi). Another useful resource is [JLRipley314/one-dim-amr: A simple one-dimensional AMR code](https://github.com/JLRipley314/one-dim-amr).
