@@ -13,8 +13,7 @@ the buffer is filled with `NaN` to avoid accidental reuse.
 - `stage::Int`: The RK stage index.
 """
 function fill_buffer!(u, level::Level, stage::Int)
-    (; Yn_buffer, num_boundary_points, is_physical_boundary) =
-        level
+    (; Yn_buffer, num_boundary_points, is_physical_boundary) = level
     Yn = Yn_buffer[stage]
     boundary_indices = get_boundary_indices(level)
     for dir in 1:2
@@ -26,7 +25,7 @@ function fill_buffer!(u, level::Level, stage::Int)
             u[idx, :] .= @view(Yn[i, :, dir])
         end
     end
-    fill!(Yn, NaN)
+    Yn .= NaN
     return nothing
 end
 
