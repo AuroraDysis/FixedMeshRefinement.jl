@@ -1,9 +1,15 @@
-#===============================================================================
-wave_rhs!:
-    * rhs of wave equation
-        dot(psi) = Pi
-        dot(Pi)  = ddpsi
-===============================================================================#
+"""
+    wave_rhs!(level, rhs, u, p, t)
+
+Calculate the right-hand side of the wave equation.
+
+# Arguments
+- `level::Level`: The level to calculate the right-hand side on.
+- `rhs`: The right-hand side of the wave equation.
+- `u`: The state of the wave equation.
+- `p`: The parameters of the wave equation.
+- `t`: The time.
+"""
 function wave_rhs!(level, rhs, u, p, t)
     psi = @view(u[:, 1])
     Pi = @view(u[:, 2])
@@ -50,11 +56,18 @@ function wave_rhs!(level, rhs, u, p, t)
     return nothing
 end
 
-#===============================================================================
-Energy:
-    * int_xmin^xmax (Pi^2/2 + dpsi^2/2)
-    * calculate on base level (interior) only
-===============================================================================#
+@doc raw"""
+    wave_energy(grid)
+
+Calculate the energy of the wave, which is defined as
+```math
+E = \int_{x_{\text{min}}}^{x_{\text{max}}} \left(\frac{1}{2} \Pi^2 + \frac{1}{2} \left(\frac{d\psi}{dx}\right)^2\right) dx
+```
+The energy is calculated on the base level only.
+
+# Arguments
+- `grid::Grid`: The grid to calculate the energy on.
+"""
 function wave_energy(grid)
     apply_reflective_boundary_condition!(grid)
 

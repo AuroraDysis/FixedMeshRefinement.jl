@@ -63,9 +63,6 @@ function time_interpolate!(res, u, order)
     end
 end
 
-#===============================================================================
-Functions needed by Mongwane's subcycling method
-===============================================================================#
 """
     rk4_dense_output_y!(y, theta, h, yn, k)
 
