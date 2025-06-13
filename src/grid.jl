@@ -369,6 +369,7 @@ mutable struct Grid
     subcycling::Bool  # turn on subcycling or not
     substeps::Vector{Int}
     spatial_interpolation_buffer::Vector{Array{Float64,2}}
+    point_buffer::Vector{Vector{Float64}}
 
     """
         Grid(
@@ -532,6 +533,7 @@ mutable struct Grid
         spatial_interpolation_buffer = [
             fill(NaN, num_spatial_interpolation_points, num_state_variables) for _ in 1:4
         ]
+        point_buffer = [zeros(Float64, num_state_variables) for _ in 1:3]
 
         # construct
         return new(
@@ -545,6 +547,7 @@ mutable struct Grid
             subcycling,
             substeps,
             spatial_interpolation_buffer,
+            point_buffer,
         )
     end
 end

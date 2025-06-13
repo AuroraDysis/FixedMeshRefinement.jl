@@ -224,8 +224,7 @@ function apply_transition_zone!(grid::Grid, l::Int, interp_in_time::Bool)
 
     kc = [get_rk_stage(coarse_level, i) for i in 1:4]
 
-    # TODO: preallocate in grid
-    aligned_buffer = zeros(Float64, fine_level.num_state_variables)
+    y_aligned = grid.point_buffer[1]
     spatial_buffer = grid.spatial_interpolation_buffer[1]
 
     fine_x = get_x(fine_level)
@@ -258,9 +257,9 @@ function apply_transition_zone!(grid::Grid, l::Int, interp_in_time::Bool)
                 kcs = [view(kc[m], cidx, :) for m in 1:4]
                 yn = @view(uc_p[cidx, :])
                 if interp_in_time
-                    rk4_dense_output_y!(aligned_buffer, 0.5, dtc, yn, kcs)
+                    rk4_dense_output_y!(y_aligned, 0.5, dtc, yn, kcs)
                 else
-                    aligned_buffer .= yn
+                    y_aligned .= yn
                 end
             else
                 cidx = fine_to_coarse_index(fine_level, fidx - 1)
@@ -275,7 +274,7 @@ function apply_transition_zone!(grid::Grid, l::Int, interp_in_time::Bool)
                     end
                 end
                 spatial_interpolate!(
-                    aligned_buffer,
+                    y_aligned,
                     [
                         @view(spatial_buffer[ic, :]) for
                         ic in 1:num_spatial_interpolation_points
@@ -284,7 +283,7 @@ function apply_transition_zone!(grid::Grid, l::Int, interp_in_time::Bool)
                     spatial_interpolation_order,
                 )
             end
-            @.. uf[fidx, :] = (1 - w) * aligned_buffer + w * @view(uf[fidx, :])
+            @.. uf[fidx, :] = (1 - w) * y_aligned + w * @view(uf[fidx, :])
         end
     end
 end
@@ -335,8 +334,7 @@ function prolongate_mongwane!(grid::Grid, l::Int, interp_in_time::Bool)
     spatial_buffer = grid.spatial_interpolation_buffer
 
     # Yn buffer
-    # TODO: preallocate in grid
-    dytmp = [zeros(Float64, fine_level.num_state_variables) for _ in 1:3]
+    dytmp = grid.point_buffer
 
     # dir: 1: left, 2: right
     for dir in 1:2
