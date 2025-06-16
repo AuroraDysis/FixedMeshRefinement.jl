@@ -57,7 +57,7 @@ A struct representing a single refinement level in the mesh.
 - `dx::Float64`: Grid spacing.
 - `dt::Float64`: Time step.
 - `t::Float64`: Current time of this level.
-- `parent_indices::UnitRange{Int}`: Range of indices in the parent level that this level covers.
+- `parent_indices::UnitRange{Int}`: Range of indices of the parent level that this level covers.
 - `offset_indices::UnitRange{Int}`: Range of indices for `OffsetArray`s of this level.
 """
 mutable struct Level
