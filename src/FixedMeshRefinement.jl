@@ -13,5 +13,6 @@ include("rk.jl")
 include("step.jl")
 include("excision.jl")
 include("merge.jl")
+include("integrate.jl")
 
 end
