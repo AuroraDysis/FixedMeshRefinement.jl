@@ -60,6 +60,7 @@ Shift the boundary of a `Level` by a given number of points, as a prerequisite, 
 function shift_level_boundaries!(
     level::Level,
     num_shift_points::NTuple{2,Int};
+    shift_parent_indices::Bool=false,
     func_fill_extended::Function=(state, extended_indices, direction) ->
         fill_extended_grid_extrapolate!(
             state,
@@ -113,6 +114,10 @@ function shift_level_boundaries!(
     )
     new_parent_indices = if is_base_level(level)
         0:0
+    elseif shift_parent_indices
+        left_parent_indices = first(parent_indices)
+        right_parent_indices = last(parent_indices) + div(num_shift_points[2], 2) + div(num_shift_points[1], 2)
+        left_parent_indices:right_parent_indices
     else
         left_parent_indices = first(parent_indices) - div(num_shift_points[1], 2)
         right_parent_indices = last(parent_indices) + div(num_shift_points[2], 2)
@@ -186,6 +191,7 @@ function shift_grid_boundaries!(
         shift_level_boundaries!(
             level,
             (left_shift_points, right_shift_points);
+            shift_parent_indices=true,
             func_fill_extended=func_fill_extended,
         )
     end
