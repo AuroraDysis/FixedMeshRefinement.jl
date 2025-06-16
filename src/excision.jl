@@ -58,7 +58,8 @@ end
 Shift the boundary of a `Level` by a given number of points, as a prerequisite, the level must align with the physical boundary.
 """
 function shift_level_boundaries!(
-    level::Level,
+    grid::Grid,
+    l::Int,
     num_shift_points::NTuple{2,Int};
     shift_parent_indices::Bool=false,
     func_fill_extended::Function=(state, extended_indices, direction) ->
@@ -69,6 +70,8 @@ function shift_level_boundaries!(
             DEFAULT_FILL_EXTENDED_GRID_EXTRAPOLATION_ORDER,
         ),
 )
+    level = get_level(grid, l)
+
     (; is_physical_boundary) = level
 
     if (num_shift_points[1] != 0 && !is_physical_boundary[1]) ||
@@ -116,7 +119,8 @@ function shift_level_boundaries!(
         0:0
     elseif shift_parent_indices
         left_parent_indices = first(parent_indices)
-        right_parent_indices = last(parent_indices) + div(num_shift_points[2], 2) + div(num_shift_points[1], 2)
+        right_parent_indices =
+            last(parent_indices) + div(num_shift_points[2], 2) + div(num_shift_points[1], 2)
         left_parent_indices:right_parent_indices
     else
         left_parent_indices = first(parent_indices) - div(num_shift_points[1], 2)
@@ -131,6 +135,34 @@ function shift_level_boundaries!(
     level.physical_domain_box = new_physical_domain_box
     level.parent_indices = new_parent_indices
     level.offset_indices = new_offset_indices
+
+    # check if the parent indices are valid
+    if l > 1
+        parent_level = get_level(grid, l - 1)
+        parent_x = get_x(parent_level)
+        level_domain = level.domain_box
+
+        if !(
+            isapprox_tol(parent_x[new_parent_indices[1]], level_domain[1]) &&
+            isapprox_tol(parent_x[new_parent_indices[end]], level_domain[2])
+        )
+            println("parent_indices = ", new_parent_indices)
+            println("parent_level.dx = ", parent_level.dx)
+            println("parent_level.x = ", parent_x)
+            println("level_domain = ", level_domain)
+
+            error(
+                "Level $(l): Coordinates are not aligned: ",
+                parent_x[new_parent_indices[1]],
+                " != ",
+                level_domain[1],
+                " or ",
+                parent_x[new_parent_indices[end]],
+                " != ",
+                level_domain[2],
+            )
+        end
+    end
 
     # Fill extended regions
     if num_shift_points[1] > 0
@@ -189,7 +221,8 @@ function shift_grid_boundaries!(
         left_shift_points = num_shift_points[1] * 2^(l - 1)
         right_shift_points = num_shift_points[2] * 2^(l - 1)
         shift_level_boundaries!(
-            level,
+            grid,
+            l,
             (left_shift_points, right_shift_points);
             shift_parent_indices=true,
             func_fill_extended=func_fill_extended,
