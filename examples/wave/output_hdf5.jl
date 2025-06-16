@@ -13,6 +13,9 @@ mutable struct OutputHDF5
     path::String
     file::HDF5.File
     level_grid_points::Vector{Int}
+    save_merged_data::Bool
+    max_merged_length::Int
+    merged_vec::Vector{Float64}
 
     """
         OutputHDF5(filepath::String, grid)
@@ -21,7 +24,7 @@ mutable struct OutputHDF5
     truncate an existing one) and set up the necessary groups and extendible
     datasets based on the initial grid structure.
     """
-    function OutputHDF5(filepath::String, grid::Grid)
+    function OutputHDF5(filepath::String, grid::Grid; save_merged_data::Bool=false)
         # Ensure the directory exists
         dir = dirname(filepath)
         if !isdir(dir)
@@ -30,6 +33,7 @@ mutable struct OutputHDF5
 
         (; num_state_variables, num_diagnostic_variables) = grid
         num_levels = get_num_levels(grid)
+        max_merged_length = -1
 
         local file::HDF5.File
         if isfile(filepath)
@@ -76,6 +80,22 @@ mutable struct OutputHDF5
                         )
                     end
                 end
+
+                if save_merged_data
+                    g_merged = create_group(file, "merged_state")
+
+                    x, y = merge_grid_levels(grid, l -> get_state(l)[:, 1])
+                    write(g_merged, "x", collect(x))
+
+                    t_merged_ds_space = HDF5.dataspace((0,); max_dims=(-1,))
+                    t_merged_chunk = (1024,)
+                    create_dataset(g_merged, "t", Float64, t_merged_ds_space; chunk=t_merged_chunk)
+
+                    max_merged_length = max(max_merged_length, length(x))
+                    merged_ds_space = HDF5.dataspace((max_merged_length, 0); max_dims=(max_merged_length, -1))
+                    merged_chunk = (max_merged_length, 1)
+                    create_dataset(g_merged, "psi", Float64, merged_ds_space; chunk=merged_chunk)
+                end
             catch e
                 close(file)
                 rethrow(e)
@@ -87,7 +107,8 @@ mutable struct OutputHDF5
             level = get_level(grid, l)
             level_grid_points[l] = get_maximum_grid_points(level)
         end
-        return new(filepath, file, level_grid_points)
+        merged_vec = zeros(max_merged_length)
+        return new(filepath, file, level_grid_points, save_merged_data, max_merged_length, merged_vec)
     end
 end
 
@@ -140,6 +161,24 @@ function append_data(out::OutputHDF5, grid::Grid)
             dset_diagnostic, (num_points, num_diagnostic_variables, new_len)
         )
         dset_diagnostic[:, :, new_len] = parent(diagnostic)
+    end
+
+    if out.save_merged_data
+        g_merged = out.file["merged_state"]
+
+        dset_merged_t = g_merged["t"]
+        current_len = size(dset_merged_t, 1)
+        new_len = current_len + 1
+        HDF5.set_extent_dims(dset_merged_t, (1, new_len))
+        dset_merged_t[new_len] = grid.t
+
+        dset_merged = g_merged["psi"]
+        HDF5.set_extent_dims(dset_merged, (out.max_merged_length, new_len))
+        x, y = merge_grid_levels(grid, l -> get_state(l)[:, 1])
+        lo_idx = out.max_merged_length - length(y) + 1
+        out.merged_vec[1:lo_idx-1] .= NaN
+        out.merged_vec[lo_idx:end] .= y
+        dset_merged[:, new_len] = out.merged_vec
     end
 end
 

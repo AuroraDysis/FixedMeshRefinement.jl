@@ -137,7 +137,8 @@ function main(params, out_dir; grid=nothing, start_step=1)
     end
 
     out_csv = OutputCSV(joinpath(out_dir, "output.csv"), ["t", "E"])
-    out_h5 = OutputHDF5(joinpath(out_dir, "data.h5"), grid)
+    save_merged_data = get_level(grid, num_levels).is_physical_boundary[1]
+    out_h5 = OutputHDF5(joinpath(out_dir, "data.h5"), grid; save_merged_data=save_merged_data)
 
     E0 = wave_energy(grid)
     @printf("t = %.4f, iteration %d. E = %.17f\n", grid.t, start_step - 1, E0)
