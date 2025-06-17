@@ -14,10 +14,21 @@ function integrate_trapezoidal(grid::Grid, getter::Function)
     length(x) == length(y) || error("x and y vectors must be of the same length!")
     n ≥ 2 || error("vectors must contain at least two elements")
 
-    @inbounds retval = (x[2] - x[1]) * (y[1] + y[2])
-    @inbounds @fastmath @simd for i in 2:(n - 1)
-        retval += (x[i+1] - x[i]) * (y[i] + y[i+1])
+    retval = 0.0
+    for i in 1:blocklength(x)
+        block_x = getblock(x, i)
+        block_y = getblock(y, i)
+
+        dx = block_x[begin+1] - block_x[begin]
+
+        y_prev = i == 1 ? block_y[1] : getblock(y, i - 1)[end]
+        local_retval = i == 1 ? block_y[2] : block_y[1]
+        start_idx = i == 1 ? 3 : 2
+        @inbounds @fastmath @simd for j in start_idx:(length(block_y) - 1)
+            local_retval += block_y[j]
+        end
+        @inbounds retval += dx * (local_retval + (y_prev + block_y[end]) / 2)
     end
 
-    return retval / 2
+    return retval
 end
