@@ -85,16 +85,6 @@ function wave_energy(grid)
         psi = @view(u[:, 1])
         Pi = @view(u[:, 2])
 
-        if any(isnan, psi)
-            println("l = $l")
-            for i in eachindex(psi)
-                if isnan(psi[i])
-                    println("psi[$i] = ", psi[i])
-                end
-            end
-            error("psi contains NaN values")
-        end
-
         diag_state = get_diagnostic_state(level)
         rho = @view(diag_state[:, 1])
         tmp_state = get_tmp_state(level)
