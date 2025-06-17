@@ -17,13 +17,13 @@ function integrate_trapezoidal(grid::Grid, getter::Function)
 
         dx = x[begin + 1] - x[begin]
 
-        lo = firstindex(y)
-        hi = lastindex(y)
+        first_idx = firstindex(y)
+        last_idx = lastindex(y)
 
-        y_prev = i == 1 ? y[lo] : getblock(var_y, i - 1)[end]
-        local_retval = i == 1 ? y[lo + 1] : y[lo]
-        start_idx = i == 1 ? lo + 2 : lo + 1
-        @inbounds @fastmath @simd for j in start_idx:(hi - 1)
+        y_prev = i == 1 ? y[first_idx] : getblock(var_y, i - 1)[end]
+        local_retval = i == 1 ? y[first_idx + 1] : y[first_idx]
+        start_idx = i == 1 ? first_idx + 2 : first_idx + 1
+        @inbounds @fastmath @simd for j in start_idx:(last_idx - 1)
             local_retval += y[j]
         end
         @inbounds retval += dx * (local_retval + (y_prev + y[end]) / 2)
