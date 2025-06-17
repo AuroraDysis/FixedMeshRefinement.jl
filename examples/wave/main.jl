@@ -136,14 +136,17 @@ function main(params, out_dir; grid=nothing, start_step=1)
         show(stdout, MIME("text/plain"), get_level(grid, l))
     end
 
-    out_csv = OutputCSV(joinpath(out_dir, "output.csv"), ["t", "E"])
+    out_csv = OutputCSV(joinpath(out_dir, "output.csv"), ["t", "Ebase", "E"])
     save_merged_data = get_level(grid, num_levels).is_physical_boundary[1]
-    out_h5 = OutputHDF5(joinpath(out_dir, "data.h5"), grid; save_merged_data=save_merged_data)
+    out_h5 = OutputHDF5(
+        joinpath(out_dir, "data.h5"), grid; save_merged_data=save_merged_data
+    )
 
-    E0 = wave_energy(grid)
-    @printf("t = %.4f, iteration %d. E = %.17f\n", grid.t, start_step - 1, E0)
+    Ebase, E = wave_energy(grid)
+    E0 = E
+    @printf("t = %.4f, iteration %d. Ebase = %.17f, E = %.17f\n", grid.t, start_step - 1, Ebase, E)
     if start_step == 1
-        write_row(out_csv, (grid.t, wave_energy(grid)))
+        write_row(out_csv, (grid.t, Ebase, E))
         append_data(out_h5, grid)
     end
 
@@ -157,10 +160,17 @@ function main(params, out_dir; grid=nothing, start_step=1)
         apply_reflective_boundary_condition!(grid)
         step!(grid, wave_rhs!, p; mongwane=mongwane, apply_trans_zone=apply_trans_zone)
 
-        @printf("t = %.4f, iteration %d. dE = %.5g\n", grid.t, step, wave_energy(grid) - E0)
+        Ebase, E = wave_energy(grid)
+        @printf(
+            "t = %.4f, iteration %d. dEbase = %.5g, dE = %.5g\n",
+            grid.t,
+            step,
+            Ebase - E0,
+            E - E0
+        )
 
         if out_every_0d > 0 && mod(step, out_every_0d) == 0
-            write_row(out_csv, (grid.t, wave_energy(grid)))
+            write_row(out_csv, (grid.t, Ebase, E))
         end
 
         if out_every_1d > 0 && mod(step, out_every_1d) == 0

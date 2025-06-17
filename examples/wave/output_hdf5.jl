@@ -84,7 +84,7 @@ mutable struct OutputHDF5
                 if save_merged_data
                     g_merged = create_group(file, "merged_state")
 
-                    x, y = merge_grid_levels(grid, l -> get_state(l)[:, 1])
+                    x, y = merge_grid_levels(grid, l -> view(get_state(l), :, 1))
                     write(g_merged, "x", collect(x))
 
                     t_merged_ds_space = HDF5.dataspace((0,); max_dims=(-1,))
@@ -174,7 +174,7 @@ function append_data(out::OutputHDF5, grid::Grid)
 
         dset_merged = g_merged["psi"]
         HDF5.set_extent_dims(dset_merged, (out.max_merged_length, new_len))
-        x, y = merge_grid_levels(grid, l -> get_state(l)[:, 1])
+        x, y = merge_grid_levels(grid, l -> view(get_state(l), :, 1))
         lo_idx = out.max_merged_length - length(y) + 1
         out.merged_vec[1:lo_idx-1] .= NaN
         out.merged_vec[lo_idx:end] .= y

@@ -71,32 +71,52 @@ The energy is calculated on the base level only.
 function wave_energy(grid)
     apply_reflective_boundary_condition!(grid)
 
-    base_level = grid.levels[1]
-    (; dx) = base_level
+    num_levels = get_num_levels(grid)
 
-    u = get_state(base_level)
-    psi = @view(u[:, 1])
-    Pi = @view(u[:, 2])
+    E_base_level = NaN
+    for l in 1:num_levels
+        if l > 1
+            prolongate!(grid, l, false; diagnostic=true)
+        end
 
-    diag_state = get_diagnostic_state(base_level)
-    rho = @view(diag_state[:, 1])
-    tmp_state = get_tmp_state(base_level)
-    dpsi = @view(tmp_state[:, 1])
+        level = get_level(grid, l)
+        (; dx) = level
+        u = get_state(level)
+        psi = @view(u[:, 1])
+        Pi = @view(u[:, 2])
 
-    idx = get_interior_indices(base_level)
+        if any(isnan, psi)
+            println("l = $l")
+            for i in eachindex(psi)
+                if isnan(psi[i])
+                    println("psi[$i] = ", psi[i])
+                end
+            end
+            error("psi contains NaN values")
+        end
 
-    @.. dpsi[idx] =
-        (psi[idx .- 2] - 8 * psi[idx .- 1] + 8 * psi[idx .+ 1] - psi[idx .+ 2]) / (12 * dx)
-    @.. rho[idx] = (0.5 * Pi[idx] * Pi[idx] + 0.5 * dpsi[idx] * dpsi[idx])
+        diag_state = get_diagnostic_state(level)
+        rho = @view(diag_state[:, 1])
+        tmp_state = get_tmp_state(level)
+        dpsi = @view(tmp_state[:, 1])
 
-    # TODO: improve trapezoidal rule for boundary points
-    first_idx = first(idx)
-    last_idx = last(idx)
-    indices = (first_idx + 1):(last_idx - 1)
-    E =
-        sum(@view(rho[indices])) * dx +
-        (rho[first_idx] + rho[last_idx]) * dx / 2 +
-        0.5 * (rho[first_idx] + rho[last_idx]) * dx
+        idx = get_interior_indices(level)
+        @.. dpsi[idx] =
+            (psi[idx .- 2] - 8 * psi[idx .- 1] + 8 * psi[idx .+ 1] - psi[idx .+ 2]) / (12 * dx)
+        @.. rho[idx] = (0.5 * Pi[idx] * Pi[idx] + 0.5 * dpsi[idx] * dpsi[idx])
 
-    return E
+        if l == 1
+            first_idx = first(idx)
+            last_idx = last(idx)
+            indices = (first_idx + 1):(last_idx - 1)
+            E_base_level =
+                sum(@view(rho[indices])) * dx +
+                (rho[first_idx] + rho[last_idx]) * dx / 2 +
+                0.5 * (rho[first_idx] + rho[last_idx]) * dx
+        end
+    end
+
+    E = integrate_trapezoidal(grid, l -> view(get_diagnostic_state(l), :, 1))
+
+    return E_base_level, E
 end

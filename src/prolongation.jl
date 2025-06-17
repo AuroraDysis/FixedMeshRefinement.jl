@@ -386,7 +386,7 @@ in space and, optionally, in time.
 - `l::Int`: The fine level index.
 - `interp_in_time::Bool`: Whether to use time interpolation.
 """
-function prolongate!(grid::Grid, l::Int, interp_in_time::Bool)
+function prolongate!(grid::Grid, l::Int, interp_in_time::Bool; diagnostic::Bool=false)
     fine_level = get_level(grid, l)
     coarse_level = get_level(grid, l - 1)
 
@@ -405,7 +405,7 @@ function prolongate!(grid::Grid, l::Int, interp_in_time::Bool)
     end
 
     uf = get_state(fine_level)
-    uc_p = get_state(coarse_level, -1)
+    uc_p = diagnostic ? get_state(coarse_level) : get_state(coarse_level, -1)
     boundary_indices = get_boundary_indices(fine_level)
 
     spatial_buffer = grid.spatial_interpolation_buffer[1]

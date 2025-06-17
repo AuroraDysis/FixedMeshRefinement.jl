@@ -13,7 +13,7 @@ function merge_grid_levels(grid::Grid, getter::Function)
     # Start with the interior of the finest level
     finest_level = get_level(grid, num_levels)
     finest_x = get_x(finest_level)
-    finest_data = getter(finest_level)::OffsetVector{Float64,Vector{Float64}}
+    finest_data = getter(finest_level)
     finest_interior_indices = get_interior_indices(finest_level)
     x_blocks = [@view finest_x[finest_interior_indices]]
     y_blocks = [@view finest_data[finest_interior_indices]]
@@ -23,7 +23,7 @@ function merge_grid_levels(grid::Grid, getter::Function)
         fine_level = get_level(grid, l + 1)
         level = get_level(grid, l)
         level_x = get_x(level)
-        level_data = getter(level)::OffsetVector{Float64,Vector{Float64}}
+        level_data = getter(level)
         level_interior_indices = get_interior_indices(level)
         l_lo_idx, l_hi_idx = first(level_interior_indices), last(level_interior_indices)
         f_lo_idx, f_hi_idx = first(fine_level.parent_indices),
