@@ -5,7 +5,7 @@ export merge_grid_levels
 
 Merge signle variable from all levels of the grid into a `BlockArray`.
 The `getter` function specifies which data to retrieve the data of the variable from each level.
-`getter(level)` should return an `OffsetArray` from which data is read.
+`getter(level)` should return a `SubArray` of `OffsetArray` from which data is read.
 """
 function merge_grid_levels(grid::Grid, getter::Function)
     num_levels = get_num_levels(grid)
