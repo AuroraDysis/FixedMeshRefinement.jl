@@ -106,7 +106,7 @@ function wave_energy(grid)
         end
     end
 
-    E = integrate_trapezoidal(grid, l -> view(get_diagnostic_state(l), :, 1))
+    E = integrate_simpson(grid, l -> view(get_diagnostic_state(l), :, 1))
 
     return E_base_level, E
 end
