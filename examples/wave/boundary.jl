@@ -11,13 +11,13 @@ function apply_reflective_boundary_condition!(grid::Grid)
         # apply reflective boundary condition to state
         if is_physical_boundary[1]
             for i in 1:num_boundary_points[1]
-                @.. u[boundary_indices[1][i], :] = -@view(u[1 + i, :])
+                @.. u[:, boundary_indices[1][i]] = -@view(u[:, 1 + i])
             end
         end
 
         if is_physical_boundary[2]
             for i in 1:num_boundary_points[2]
-                @.. u[boundary_indices[2][i], :] = -@view(u[num_interior_points - i, :])
+                @.. u[:, boundary_indices[2][i]] = -@view(u[:, num_interior_points - i])
             end
         end
     end
@@ -33,13 +33,13 @@ function apply_reflective_boundary_condition_rhs!(level::Level, rhs)
     # apply reflective boundary condition to state
     if is_physical_boundary[1]
         for i in 1:num_boundary_points[1]
-            @.. rhs[boundary_indices[1][i], :] = -@view(rhs[1 + i, :])
+            @.. rhs[:, boundary_indices[1][i]] = -@view(rhs[:, 1 + i])
         end
     end
 
     if is_physical_boundary[2]
         for i in 1:num_boundary_points[2]
-            @.. rhs[boundary_indices[2][i], :] = -@view(rhs[num_interior_points - i, :])
+            @.. rhs[:, boundary_indices[2][i]] = -@view(rhs[:, num_interior_points - i])
         end
     end
 

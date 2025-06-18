@@ -4,8 +4,8 @@ function gaussian!(grid; amp=1.0, sig=0.25, x0=0.0)
     for l in 1:num_levels
         level = get_level(grid, l)
         u = get_state(level)
-        psi = @view(u[:, 1])
-        Pi = @view(u[:, 2])
+        psi = @view(u[1, :])
+        Pi = @view(u[2, :])
         x = get_x(level)
         @.. psi = amp * exp(-((x - x0) / sig)^2)
         @.. Pi = 0.0
@@ -24,8 +24,8 @@ function sinusoidal!(grid)
         level = get_level(grid, l)
 
         u = get_state(level)
-        psi = @view(u[:, 1])
-        Pi = @view(u[:, 2])
+        psi = @view(u[1, :])
+        Pi = @view(u[2, :])
 
         x = get_x(level)
         @.. psi = sin(2 * pi * (x - 0.0))

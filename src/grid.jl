@@ -127,20 +127,21 @@ mutable struct Level
         x_max = domain_box[2] + num_right_boundary_points * dx
         x = LinRange(x_min, x_max, num_total_points)
         time_levels = max(time_interpolation_order + 1, 2)
-        state = [fill(NaN, num_total_points, num_state_variables) for _ in 1:time_levels]
-        tmp = fill(NaN, num_total_points, num_state_variables)
+        state =
+            [fill(NaN, num_state_variables, num_total_points) for _ in 1:time_levels]
+        tmp = fill(NaN, num_state_variables, num_total_points)
         k = Vector{Matrix{Float64}}(undef, 4)
         Yn_buffer = Vector{Array{Float64,3}}(undef, 4)
-        diag_state = fill(NaN, num_total_points, num_diagnostic_variables)
+        diag_state = fill(NaN, num_diagnostic_variables, num_total_points)
         for j in 1:4
-            k[j] = fill(NaN, num_total_points, num_state_variables)
-            Yn_buffer[j] = fill(NaN, num_buffer_points, num_state_variables, 2)
+            k[j] = fill(NaN, num_state_variables, num_total_points)
+            Yn_buffer[j] = fill(NaN, num_state_variables, num_buffer_points, 2)
         end
         offset_indices =
             (-num_left_boundary_points + 1):(num_interior_points + num_right_boundary_points)
         num_left_transition_points = is_physical_boundary[1] ? 0 : num_transition_points
         num_right_transition_points = is_physical_boundary[2] ? 0 : num_transition_points
-        tmp_state = fill(NaN, num_total_points, num_tmp_variables)
+        tmp_state = fill(NaN, num_tmp_variables, num_total_points)
 
         return new(
             index,
@@ -259,7 +260,7 @@ time level `n`, `i=-1` to `n-1`, etc.
 """
 function get_state(level::Level, i::Int=0)
     (; state, offset_indices) = level
-    return OffsetArray(state[end + i], offset_indices, :)
+    return OffsetArray(state[end + i], :, offset_indices)
 end
 
 """
@@ -270,7 +271,7 @@ as an `OffsetArray`.
 """
 function get_rk4_tmp_state(level::Level)
     (; rk4_tmp_state, offset_indices) = level
-    return OffsetArray(rk4_tmp_state, offset_indices, :)
+    return OffsetArray(rk4_tmp_state, :, offset_indices)
 end
 
 """
@@ -281,7 +282,7 @@ scheme as an `OffsetArray`.
 """
 function get_rk_stage(level::Level, i::Int)
     (; rk_stages, offset_indices) = level
-    return OffsetArray(rk_stages[i], offset_indices, :)
+    return OffsetArray(rk_stages[i], :, offset_indices)
 end
 
 """
@@ -291,7 +292,7 @@ Return the diagnostic state variables of the `level` as an `OffsetArray`.
 """
 function get_diagnostic_state(level::Level)
     (; diagnostic_state, offset_indices) = level
-    return OffsetArray(diagnostic_state, offset_indices, :)
+    return OffsetArray(diagnostic_state, :, offset_indices)
 end
 
 """
@@ -301,7 +302,7 @@ Return the temporary state variables of the `level` as an `OffsetArray`.
 """
 function get_tmp_state(level::Level)
     (; tmp_state, offset_indices) = level
-    return OffsetArray(tmp_state, offset_indices, :)
+    return OffsetArray(tmp_state, :, offset_indices)
 end
 
 """
@@ -530,9 +531,8 @@ mutable struct Grid
         substeps = ones(Int, num_levels)
 
         num_spatial_interpolation_points = spatial_interpolation_order + 1
-        spatial_interpolation_buffer = [
-            fill(NaN, num_spatial_interpolation_points, num_state_variables) for _ in 1:4
-        ]
+        spatial_interpolation_buffer =
+            [fill(NaN, num_state_variables, num_spatial_interpolation_points) for _ in 1:4]
         point_buffer = [zeros(Float64, num_state_variables) for _ in 1:3]
 
         # construct

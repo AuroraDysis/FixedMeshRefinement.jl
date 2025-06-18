@@ -25,7 +25,7 @@ function nan_check(grid::Grid)
         u = get_state(level)
         (; num_boundary_points, parent_indices, is_physical_boundary) = level
         interior_indices = get_interior_indices(level)
-        if any(isnan.(u[interior_indices, :]))
+        if any(isnan.(u[:, interior_indices]))
             has_nan = true
             # print all the nan indexes
             println("level $l:")
@@ -35,7 +35,7 @@ function nan_check(grid::Grid)
             println("  is_physical_boundary: ", is_physical_boundary)
             for i in 1:(level.num_state_variables)
                 println(
-                    "  nan_points $(i): ", interior_indices[isnan.(u[interior_indices, i])]
+                    "  nan_points $(i): ", interior_indices[isnan.(u[i, interior_indices])]
                 )
             end
         end

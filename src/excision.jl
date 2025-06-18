@@ -37,13 +37,13 @@ function fill_extended_grid_extrapolate!(
 
     if direction == :left
         for idx in extended_indices
-            input = [@view(state[i, :]) for i in (idx + 1):(idx + order)]
-            extrapolate!(@view(state[idx, :]), input, order)
+            input = [@view(state[:, i]) for i in (idx + 1):(idx + order)]
+            extrapolate!(@view(state[:, idx]), input, order)
         end
     elseif direction == :right
         for idx in extended_indices
-            input = [@view(state[i, :]) for i in (idx - 1):-1:(idx - order)]
-            extrapolate!(@view(state[idx, :]), input, order)
+            input = [@view(state[:, i]) for i in (idx - 1):-1:(idx - order)]
+            extrapolate!(@view(state[:, idx]), input, order)
         end
     else
         error("Unsupported direction for extrapolation: $direction")

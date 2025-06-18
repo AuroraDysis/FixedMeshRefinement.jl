@@ -11,10 +11,10 @@ Calculate the right-hand side of the wave equation.
 - `t`: The time.
 """
 function wave_rhs!(level, rhs, u, p, t)
-    psi = @view(u[:, 1])
-    Pi = @view(u[:, 2])
-    psi_rhs = @view(rhs[:, 1])
-    Pi_rhs = @view(rhs[:, 2])
+    psi = @view(u[1, :])
+    Pi = @view(u[2, :])
+    psi_rhs = @view(rhs[1, :])
+    Pi_rhs = @view(rhs[2, :])
 
     (; dx) = level
     (; dissipation) = p
@@ -22,9 +22,9 @@ function wave_rhs!(level, rhs, u, p, t)
     idx = get_rhs_evaluation_indices(level)
 
     tmp_state = get_tmp_state(level)
-    ddpsi = @view(tmp_state[:, 1])
-    diss_psi = @view(tmp_state[:, 2])
-    diss_Pi = @view(tmp_state[:, 3])
+    ddpsi = @view(tmp_state[1, :])
+    diss_psi = @view(tmp_state[2, :])
+    diss_Pi = @view(tmp_state[3, :])
 
     @.. ddpsi[idx] =
         (
@@ -82,13 +82,13 @@ function wave_energy(grid)
         level = get_level(grid, l)
         (; dx) = level
         u = get_state(level)
-        psi = @view(u[:, 1])
-        Pi = @view(u[:, 2])
+        psi = @view(u[1, :])
+        Pi = @view(u[2, :])
 
         diag_state = get_diagnostic_state(level)
-        rho = @view(diag_state[:, 1])
+        rho = @view(diag_state[1, :])
         tmp_state = get_tmp_state(level)
-        dpsi = @view(tmp_state[:, 1])
+        dpsi = @view(tmp_state[1, :])
 
         idx = get_interior_indices(level)
         @.. dpsi[idx] =
@@ -106,7 +106,7 @@ function wave_energy(grid)
         end
     end
 
-    E = integrate_simpson(grid, l -> view(get_diagnostic_state(l), :, 1))
+    E = integrate_simpson(grid, l -> view(get_diagnostic_state(l), 1, :))
 
     return E_base_level, E
 end

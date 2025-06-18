@@ -59,18 +59,18 @@ mutable struct OutputHDF5
                     create_dataset(g, "t", Float64, t_ds_space; chunk=t_chunk)
 
                     state_ds_space = HDF5.dataspace(
-                        (num_points, num_state_variables, 0);
-                        max_dims=(num_points, num_state_variables, -1),
+                        (num_state_variables, num_points, 0);
+                        max_dims=(num_state_variables, num_points, -1),
                     )
-                    state_chunk = (num_points, num_state_variables, 1) # chunked by time slice
+                    state_chunk = (num_state_variables, num_points, 1) # chunked by time slice
                     create_dataset(g, "state", Float64, state_ds_space; chunk=state_chunk)
 
                     if num_diagnostic_variables > 0
                         diagnostic_ds_space = HDF5.dataspace(
-                            (num_points, num_diagnostic_variables, 0);
-                            max_dims=(num_points, num_diagnostic_variables, -1),
+                            (num_diagnostic_variables, num_points, 0);
+                            max_dims=(num_diagnostic_variables, num_points, -1),
                         )
-                        diagnostic_chunk = (num_points, num_diagnostic_variables, 1)
+                        diagnostic_chunk = (num_diagnostic_variables, num_points, 1)
                         create_dataset(
                             g,
                             "diagnostic",
@@ -84,7 +84,7 @@ mutable struct OutputHDF5
                 if save_merged_data
                     g_merged = create_group(file, "merged_state")
 
-                    x, y = merge_grid_levels(grid, l -> view(get_state(l), :, 1))
+                    x, y = merge_grid_levels(grid, l -> view(get_state(l), 1, :))
                     write(g_merged, "x", collect(x))
 
                     t_merged_ds_space = HDF5.dataspace((0,); max_dims=(-1,))
@@ -132,8 +132,8 @@ function append_data(out::OutputHDF5, grid::Grid)
         offset_indices = get_offset_indices(level)
         left_indices = first(offset_indices):(first(interior_indices) - 1)
         right_indices = (last(interior_indices) + 1):last(offset_indices)
-        state[left_indices, :] .= NaN
-        state[right_indices, :] .= NaN
+        state[:, left_indices] .= NaN
+        state[:, right_indices] .= NaN
 
         # interior indices for the HDF5 dataset
         nleft = first(interior_indices) - first(offset_indices)
@@ -152,13 +152,13 @@ function append_data(out::OutputHDF5, grid::Grid)
 
         # Append state
         dset_state = g["state"]
-        HDF5.set_extent_dims(dset_state, (num_points, num_state_variables, new_len))
+        HDF5.set_extent_dims(dset_state, (num_state_variables, num_points, new_len))
         dset_state[:, :, new_len] = parent(state)
 
         # Append diagnostic
         dset_diagnostic = g["diagnostic"]
         HDF5.set_extent_dims(
-            dset_diagnostic, (num_points, num_diagnostic_variables, new_len)
+            dset_diagnostic, (num_diagnostic_variables, num_points, new_len)
         )
         dset_diagnostic[:, :, new_len] = parent(diagnostic)
     end
@@ -174,7 +174,7 @@ function append_data(out::OutputHDF5, grid::Grid)
 
         dset_merged = g_merged["psi"]
         HDF5.set_extent_dims(dset_merged, (out.max_merged_length, new_len))
-        x, y = merge_grid_levels(grid, l -> view(get_state(l), :, 1))
+        x, y = merge_grid_levels(grid, l -> view(get_state(l), 1, :))
         lo_idx = out.max_merged_length - length(y) + 1
         out.merged_vec[1:lo_idx-1] .= NaN
         out.merged_vec[lo_idx:end] .= y

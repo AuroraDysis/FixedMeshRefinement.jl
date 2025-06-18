@@ -31,14 +31,14 @@ function restrict_injection!(grid::Grid, l::Int; apply_trans_zone=false)
         fidx_end = num_interior_points
     end
 
-    uf = view(get_state(fine_level), fidx_start:2:fidx_end, :)
+    uf = view(get_state(fine_level), :, fidx_start:2:fidx_end)
     uc = get_state(coarse_level)
 
     if apply_trans_zone
         noffset_left = div(num_transition_points[1] + 1, 2)
         noffset_right = div(num_transition_points[2] + 1, 2)
-        uc[parent_indices[(1 + noffset_left):(end - noffset_right)], :] .= uf
+        uc[:, parent_indices[(1 + noffset_left):(end - noffset_right)]] .= uf
     else
-        uc[parent_indices, :] .= uf
+        uc[:, parent_indices] .= uf
     end
 end

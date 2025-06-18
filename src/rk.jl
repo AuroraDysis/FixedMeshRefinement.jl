@@ -24,7 +24,7 @@ function fill_buffer!(u, level::Level, stage::Int; fill_with_nan::Bool=true)
         end
         for i in 1:num_boundary_points[dir]
             idx = boundary_indices[dir][i]
-            u[idx, :] .= @view(Yn[i, :, dir])
+            u[:, idx] .= @view(Yn[:, i, dir])
         end
     end
 
