@@ -83,7 +83,7 @@ mutable struct Level
     offset_indices::UnitRange{Int}
 
     # data
-    const x::LinRange{Float64,Int64}
+    const x::StepRangeLen{Float64, Base.TwicePrecision{Float64}, Base.TwicePrecision{Float64}, Int}
     const state::Vector{Matrix{Float64}} # state vectors at different time levels
     const rk4_tmp_state::Matrix{Float64} # temporary state for RK4
 
@@ -125,7 +125,7 @@ mutable struct Level
         dx = (domain_box[2] - domain_box[1]) / (num_interior_points - 1)
         x_min = domain_box[1] - num_left_boundary_points * dx
         x_max = domain_box[2] + num_right_boundary_points * dx
-        x = LinRange(x_min, x_max, num_total_points)
+        x = range(x_min, x_max, length=num_total_points)
         time_levels = max(time_interpolation_order + 1, 2)
         state =
             [fill(NaN, num_state_variables, num_total_points) for _ in 1:time_levels]
@@ -447,10 +447,10 @@ mutable struct Grid
             level_dt = (subcycling ? cfl * level_dx : base_dt)
             parent_level = levels[l - 1]  # level lower than the current level (parent level)
             # if we refine parent level everywhere
-            parent_level_grid_points = LinRange(
+            parent_level_grid_points = range(
                 parent_level.domain_box[1],
                 parent_level.domain_box[2],
-                (parent_level.num_interior_points - 1) * 2 + 1,
+                length=(parent_level.num_interior_points - 1) * 2 + 1,
             )
             level_domain_box = domain_boxes[l]
             # find those two which are closest to current level boundaries using binary search
