@@ -66,28 +66,30 @@ function rk4!(level::Level, f::Function, p; mongwane::Bool=false)
     sixth_dt = dt / 6
     half_dt = dt / 2
 
+    idx = get_rk4_evaluation_indices(level)
+
     f(level, k1, u_p, p, t)
 
-    @.. tmp = u_p + half_dt * k1
+    @.. tmp[:, idx] = u_p[:, idx] + half_dt * k1[:, idx]
     if mongwane
         fill_buffer!(tmp, level, 2)
     end
     f(level, k2, tmp, p, t + half_dt)
 
-    @.. tmp = u_p + half_dt * k2
+    @.. tmp[:, idx] = u_p[:, idx] + half_dt * k2[:, idx]
     if mongwane
         fill_buffer!(tmp, level, 3)
     end
     f(level, k3, tmp, p, t + half_dt)
 
-    @.. tmp = u_p + dt * k3
+    @.. tmp[:, idx] = u_p[:, idx] + dt * k3[:, idx]
     if mongwane
         fill_buffer!(tmp, level, 4)
     end
     f(level, k4, tmp, p, t + dt)
 
     u = get_state(level)
-    @.. u = u_p + sixth_dt * (2 * (k2 + k3) + (k1 + k4))
+    @.. u[:, idx] = u_p[:, idx] + sixth_dt * (2 * (k2[:, idx] + k3[:, idx]) + (k1[:, idx] + k4[:, idx]))
 
     # update time
     level.t = t + dt

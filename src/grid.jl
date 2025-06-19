@@ -10,6 +10,7 @@ export Level,
     get_interior_indices,
     get_offset_indices,
     get_rhs_evaluation_indices,
+    get_rk4_evaluation_indices,
     get_total_grid_points,
     get_maximum_grid_points,
     cycle_state!,
@@ -178,6 +179,16 @@ end
 
 function is_base_level(level::Level)
     return level.index == 1
+end
+
+"""
+    get_rk4_evaluation_indices(level::Level) -> UnitRange{Int}
+
+Return the indices that requires evaluation of the RK4 stages.
+"""
+function get_rk4_evaluation_indices(level::Level)
+    (; num_boundary_points, num_interior_points) = level
+    return (-num_boundary_points[1] + 1):(num_interior_points + num_boundary_points[2])
 end
 
 """

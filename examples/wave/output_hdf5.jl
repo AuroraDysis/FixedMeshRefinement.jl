@@ -33,7 +33,7 @@ mutable struct OutputHDF5
 
         (; num_state_variables, num_diagnostic_variables) = grid
         num_levels = get_num_levels(grid)
-        max_merged_length = -1
+        max_merged_length = 0
 
         local file::HDF5.File
         if isfile(filepath)
