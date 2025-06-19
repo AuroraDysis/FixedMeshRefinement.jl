@@ -56,6 +56,20 @@ function wave_rhs!(level, rhs, u, p, t)
     return nothing
 end
 
+function fdm_integrate_simpson(f::AbstractVector{T}, dx::T) where {T<:AbstractFloat}
+    @inbounds val =
+        (
+            17 * (f[1] + f[end]) +
+            59 * (f[2] + f[end - 1]) +
+            43 * (f[3] + f[end - 2]) +
+            49 * (f[4] + f[end - 3])
+        ) / 48
+    @inbounds @simd for i in 5:(length(f) - 4)
+        val += f[i]
+    end
+    @inbounds return val * dx
+end
+
 @doc raw"""
     wave_energy(grid)
 
@@ -98,11 +112,7 @@ function wave_energy(grid)
         if l == 1
             first_idx = first(idx)
             last_idx = last(idx)
-            indices = (first_idx + 1):(last_idx - 1)
-            E_base_level =
-                sum(@view(rho[indices])) * dx +
-                (rho[first_idx] + rho[last_idx]) * dx / 2 +
-                0.5 * (rho[first_idx] + rho[last_idx]) * dx
+            E_base_level = fdm_integrate_simpson(@view(rho[first_idx:last_idx]), dx)
         end
     end
 
