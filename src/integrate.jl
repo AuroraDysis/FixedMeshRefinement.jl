@@ -1,4 +1,30 @@
-export integrate_trapezoidal, integrate_simpson
+export integrate_trapezoidal, integrate_simpson, integrate_block_trapezoidal, integrate_block_simpson
+
+function integrate_block_simpson(f::AbstractVector{T}, dx::T) where {T<:AbstractFloat}
+    length(f) >= 4 || throw(ArgumentError("f must have at least 4 elements"))
+
+    @inbounds val =
+        (
+            17 * (f[1] + f[end]) +
+            59 * (f[2] + f[end - 1]) +
+            43 * (f[3] + f[end - 2]) +
+            49 * (f[4] + f[end - 3])
+        ) / 48
+    @inbounds @simd for i in 5:(length(f) - 4)
+        val += f[i]
+    end
+    @inbounds return val * dx
+end
+
+function integrate_block_trapezoidal(f::AbstractVector{T}, dx::T) where {T<:AbstractFloat}
+    length(f) >= 3 || throw(ArgumentError("f must have at least 3 elements"))
+
+    @inbounds val = f[2]
+    @inbounds @simd for i in 3:(length(f) - 1)
+        val += f[i]
+    end
+    @inbounds return dx * (val + (f[1] + f[end]) / 2)
+end
 
 """
     integrate_trapezoidal(grid::Grid, getter::Function)
@@ -8,25 +34,15 @@ The `getter` function specifies which data to retrieve the data of the variable 
 `getter(level)` should return an `SubArray` of `OffsetArray`.
 """
 function integrate_trapezoidal(grid::Grid, getter::Function)
-    var_x, var_y = merge_grid_levels(grid, getter)
+    var_x, var_y = merge_grid_levels(grid, getter; include_overlap_points=true)
 
     retval = 0.0
     for i in 1:blocklength(var_x)
         x = getblock(var_x, i)
         y = getblock(var_y, i)
 
-        dx = x[begin + 1] - x[begin]
-
-        first_idx = firstindex(y)
-        last_idx = lastindex(y)
-
-        y_prev = i == 1 ? y[first_idx] : getblock(var_y, i - 1)[end]
-        local_retval = i == 1 ? y[first_idx + 1] : y[first_idx]
-        start_idx = i == 1 ? first_idx + 2 : first_idx + 1
-        @inbounds @fastmath @simd for j in start_idx:(last_idx - 1)
-            local_retval += y[j]
-        end
-        @inbounds retval += dx * (local_retval + (y_prev + y[end]) / 2)
+        dx = step(x)
+        retval += integrate_block_trapezoidal(y, dx)
     end
 
     return retval
@@ -40,34 +56,15 @@ The `getter` function specifies which data to retrieve the data of the variable 
 `getter(level)` should return an `SubArray` of `OffsetArray`.
 """
 function integrate_simpson(grid::Grid, getter::Function)
-    var_x, var_y = merge_grid_levels(grid, getter)
+    var_x, var_y = merge_grid_levels(grid, getter; include_overlap_points=true)
 
     retval = 0.0
     for i in 1:blocklength(var_x)
         x = getblock(var_x, i)
         y = getblock(var_y, i)
 
-        dx = x[begin + 1] - x[begin]
-
-        y_prev = i == 1 ? y[begin] : getblock(var_y, i - 1)[end]
-        p1 = i == 1 ? y[begin+1] : y[begin]
-        p2 = i == 1 ? y[begin+2] : y[begin+1]
-        p3 = i == 1 ? y[begin+3] : y[begin+2]
-
-        @inbounds local_retval = (
-            17 * (y_prev + y[end]) +
-            59 * (p1 + y[end-1]) +
-            43 * (p2 + y[end-2]) +
-            49 * (p3 + y[end-3])
-        ) / 48
-
-        first_idx = firstindex(y)
-        last_idx = lastindex(y)
-        start_idx = i == 1 ? first_idx + 4 : first_idx + 3
-        @inbounds @fastmath @simd for j in start_idx:(last_idx-4)
-            local_retval += y[j]
-        end
-        retval += dx * local_retval
+        dx = step(x)
+        retval += integrate_block_simpson(y, dx)
     end
 
     return retval

@@ -7,7 +7,7 @@ Merge signle variable from all levels of the grid into a `BlockArray`.
 The `getter` function specifies which data to retrieve the data of the variable from each level.
 `getter(level)` should return a `SubArray` of `OffsetArray` from which data is read.
 """
-function merge_grid_levels(grid::Grid, getter::Function)
+function merge_grid_levels(grid::Grid, getter::Function; include_overlap_points=false)
     num_levels = get_num_levels(grid)
 
     # Start with the interior of the finest level
@@ -15,7 +15,7 @@ function merge_grid_levels(grid::Grid, getter::Function)
     finest_x = get_x(finest_level)
     finest_data = getter(finest_level)
     finest_interior_indices = get_interior_indices(finest_level)
-    x_blocks = [@view finest_x[finest_interior_indices]]
+    x_blocks = [finest_x[finest_interior_indices]]
     y_blocks = [@view finest_data[finest_interior_indices]]
 
     # Go from finest - 1 to coarsest, adding the uncovered parts of each level
@@ -31,14 +31,16 @@ function merge_grid_levels(grid::Grid, getter::Function)
 
         # Prepend the part of the parent grid before the fine grid
         if l_lo_idx < f_lo_idx
-            pushfirst!(x_blocks, @view level_x[l_lo_idx:(f_lo_idx - 1)])
-            pushfirst!(y_blocks, @view level_data[l_lo_idx:(f_lo_idx - 1)])
+            hi_idx = include_overlap_points ? f_lo_idx : f_lo_idx - 1
+            pushfirst!(x_blocks, level_x[l_lo_idx:hi_idx])
+            pushfirst!(y_blocks, @view level_data[l_lo_idx:hi_idx])
         end
 
         # Append the part of the coarse grid after the fine grid
         if l_hi_idx > f_hi_idx
-            push!(x_blocks, @view level_x[(f_hi_idx + 1):l_hi_idx])
-            push!(y_blocks, @view level_data[(f_hi_idx + 1):l_hi_idx])
+            lo_idx = include_overlap_points ? f_hi_idx : f_hi_idx + 1
+            push!(x_blocks, level_x[lo_idx:l_hi_idx])
+            push!(y_blocks, @view level_data[lo_idx:l_hi_idx])
         end
     end
 

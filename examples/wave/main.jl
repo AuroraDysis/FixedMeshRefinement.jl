@@ -145,12 +145,15 @@ function main(params, out_dir; grid=nothing, start_step=1)
     Ebase, E = wave_energy(grid)
     E0 = E
     @printf(
-        "t = %.4f, iteration %d. Ebase = %.17f, E = %.17f\n",
+        "t = %.4f, iteration %d. Ebase = %.17f, E = %.17f, diff = %.3g\n",
         grid.t,
         start_step - 1,
         Ebase,
-        E
+        E,
+        Ebase - E
     )
+    # exit()
+
     if start_step == 1
         write_row(out_csv, (grid.t, Ebase, E))
         append_data(out_h5, grid)
