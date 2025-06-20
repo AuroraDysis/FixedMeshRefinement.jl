@@ -217,7 +217,6 @@ function shift_grid_boundaries!(
     end
 
     for l in 1:num_levels
-        level = get_level(grid, l)
         left_shift_points = num_shift_points[1] * 2^(l - 1)
         right_shift_points = num_shift_points[2] * 2^(l - 1)
         shift_level_boundaries!(
@@ -227,5 +226,9 @@ function shift_grid_boundaries!(
             shift_parent_indices=true,
             func_fill_extended=func_fill_extended,
         )
+    end
+
+    for l in (num_levels - 1):-1:1
+        restrict_injection!(grid, l)
     end
 end
