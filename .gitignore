@@ -10,3 +10,5 @@ examples/wave/config/data/
 examples/stderr.txt
 examples/stdout.txt
 /test/Manifest*.toml
+
+.DS_Store
