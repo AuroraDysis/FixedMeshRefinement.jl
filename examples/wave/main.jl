@@ -180,7 +180,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
 
     if start_step == 1
         write_row(out_csv, (grid.t, Ebase, E))
-        append_data(out_h5, grid)
+        append_data(out_h5, grid, 1)
     end
 
     ##########
@@ -207,7 +207,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
         end
 
         if out_every_1d > 0 && mod(step, out_every_1d) == 0
-            append_data(out_h5, grid)
+            append_data(out_h5, grid, 1)
         end
 
         if checkpoint_every > 0 && mod(step, checkpoint_every) == 0
