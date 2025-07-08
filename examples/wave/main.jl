@@ -182,6 +182,11 @@ function main(params, out_dir; grid=nothing, start_step=1)
     end
     out_h5 = OutputHDF5(data_dir, "data", grid)
 
+    checkpoint_dir = joinpath(out_dir, "checkpoint")
+    if !isdir(checkpoint_dir)
+        mkpath(checkpoint_dir)
+    end
+
     Ebase, E = wave_energy(grid)
     E0 = E
     @printf(
@@ -226,7 +231,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
         end
 
         if checkpoint_every > 0 && mod(step, checkpoint_every) == 0
-            write_checkpoint(out_dir, grid, step, params)
+            write_checkpoint(checkpoint_dir, grid, step, params)
         end
 
         # nan check
