@@ -152,7 +152,6 @@ function main(params, out_dir; grid=nothing, start_step=1)
         E,
         Ebase - E
     )
-    # exit()
 
     if start_step == 1
         write_row(out_csv, (grid.t, Ebase, E))
