@@ -1,4 +1,6 @@
-export typetol, extrapolate!
+export typetol, extrapolate!, durationstring
+
+using Printf
 
 """
     typetol(TF::Type{<:AbstractFloat})
@@ -51,4 +53,35 @@ function extrapolate!(out, input, order::Integer)
     else
         error("Extrapolation order $order is not supported.")
     end
+end
+
+"""
+    durationstring(nsec)
+
+Convert a duration in seconds to a human-readable string format.
+
+# Arguments
+- `nsec`: Number of seconds to convert
+
+# Returns
+- A string representing the duration in the format:
+  - "HH:MM:SS" for durations less than a day
+  - "N days, HH:MM:SS" for durations between 1-9 days
+  - "X.XX days" for durations greater than 9 days
+"""
+function durationstring(nsec)
+    days = div(nsec, 60 * 60 * 24)
+    r = nsec - 60 * 60 * 24 * days
+    hours = div(r, 60 * 60)
+    r = r - 60 * 60 * hours
+    minutes = div(r, 60)
+    seconds = floor(r - 60 * minutes)
+
+    hhmmss = @sprintf "%u:%02u:%02u" hours minutes seconds
+    if days > 9
+        return @sprintf "%.2f days" nsec / (60 * 60 * 24)
+    elseif days > 0
+        return @sprintf "%u days, %s" days hhmmss
+    end
+    return hhmmss
 end

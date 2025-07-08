@@ -43,7 +43,7 @@ function nan_check(grid::Grid)
     return has_nan
 end
 
-function main(params, out_dir; grid=nothing, start_step=0)
+function pde_main(params, out_dir; grid=nothing, start_step=0)
     ########################
     # Read Parameter Files #
     ########################
@@ -186,26 +186,13 @@ function main(params, out_dir; grid=nothing, start_step=0)
         mkpath(checkpoint_dir)
     end
 
-    Ebase, E = wave_energy(grid)
-    E0 = E
-    @printf(
-        "t = %.4f, iteration %d. Ebase = %.17f, E = %.17f, diff = %.3g\n",
-        grid.t,
-        start_step - 1,
-        Ebase,
-        E,
-        Ebase - E
-    )
-
-    if start_step == 1
-        write_row(out_csv, (grid.t, Ebase, E))
-        append_data(out_h5, grid, 1)
-    end
-
     ##########
     # Evolve #
     ##########
     println("Start evolution...")
+
+    Ebase, E = wave_energy(grid)
+    E0 = E
 
     runtime_start = time()
     slurm_job_end_time = if haskey(ENV, "SLURM_JOB_END_TIME")
@@ -225,7 +212,7 @@ function main(params, out_dir; grid=nothing, start_step=0)
     end
 
     while true
-        if out_every_0d > 0 && mod(step, out_every0d) == 0
+        if out_every_0d > 0 && mod(step, out_every_0d) == 0
             Ebase, E = wave_energy(grid)
             @printf(
                 "t = %.4f, iteration %d. dEbase = %.5g, dE = %.5g\n",
