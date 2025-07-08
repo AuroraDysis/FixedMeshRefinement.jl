@@ -48,16 +48,16 @@ function main(params, out_dir; grid=nothing, start_step=1)
     ########################
     # Read Parameter Files #
     ########################
-    stop_time = get(params, "stop_time", -1.0)
-    max_step = get(params, "max_step", -1)
-    out_every_0d = get(params, "out_every_0d", 10)
-    out_every_1d = get(params, "out_every_1d", 100)
-    cfl = get(params, "cfl", 0.25)
-    dissipation = get(params, "dissipation", 0.0)
-    subcycling = get(params, "subcycling", true)
-    mongwane = get(params, "mongwane", false)
-    apply_trans_zone = get(params, "apply_trans_zone", true)
-    checkpoint_every = get(params, "checkpoint_every", -1)
+    stop_time::Float64 = get(params, "stop_time", -1.0)
+    max_step::Int = get(params, "max_step", -1)
+    out_every_dt_0d::Float64 = get(params, "out_every_0d", 0.01)
+    out_every_dt_1d::Float64 = get(params, "out_every_1d", 0.1)
+    cfl::Float64 = get(params, "cfl", 0.25)
+    dissipation::Float64 = get(params, "dissipation", 0.0)
+    subcycling::Bool = get(params, "subcycling", true)
+    mongwane::Bool = get(params, "mongwane", false)
+    apply_trans_zone::Bool = get(params, "apply_trans_zone", true)
+    checkpoint_every_dt::Float64 = get(params, "checkpoint_every", 2.0)
 
     println("Parameters:")
     println("  cfl              = ", cfl)
@@ -65,9 +65,9 @@ function main(params, out_dir; grid=nothing, start_step=1)
     println("  trans_zone       = ", apply_trans_zone)
     println("  max_step         = ", max_step)
     println("  stop_time        = ", stop_time)
-    println("  out_every_0d     = ", out_every_0d)
-    println("  out_every_1d     = ", out_every_1d)
-    println("  checkpoint_every = ", checkpoint_every)
+    println("  out_every_dt_0d  = ", out_every_dt_0d)
+    println("  out_every_dt_1d  = ", out_every_dt_1d)
+    println("  checkpoint_every_dt = ", checkpoint_every_dt)
     println("  out_dir          = ", out_dir)
 
     ########################
@@ -208,7 +208,18 @@ function main(params, out_dir; grid=nothing, start_step=1)
     ##########
     println("Start evolution...")
 
+    runtime_start = time()
+    slurm_job_end_time = if haskey(ENV, "SLURM_JOB_END_TIME")
+        parse(Float64, ENV["SLURM_JOB_END_TIME"])
+    else
+        Inf
+    end
+
     step = start_step
+    out_every_0d = round(Int, out_every_dt_0d / grid.base_dt)
+    out_every_1d = round(Int, out_every_dt_1d / grid.base_dt)
+    start_t = grid.t
+
     while (max_step > 0 && step <= max_step) || (stop_time > 0.0 && grid.t < stop_time)
         apply_reflective_boundary_condition!(grid)
         step!(grid, wave_rhs!, p; mongwane=mongwane, apply_trans_zone=apply_trans_zone)
@@ -322,10 +333,10 @@ elseif endswith(input_file, ".jld2")
     if redirect_std
         # redirect output and error
         redirect_to_files(out_dir * "/stdout.txt", out_dir * "/stderr.txt"; append=true) do
-            main(params, out_dir; grid=grid, start_step=step + 1)
+            main(params, out_dir; grid=grid, start_step=step)
         end
     else
-        main(params, out_dir; grid=grid, start_step=step + 1)
+        main(params, out_dir; grid=grid, start_step=step)
     end
 else
     println(
