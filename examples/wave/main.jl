@@ -161,19 +161,7 @@ function pde_main(params, out_dir; grid=nothing, start_step=0)
 
     out_csv = OutputCSV(joinpath(csv_dir, "output.csv"), ["t", "Ebase", "E"])
 
-    begin
-        num_levels = get_num_levels(grid)
-
-        for l in 1:num_levels
-            level = get_level(grid, l)
-            x = get_x(level)
-
-            # Create filename with level number padded to 2 digits
-            csv_filename = "x_$(lpad(l, 2, '0')).csv"
-            csv_path = joinpath(csv_dir, csv_filename)
-            writedlm(csv_path, x)
-        end
-    end
+    write_grid_coordinates(grid, csv_dir)
 
     data_dir = joinpath(out_dir, "data")
     if !isdir(data_dir)

@@ -57,3 +57,17 @@ function Base.close(out::OutputCSV)
         close(out.io)
     end
 end
+
+function write_grid_coordinates(grid, csv_dir)
+    num_levels = get_num_levels(grid)
+
+    for l in 1:num_levels
+        level = get_level(grid, l)
+        x = get_x(level)
+
+        # Create filename with level number padded to 2 digits
+        csv_filename = "x_$(lpad(l, 2, '0')).csv"
+        csv_path = joinpath(csv_dir, csv_filename)
+        writedlm(csv_path, x)
+    end
+end
