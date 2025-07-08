@@ -44,7 +44,7 @@ function nan_check(grid::Grid)
     return has_nan
 end
 
-function main(params, out_dir; grid=nothing, start_step=1)
+function main(params, out_dir; grid=nothing, start_step=0)
     ########################
     # Read Parameter Files #
     ########################
@@ -73,7 +73,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
     ########################
     # build grid structure #
     ########################
-    p = (; dissipation)
+    p = (; dissipation, termination=Ref(false))
     if isnothing(grid)
         num_state_variables = 2
         num_diagnostic_variables = 1
@@ -182,7 +182,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
     end
     out_h5 = OutputHDF5(data_dir, "data", grid)
 
-    checkpoint_dir = joinpath(out_dir, "checkpoint")
+    checkpoint_dir = joinpath(out_dir, "checkpoints")
     if !isdir(checkpoint_dir)
         mkpath(checkpoint_dir)
     end
@@ -219,21 +219,22 @@ function main(params, out_dir; grid=nothing, start_step=1)
     out_every_0d = round(Int, out_every_dt_0d / grid.base_dt)
     out_every_1d = round(Int, out_every_dt_1d / grid.base_dt)
     start_t = grid.t
+    next_checkpoint_t = if start_step == 0
+        checkpoint_every_dt
+    else
+        start_t - mod(start_t, checkpoint_every_dt) + checkpoint_every_dt
+    end
 
-    while (max_step > 0 && step <= max_step) || (stop_time > 0.0 && grid.t < stop_time)
-        apply_reflective_boundary_condition!(grid)
-        step!(grid, wave_rhs!, p; mongwane=mongwane, apply_trans_zone=apply_trans_zone)
-
-        Ebase, E = wave_energy(grid)
-        @printf(
-            "t = %.4f, iteration %d. dEbase = %.5g, dE = %.5g\n",
-            grid.t,
-            step,
-            Ebase - E0,
-            E - E0
-        )
-
-        if out_every_0d > 0 && mod(step, out_every_0d) == 0
+    while true
+        if out_every_0d > 0 && mod(step, out_every0d) == 0
+            Ebase, E = wave_energy(grid)
+            @printf(
+                "t = %.4f, iteration %d. dEbase = %.5g, dE = %.5g\n",
+                grid.t,
+                step,
+                Ebase - E0,
+                E - E0
+            )
             write_row(out_csv, (grid.t, Ebase, E))
         end
 
@@ -241,18 +242,56 @@ function main(params, out_dir; grid=nothing, start_step=1)
             append_data(out_h5, grid, step)
         end
 
-        if checkpoint_every > 0 && mod(step, checkpoint_every) == 0
+        if grid.t >= next_checkpoint_t
             write_checkpoint(checkpoint_dir, grid, step, params)
+            next_checkpoint_t += checkpoint_every_dt
         end
+
+        # check if the simulation is finished
+        if (max_step > 0 && step >= max_step)
+            println("Max step reached, break")
+            write_checkpoint(checkpoint_dir, grid, step, params)
+            break
+        end
+
+        if stop_time > 0.0 && grid.t >= stop_time
+            println("Stop time reached, break")
+            write_checkpoint(checkpoint_dir, grid, step, params)
+            break
+        end
+
+        # if slurm job time smaller than 30 mins
+        if time() > slurm_job_end_time - 1800
+            println("WARNING: Slurm job time is less than 30 mins, break")
+            write_checkpoint(checkpoint_dir, grid, step, params)
+            break
+        end
+
+        # if termination signal received
+        if p.termination[]
+            println("Termination signal received, break")
+            write_checkpoint(checkpoint_dir, grid, step, params)
+            break
+        end
+
+        apply_reflective_boundary_condition!(grid)
+        step!(grid, wave_rhs!, p; mongwane=mongwane, apply_trans_zone=apply_trans_zone)
 
         # nan check
         if nan_check(grid)
             println("Nan detected at t = $(grid.t), step = $(step)!")
-            exit()
+            break
         end
 
         step += 1
     end
+
+    elapsed_seconds = time() - runtime_start
+    elapsed = durationstring(elapsed_seconds)
+    t_per_minutes = grid.t / elapsed_seconds * 60
+    println(
+        "Simulation finished in $elapsed, speed = $t_per_minutes, t = $(grid.t), step = $step",
+    )
 
     ########
     # Done #
