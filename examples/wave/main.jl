@@ -17,6 +17,20 @@ function get(params, key, default)
     return haskey(params, key) ? params[key] : default
 end
 
+function find_next_output_dir(base_dir::String, max_attempts::Int=100)
+    """
+    Find the next available output directory by checking for directories 
+    named "out_01", "out_02", etc. Returns the first directory that doesn't exist.
+    """
+    for i in 1:max_attempts
+        candidate_dir = joinpath(base_dir, "out_$(lpad(i, 2, '0'))")
+        if !isdir(candidate_dir)
+            return candidate_dir
+        end
+    end
+    error("Too many existing output directories (>$max_attempts), something might be wrong")
+end
+
 function nan_check(grid::Grid)
     has_nan = false
     num_levels = get_num_levels(grid)
@@ -137,21 +151,7 @@ function pde_main(params, out_dir; grid=nothing, start_step=0)
     end
 
     # find output directories
-    i = 1
-    begin
-        out_dir_tmp = ""
-        while i <= 100
-            out_dir_tmp = joinpath(out_dir, "out_$(lpad(i, 2, '0'))")
-            if !isdir(out_dir_tmp)
-                break
-            end
-            i += 1
-        end
-        if i > 100
-            error("Too many existing output directories, something might be wrong")
-        end
-        out_dir = out_dir_tmp
-    end
+    out_dir = find_next_output_dir(out_dir)
 
     # create a folder for csv
     csv_dir = joinpath(out_dir, "csv")
