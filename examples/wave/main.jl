@@ -207,7 +207,7 @@ function main(params, out_dir; grid=nothing, start_step=1)
         end
 
         if out_every_1d > 0 && mod(step, out_every_1d) == 0
-            append_data(out_h5, grid, 1)
+            append_data(out_h5, grid, step)
         end
 
         if checkpoint_every > 0 && mod(step, checkpoint_every) == 0
