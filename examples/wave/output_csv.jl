@@ -17,12 +17,20 @@ mutable struct OutputCSV
     Create an `OutputCSV` object and open the file for writing.
     """
     function OutputCSV(filepath::String, num_columns::Int)
-        io = open(filepath, "a")
+        if isfile(filepath)
+            error("File $filepath already exists, please delete it first")
+        end
+
+        io = open(filepath, "w")
         return new(filepath, io, num_columns, nothing)
     end
 
     function OutputCSV(filepath::String, header::Vector{String})
-        io = open(filepath, "a")
+        if isfile(filepath)
+            error("File $filepath already exists, please delete it first")
+        end
+
+        io = open(filepath, "w")
         println(io, join(header, ","))
         return new(filepath, io, length(header), header)
     end

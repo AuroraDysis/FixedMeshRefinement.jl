@@ -8,8 +8,8 @@ using FastBroadcast
 
 include("boundary.jl")
 include("initial_data.jl")
-include("output_hdf5.jl")
 include("output_csv.jl")
+include("output_hdf5.jl")
 include("output_checkpoint.jl")
 include("wave.jl")
 
@@ -136,11 +136,36 @@ function main(params, out_dir; grid=nothing, start_step=1)
         show(stdout, MIME("text/plain"), get_level(grid, l))
     end
 
-    out_csv = OutputCSV(joinpath(out_dir, "output.csv"), ["t", "Ebase", "E"])
-    save_merged_data = get_level(grid, num_levels).is_physical_boundary[1]
-    out_h5 = OutputHDF5(
-        joinpath(out_dir, "data.h5"), grid; save_merged_data=save_merged_data
-    )
+    # find output directories
+    i = 1
+    begin
+        out_dir_tmp = ""
+        while i <= 100
+            out_dir_tmp = joinpath(out_dir, "out_$(lpad(i, 2, '0'))")
+            if !isdir(out_dir_tmp)
+                break
+            end
+            i += 1
+        end
+        if i > 100
+            error("Too many existing output directories, something might be wrong")
+        end
+        out_dir = out_dir_tmp
+    end
+
+    # create a folder for csv
+    csv_dir = joinpath(out_dir, "csv")
+    if !isdir(csv_dir)
+        mkpath(csv_dir)
+    end
+
+    out_csv = OutputCSV(joinpath(csv_dir, "output.csv"), ["t", "Ebase", "E"])
+
+    data_dir = joinpath(out_dir, "data")
+    if !isdir(data_dir)
+        mkpath(data_dir)
+    end
+    out_h5 = OutputHDF5(data_dir, "data", grid)
 
     Ebase, E = wave_energy(grid)
     E0 = E
