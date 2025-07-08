@@ -3,5 +3,5 @@ cfl = 0.25
 num_interior_points = 10001
 num_ghost_points = 3
 stop_time = 10.0
-out_dir = "data"
+out_dir = ".data"
 redirect_std = false
