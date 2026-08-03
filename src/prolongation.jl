@@ -128,7 +128,7 @@ function calc_Yn_from_kcs!(Yn_buffer, yn, kcs, dtc, interp_in_time::Bool, dytmp)
         @.. d1y = ck1 * kcs[1] + ck23 * (kcs[2] + kcs[3]) + ck4 * kcs[4]
     end
     let ck1 = -3 + 4 * theta, ck23 = 2 - 4 * theta, ck4 = -1 + 4 * theta
-        @.. d2y = (ck1 * kcs[1] + ck23 * (kcs[2] + kcs[3]) + ck4 * kcs[4]) * dtc
+        @.. d2y = ck1 * kcs[1] + ck23 * (kcs[2] + kcs[3]) + ck4 * kcs[4]
     end
     @.. d3y = 4 * (kcs[1] - kcs[2] - kcs[3] + kcs[4])
 

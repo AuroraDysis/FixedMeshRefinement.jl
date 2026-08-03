@@ -1,6 +1,8 @@
 using TestItems
 using TestItemRunner
 
+include("test_fmr_mongwane_temporal_order.jl")
+
 @testitem "Code quality (Aqua.jl)" begin
     using Aqua
 
